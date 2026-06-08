@@ -1,0 +1,607 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Hiro &amp; Aiko — A Sakura Wedding</title>
+<meta name="description" content="Join us beneath the cherry blossoms — an invitation to the wedding of Hiro & Aiko." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300&family=Shippori+Mincho:wght@400;500;700&family=Yuji+Syuku&display=swap" rel="stylesheet">
+<style>
+  /* ===== Design system ported from styles.css (oklch) ===== */
+  :root{
+    --background: oklch(0.972 0.018 85);
+    --foreground: oklch(0.22 0.04 35);
+    --card: oklch(0.965 0.022 80);
+    --muted-foreground: oklch(0.45 0.04 50);
+    --primary: oklch(0.62 0.12 75);
+    --primary-foreground: oklch(0.98 0.01 85);
+    --border: oklch(0.85 0.04 65);
+    --ink: oklch(0.18 0.03 40);
+    --gold: oklch(0.58 0.16 70);
+    --gold-soft: oklch(0.7 0.13 75);
+    --sakura: oklch(0.85 0.08 15);
+    --sakura-deep: oklch(0.7 0.14 10);
+    --font-display: "Yuji Syuku", "Shippori Mincho", serif;
+    --font-serif: "Cormorant Garamond", "Shippori Mincho", serif;
+    --font-brush: "Shippori Mincho", serif;
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-serif);
+    -webkit-font-smoothing: antialiased;
+    overflow-x:hidden;
+  }
+  ::selection{ background: var(--gold); color: var(--background); }
+
+  /* utilities */
+  .font-display{ font-family: var(--font-display); }
+  .font-brush{ font-family: var(--font-brush); }
+  .font-serif-soft{ font-family: var(--font-serif); }
+  .text-gold{ color: var(--gold); }
+  .text-ink{ color: var(--ink); }
+  .italic{ font-style: italic; }
+
+  .ink-divider{
+    background: linear-gradient(90deg, transparent, var(--gold) 20%, var(--gold) 80%, transparent);
+    height:1px; width:100%; opacity:.55;
+  }
+
+  /* fixed scroll-driven background gradient */
+  #bgGradient{
+    position:fixed; inset:0; z-index:0;
+    background: linear-gradient(180deg, oklch(0.94 0.045 20) 0%, oklch(0.96 0.03 60) 100%);
+  }
+  #bgGradient::after{ /* paper grain */
+    content:""; position:absolute; inset:0;
+    background-image:
+      radial-gradient(circle at 20% 30%, oklch(0.88 0.04 60 / 0.35) 0, transparent 50%),
+      radial-gradient(circle at 80% 70%, oklch(0.86 0.05 30 / 0.25) 0, transparent 55%);
+    background-blend-mode: multiply;
+  }
+  /* soft vignette */
+  #vignette{
+    position:fixed; inset:0; z-index:5; pointer-events:none;
+    background: radial-gradient(ellipse at center, transparent 40%, oklch(0.2 0.03 40 / 0.25) 100%);
+  }
+
+  #bg{ position:fixed; inset:0; z-index:10; pointer-events:none; }
+
+  main{ position:relative; z-index:20; }
+
+  section{ position:relative; }
+  .wrap{ margin:0 auto; width:100%; max-width:64rem; padding:8rem 1.5rem; }
+
+  /* HERO */
+  .hero{
+    position:relative; min-height:100vh;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    padding:1.5rem; text-align:center;
+  }
+  .hero-inner{
+    position:relative;
+    display:flex; flex-direction:column; gap:2rem; align-items:center;
+    text-shadow:
+      0 2px 24px oklch(0.98 0.02 80 / 0.9),
+      0 0 60px oklch(0.98 0.02 80 / 0.7);
+  }
+  .hero-inner::before{
+    content:""; position:absolute; inset:-10% -14%; z-index:-1;
+    background: radial-gradient(ellipse at center, oklch(0.98 0.02 80 / 0.6) 0%, oklch(0.98 0.02 80 / 0.28) 45%, transparent 72%);
+  }
+  .eyebrow{
+    font-family: var(--font-display);
+    font-size:.875rem; letter-spacing:.6em; color: var(--gold);
+  }
+  .hero h1{
+    font-family: var(--font-display);
+    font-weight:400;
+    font-size: clamp(3.75rem, 12vw, 8rem);
+    line-height:.95; color: var(--ink);
+  }
+  .hero h1 .amp{
+    display:inline-block; vertical-align:middle;
+    margin:0 1.5rem; font-size: clamp(1.875rem, 4vw, 2.5rem);
+    color: var(--gold);
+  }
+  .hero .poem{
+    font-family: var(--font-serif);
+    font-style:italic; color: var(--muted-foreground);
+    font-size: clamp(1.125rem, 2vw, 1.25rem); line-height:1.6;
+  }
+  .hero .when{
+    font-family: var(--font-display);
+    font-size:.875rem; letter-spacing:.4em; color: oklch(0.18 0.03 40 / .8);
+  }
+  .scroll-cue{
+    position:absolute; bottom:2.5rem; left:50%; transform:translateX(-50%);
+    font-family: var(--font-display); font-size:.75rem; letter-spacing:.4em; color: var(--gold);
+    animation: floaty 2.4s ease-in-out infinite;
+  }
+  @keyframes floaty{ 0%,100%{transform:translateX(-50%) translateY(0)} 50%{transform:translateX(-50%) translateY(10px)} }
+
+  .center{ text-align:center; }
+  .kicker{ font-family: var(--font-display); font-size:.75rem; letter-spacing:.5em; color: var(--gold); }
+  .kicker.lg{ font-size:.875rem; }
+  h2.section{
+    margin-top:1.5rem; font-family: var(--font-display);
+    font-size: clamp(2.25rem,5vw,3rem); color: var(--ink); font-weight:400;
+  }
+  .lede{
+    margin:2.5rem auto 0; max-width:42rem;
+    font-family: var(--font-serif); font-size: clamp(1.125rem,2vw,1.25rem);
+    line-height:1.75; color: oklch(0.18 0.03 40 / .85);
+  }
+  .divider-sm{ margin:2rem auto 0; max-width:6rem; }
+
+  /* COUNTDOWN */
+  .cd-grid{
+    display:grid; grid-template-columns: repeat(2,1fr); gap:1rem;
+    margin-top:3.5rem;
+  }
+  @media(min-width:768px){ .cd-grid{ grid-template-columns: repeat(4,1fr); gap:1.5rem; } }
+  .cd-cell-wrap{ display:flex; flex-direction:column; align-items:center; }
+  .cd-cell{
+    position:relative; width:100%; max-width:180px; aspect-ratio:1/1;
+    overflow:hidden; border:1px solid oklch(0.58 0.16 70 / .4);
+    background: oklch(0.972 0.018 85 / .7); backdrop-filter: blur(4px);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+  }
+  .cd-cell .corner{ position:absolute; width:.75rem; height:.75rem; }
+  .cd-cell .corner.tl{ top:0; left:0; border-left:1px solid var(--gold); border-top:1px solid var(--gold); }
+  .cd-cell .corner.tr{ top:0; right:0; border-right:1px solid var(--gold); border-top:1px solid var(--gold); }
+  .cd-cell .corner.bl{ bottom:0; left:0; border-left:1px solid var(--gold); border-bottom:1px solid var(--gold); }
+  .cd-cell .corner.br{ bottom:0; right:0; border-right:1px solid var(--gold); border-bottom:1px solid var(--gold); }
+  .cd-cell .jp{ position:absolute; top:.25rem; right:.5rem; font-family:var(--font-display); font-size:.75rem; color: oklch(0.58 0.16 70 / .8); }
+  .cd-num{ font-family: var(--font-display); font-size: clamp(3rem,6vw,3.75rem); color: var(--ink); font-variant-numeric: lining-nums; line-height:1; }
+  .cd-label{ margin-top:.25rem; font-size:.65rem; text-transform:uppercase; letter-spacing:.4em; color: var(--muted-foreground); }
+
+  /* DETAILS */
+  .details{ display:grid; gap:4rem; }
+  @media(min-width:768px){ .details{ grid-template-columns: repeat(2,1fr); gap:5rem; } }
+  .detail{ border-left:1px solid oklch(0.58 0.16 70 / .5); padding-left:2rem; }
+  .detail .kicker{ display:block; }
+  .detail h3{ margin-top:1rem; font-family: var(--font-display); font-size:1.875rem; color: var(--ink); font-weight:400; }
+  .detail p{ margin-top:1rem; font-family: var(--font-serif); font-size:1rem; line-height:1.7; color: oklch(0.18 0.03 40 / .8); }
+  .detail p .sub{ font-style:italic; color: var(--muted-foreground); }
+
+  /* RSVP */
+  form.rsvp{ margin:3.5rem auto 0; width:100%; max-width:36rem; display:flex; flex-direction:column; gap:1.75rem; text-align:left; }
+  .rsvp label{ display:block; font-family: var(--font-display); font-size:.75rem; text-transform:uppercase; letter-spacing:.4em; color: var(--gold); margin-bottom:.25rem; }
+  .field{
+    width:100%; border:0; border-bottom:1px solid oklch(0.58 0.16 70 / .4);
+    background:transparent; padding:.75rem .25rem; color: var(--ink);
+    font-family: var(--font-serif); font-size:1.125rem;
+    transition: border-color .3s ease; outline:none;
+  }
+  .field::placeholder{ color: oklch(0.45 0.04 50 / .7); }
+  .field:focus{ border-color: var(--gold); }
+  select.field{ appearance:none; }
+  textarea.field{ resize:none; }
+  .rsvp .two{ display:grid; gap:1.75rem; }
+  @media(min-width:768px){ .rsvp .two{ grid-template-columns: repeat(2,1fr); } }
+  .send-btn{
+    display:inline-flex; align-items:center; gap:.75rem;
+    border:1px solid var(--gold); background:transparent;
+    padding:1rem 2.5rem; font-family: var(--font-display);
+    font-size:.875rem; text-transform:uppercase; letter-spacing:.35em; color: var(--ink);
+    cursor:pointer; transition: all .35s ease;
+  }
+  .send-btn:hover{ background: var(--gold); color: var(--primary-foreground); }
+  .send-btn .jp{ font-family: var(--font-brush); font-size:1rem; text-transform:none; letter-spacing:0; }
+  .send-btn:disabled{ opacity:.5; }
+
+  footer{ position:relative; z-index:20; padding:5rem 1.5rem; text-align:center; }
+
+  /* toast */
+  #toast{
+    position:fixed; left:50%; bottom:2rem; transform:translateX(-50%) translateY(20px);
+    z-index:60; min-width:280px; max-width:90vw;
+    background: var(--background); border:1px solid var(--gold); color: var(--ink);
+    padding:1rem 1.25rem; font-family: var(--font-serif);
+    box-shadow: 0 20px 50px -20px oklch(0.2 0.03 40 / .4);
+    opacity:0; pointer-events:none; transition: opacity .4s ease, transform .4s ease;
+  }
+  #toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+  #toast .t-title{ font-family: var(--font-display); font-size:.95rem; letter-spacing:.06em; }
+  #toast .t-desc{ margin-top:.25rem; font-style:italic; color: var(--muted-foreground); font-size:.95rem; }
+
+  /* diffuse glow behind text — like the hero, no defined edge at all */
+  /* oval frosted glow behind text — soft, no hard edge */
+  .panel{
+    position:relative; margin:0 auto; isolation:isolate;
+    text-shadow: 0 1px 18px oklch(0.99 0.01 85 / 0.95), 0 0 38px oklch(0.99 0.01 85 / 0.8);
+    padding: clamp(2.5rem, 6vw, 4.5rem) clamp(2rem, 6vw, 5rem);
+  }
+  .panel::before{
+    content:""; position:absolute; inset:-8% -6%; z-index:-1; pointer-events:none;
+    background: radial-gradient(ellipse 70% 60% at 50% 50%, oklch(0.99 0.012 85 / 0.62) 0%, oklch(0.99 0.012 85 / 0.34) 38%, oklch(0.99 0.012 85 / 0.12) 62%, transparent 82%);
+    backdrop-filter: blur(9px); -webkit-backdrop-filter: blur(9px);
+    transform: translateZ(0); will-change: backdrop-filter; backface-visibility: hidden;
+    -webkit-mask: radial-gradient(ellipse 70% 60% at 50% 50%, #000 0%, rgba(0,0,0,0.5) 50%, transparent 82%);
+            mask: radial-gradient(ellipse 70% 60% at 50% 50%, #000 0%, rgba(0,0,0,0.5) 50%, transparent 82%);
+  }
+
+  /* couple photo gallery */
+  .photo-grid{ display:grid; grid-template-columns: repeat(3,1fr); gap:1.25rem; margin-top:3rem; }
+  .photo{ display:block; width:100%; height:clamp(300px,32vw,420px); object-fit:cover; border:1px solid oklch(0.58 0.16 70 / .55); box-shadow:0 24px 50px -28px oklch(.2 .03 40 / .55); background: oklch(0.95 0.02 60); }
+  .photo.mid{ transform:translateY(26px); }
+  @media(max-width:768px){
+    .photo-grid{ grid-template-columns:1fr; max-width:22rem; margin-left:auto; margin-right:auto; }
+    .photo.mid{ transform:none; }
+  }
+
+  /* reveal (framer whileInView spring approximation) */
+  .reveal{ opacity:0; transform:translateY(40px); transition: opacity .9s cubic-bezier(.16,1,.3,1), transform .9s cubic-bezier(.16,1,.3,1); }
+  .reveal.in{ opacity:1; transform:translateY(0); }
+  .stag > *{ opacity:0; transform:translateY(24px); transition: opacity .7s cubic-bezier(.16,1,.3,1), transform .7s cubic-bezier(.16,1,.3,1); }
+  .stag.in > *{ opacity:1; transform:translateY(0); }
+  .stag.in > *:nth-child(1){ transition-delay:.10s }
+  .stag.in > *:nth-child(2){ transition-delay:.18s }
+  .stag.in > *:nth-child(3){ transition-delay:.26s }
+  .stag.in > *:nth-child(4){ transition-delay:.34s }
+  .stag.in > *:nth-child(5){ transition-delay:.42s }
+</style>
+</head>
+<body>
+  <div id="bgGradient"></div>
+  <div id="vignette"></div>
+  <canvas id="bg" aria-hidden="true"></canvas>
+
+  <main>
+    <!-- HERO -->
+    <section class="hero" data-screen-label="01 Hero">
+      <div class="hero-inner">
+        <p class="eyebrow">· 結 婚 式 ·</p>
+        <h1 class="font-display">Hiro<span class="amp">&amp;</span>Aiko</h1>
+        <div class="ink-divider" style="max-width:18rem;margin:0 auto"></div>
+        <p class="poem">Beneath a thousand falling blossoms,<br/>two paths become one.</p>
+        <p class="when">12 · APRIL · 2026 &nbsp;·&nbsp; KYOTO</p>
+      </div>
+      <div class="scroll-cue font-display">scroll · 下へ</div>
+    </section>
+
+    <!-- INVITATION -->
+    <section class="wrap center reveal" data-screen-label="02 Invitation">
+      <div class="panel">
+        <p class="kicker">ご 招 待</p>
+        <h2 class="section">An Invitation</h2>
+        <div class="ink-divider divider-sm"></div>
+        <p class="lede">
+          With the warmth of the season and the blessing of our families, we invite you
+          to witness the joining of our lives. Come walk with us beneath the cherry trees,
+          share in our vows, and stay for the sake, the laughter, and the long evening.
+        </p>
+      </div>
+    </section>
+
+    <!-- COUNTDOWN -->
+    <section class="wrap center reveal" data-screen-label="03 Countdown">
+      <div class="panel">
+      <p class="kicker">残 り 時 間</p>
+      <h2 class="section">Until the Blossoms Fall</h2>
+      <div class="ink-divider divider-sm"></div>
+      <div class="cd-grid" id="cd">
+        <div class="cd-cell-wrap"><div class="cd-cell"><span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span><span class="jp">日</span><span class="cd-num" id="cd-d">00</span><span class="cd-label">Days</span></div></div>
+        <div class="cd-cell-wrap"><div class="cd-cell"><span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span><span class="jp">時</span><span class="cd-num" id="cd-h">00</span><span class="cd-label">Hours</span></div></div>
+        <div class="cd-cell-wrap"><div class="cd-cell"><span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span><span class="jp">分</span><span class="cd-num" id="cd-m">00</span><span class="cd-label">Minutes</span></div></div>
+        <div class="cd-cell-wrap"><div class="cd-cell"><span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span><span class="jp">秒</span><span class="cd-num" id="cd-s">00</span><span class="cd-label">Seconds</span></div></div>
+      </div>
+      </div>
+    </section>
+
+    <!-- PHOTOS -->
+    <section class="wrap center reveal" data-screen-label="04 Our Story">
+      <div class="panel">
+        <p class="kicker">思 い 出</p>
+        <h2 class="section">The Two of Us</h2>
+        <div class="ink-divider divider-sm"></div>
+        <div class="photo-grid">
+          <!-- Kendi fotoğrafını eklemek için src="..." değerini değiştir -->
+          <img class="photo" src="assets/couple-1.png" alt="" />
+          <img class="photo mid" src="assets/couple-2.png" alt="" />
+          <img class="photo" src="assets/couple-3.png" alt="" />
+        </div>
+      </div>
+    </section>
+
+    <!-- DETAILS -->
+    <section class="wrap reveal" data-screen-label="05 Details">
+      <div class="panel">
+      <div class="details stag">
+        <div class="detail">
+          <span class="kicker">式 · CEREMONY</span>
+          <h3>Heian Shrine</h3>
+          <p>平安神宮 · Sakyō-ku, Kyoto<br/>Four o'clock in the afternoon<br/><span class="sub">arrive in soft colors</span></p>
+        </div>
+        <div class="detail">
+          <span class="kicker">宴 · RECEPTION</span>
+          <h3>Murin-an Garden</h3>
+          <p>無鄰菴 · a lantern-lit kaiseki dinner<br/>Following the ceremony<br/><span class="sub">dancing under the moon to follow</span></p>
+        </div>
+      </div>
+      </div>
+    </section>
+
+    <!-- RSVP -->
+    <section class="wrap center reveal" id="rsvp" data-screen-label="06 RSVP">
+      <div class="panel">
+      <p class="kicker">お 返 事</p>
+      <h2 class="section">Reply by the First Bloom</h2>
+      <p class="lede" style="margin-top:1rem;font-style:italic;color:var(--muted-foreground)">kindly respond before March 1st, 2026</p>
+      <div class="ink-divider divider-sm"></div>
+
+      <form class="rsvp stag" id="rsvpForm">
+        <div>
+          <label>Your Name · 御名前</label>
+          <input class="field" name="name" required placeholder="As you wish to be greeted" autocomplete="off" />
+        </div>
+        <div class="two">
+          <div>
+            <label>Attendance</label>
+            <select class="field" name="attendance" required>
+              <option value="">— select —</option>
+              <option value="joyfully">Joyfully attending</option>
+              <option value="regret">Regretfully unable</option>
+            </select>
+          </div>
+          <div>
+            <label>Meal Preference</label>
+            <select class="field" name="meal">
+              <option value="">— select —</option>
+              <option>Kaiseki (omnivore)</option>
+              <option>Shōjin ryōri (vegetarian)</option>
+              <option>Vegan</option>
+              <option>Pescatarian</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label>A message for the couple</label>
+          <textarea class="field" name="message" rows="4" placeholder="A wish, a memory, a verse…"></textarea>
+        </div>
+        <div style="padding-top:.5rem">
+          <button type="submit" class="send-btn"><span class="btn-label">Send Reply</span><span class="jp">送る</span></button>
+        </div>
+      </form>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer>
+      <div class="ink-divider" style="max-width:4rem;margin:0 auto"></div>
+      <p class="kicker" style="margin-top:2rem">H · &amp; · A</p>
+      <p class="lede" style="margin-top:1rem;font-style:italic;color:var(--muted-foreground);font-size:.95rem">“The cherry blossoms remind us — beauty lives in the brief.”</p>
+    </footer>
+  </main>
+
+  <div id="toast"><div class="t-title"></div><div class="t-desc"></div></div>
+
+<script>
+/* =====================================================================
+   SakuraCanvas — ported from src/components/SakuraCanvas.tsx
+   Tree is an uploaded watercolor image; petals are physics-driven.
+   ===================================================================== */
+(function(){
+  const canvas = document.getElementById('bg');
+  const ctx = canvas.getContext('2d');
+  const mouse = { x:0.5, y:0.5 };
+  let dpr = Math.min(window.devicePixelRatio||1, 2);
+  let W=0, H=0;
+  const petals = [];
+
+  const treeImg = new Image();
+  treeImg.src = 'assets/sakura-tree.png';
+  let treeReady = false;
+  treeImg.onload = ()=>{ treeReady = true; };
+
+  function spawnPetal(initial){
+    const depth = 0.3 + Math.random()*0.7;
+    return {
+      x: Math.random()*W,
+      y: initial ? Math.random()*H : -20 - Math.random()*100,
+      vx: (Math.random()-0.3)*0.4,
+      vy: 0.3 + Math.random()*0.8,
+      size: (5 + Math.random()*7) * depth,
+      rot: Math.random()*Math.PI*2,
+      vr: (Math.random()-0.5)*0.04,
+      opacity: 0.55 + Math.random()*0.45,
+      depth,
+      hue: 350 + Math.random()*18,
+      upGust: 0,
+      swayPhase: Math.random()*Math.PI*2,
+      swaySpeed: 0.5 + Math.random()*1.2,
+    };
+  }
+  function buildPetals(){
+    petals.length = 0;
+    const count = Math.floor((W*H)/14000) + 80;
+    for (let i=0;i<count;i++) petals.push(spawnPetal(true));
+  }
+  function resize(){
+    dpr = Math.min(window.devicePixelRatio||1, 2);
+    W = window.innerWidth; H = window.innerHeight;
+    canvas.width = W*dpr; canvas.height = H*dpr;
+    canvas.style.width = W+'px'; canvas.style.height = H+'px';
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    buildPetals();
+  }
+
+  function drawPetal(x,y,size,rot,hue,opacity){
+    ctx.save();
+    ctx.translate(x,y); ctx.rotate(rot);
+    ctx.globalAlpha = opacity;
+    const grd = ctx.createRadialGradient(0,0,0, 0,0,size);
+    grd.addColorStop(0, `hsla(${hue}, 85%, 92%, 1)`);
+    grd.addColorStop(0.7, `hsla(${hue}, 75%, 80%, 1)`);
+    grd.addColorStop(1, `hsla(${hue-8}, 65%, 70%, 0.7)`);
+    ctx.fillStyle = grd;
+    ctx.beginPath();
+    ctx.moveTo(0,-size);
+    ctx.bezierCurveTo(size*0.9,-size*0.5, size*0.5,size*0.6, 0,size);
+    ctx.bezierCurveTo(-size*0.5,size*0.6, -size*0.9,-size*0.5, 0,-size);
+    ctx.fill();
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.beginPath();
+    ctx.ellipse(0, size*0.85, size*0.25, size*0.35, 0,0,Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawTree(t){
+    if (!treeReady) return;
+    const reveal = Math.min(1, t/1.4);
+    const iw = treeImg.naturalWidth, ih = treeImg.naturalHeight;
+    const scale = Math.max((W*0.7)/iw, H/ih);
+    const dw = iw*scale, dh = ih*scale;
+    const dx = -dw*0.04, dy = 0;
+    ctx.save();
+    ctx.globalAlpha = reveal;
+    ctx.drawImage(treeImg, dx, dy, dw, dh);
+    ctx.restore();
+  }
+
+  let start = performance.now();
+  let lastT = start;
+  let gustTimer = 0, gustStrength = 0;
+
+  function updateAndDraw(p, dt, t){
+    const windMouse = (mouse.x - 0.5)*1.4;
+    const sway = Math.sin(t*p.swaySpeed + p.swayPhase)*0.6;
+    p.x += (p.vx + sway*0.4 + windMouse*p.depth + gustStrength*0.3*p.depth)*60*dt;
+    if (p.upGust > 0){
+      p.y -= (40 + Math.random()*30)*dt*p.depth;
+      p.upGust -= dt;
+    } else {
+      p.y += p.vy*60*dt*p.depth;
+    }
+    p.rot += p.vr + sway*0.02;
+    if (p.y > H+30 || p.x < -40 || p.x > W+40){
+      Object.assign(p, spawnPetal(false));
+      p.x = Math.random()*W;
+    }
+    drawPetal(p.x, p.y, p.size, p.rot, p.hue, p.opacity*(0.5 + p.depth*0.5));
+  }
+
+  function frame(now){
+    const t = (now-start)/1000;
+    const dt = Math.min(0.05, (now-lastT)/1000);
+    lastT = now;
+    ctx.clearRect(0,0,W,H);
+    for (const p of petals) if (p.depth < 0.5) updateAndDraw(p, dt, t);
+    drawTree(t);
+    for (const p of petals) if (p.depth >= 0.5) updateAndDraw(p, dt, t);
+    gustTimer -= dt;
+    if (gustTimer <= 0){
+      gustTimer = 6 + Math.random()*8;
+      gustStrength = (Math.random()-0.4)*2.2;
+      if (Math.random() > 0.4){
+        const n = Math.floor(petals.length*0.15);
+        for (let i=0;i<n;i++){
+          const p = petals[Math.floor(Math.random()*petals.length)];
+          p.upGust = 1.2 + Math.random()*1.5;
+        }
+      }
+    }
+    requestAnimationFrame(frame);
+  }
+
+  window.addEventListener('resize', resize);
+  window.addEventListener('mousemove', e=>{
+    mouse.x = e.clientX/window.innerWidth;
+    mouse.y = e.clientY/window.innerHeight;
+  });
+  resize();
+  requestAnimationFrame(frame);
+})();
+
+/* =====================================================================
+   Scroll-driven background gradient (dawn → ivory → golden dusk)
+   ===================================================================== */
+(function(){
+  const el = document.getElementById('bgGradient');
+  // [topL,topC,topH, botL,botC,botH] for three keyframes at 0, 0.45, 1
+  const KF = [
+    [0.94,0.045,20, 0.96,0.03,60],
+    [0.97,0.02,80, 0.95,0.035,70],
+    [0.88,0.09,65, 0.72,0.13,45],
+  ];
+  const stops = [0, 0.45, 1];
+  function lerp(a,b,t){ return a+(b-a)*t; }
+  function mix(p){
+    let i = 0;
+    while (i < stops.length-2 && p > stops[i+1]) i++;
+    const t = (p - stops[i]) / (stops[i+1]-stops[i]);
+    const a = KF[i], b = KF[i+1];
+    const v = a.map((x,k)=>lerp(x, b[k], Math.max(0,Math.min(1,t))));
+    return `linear-gradient(180deg, oklch(${v[0].toFixed(3)} ${v[1].toFixed(3)} ${v[2].toFixed(1)}) 0%, oklch(${v[3].toFixed(3)} ${v[4].toFixed(3)} ${v[5].toFixed(1)}) 100%)`;
+  }
+  function onScroll(){
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    const p = max>0 ? Math.min(1, Math.max(0, window.scrollY/max)) : 0;
+    el.style.background = mix(p);
+  }
+  window.addEventListener('scroll', onScroll, {passive:true});
+  window.addEventListener('resize', onScroll);
+  onScroll();
+})();
+
+/* =====================================================================
+   Countdown — ported from Countdown.tsx
+   ===================================================================== */
+(function(){
+  // Original target was 2026-04-12; kept the date, advanced the year so the
+  // countdown stays live. Change freely.
+  const TARGET = new Date('2027-04-12T16:00:00+09:00').getTime();
+  const d = document.getElementById('cd-d'), h = document.getElementById('cd-h'),
+        m = document.getElementById('cd-m'), s = document.getElementById('cd-s');
+  function pad(n){ return String(Math.max(0,n)).padStart(2,'0'); }
+  function tick(){
+    const diff = Math.max(0, TARGET - Date.now());
+    d.textContent = pad(Math.floor(diff/86400000));
+    h.textContent = pad(Math.floor((diff%86400000)/3600000));
+    m.textContent = pad(Math.floor((diff%3600000)/60000));
+    s.textContent = pad(Math.floor((diff%60000)/1000));
+  }
+  tick(); setInterval(tick, 1000);
+})();
+
+/* =====================================================================
+   Scroll reveals (framer whileInView) + RSVP form
+   ===================================================================== */
+(function(){
+  const io = new IntersectionObserver((entries)=>{
+    for (const e of entries){
+      if (e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); }
+    }
+  }, { threshold:0.25 });
+  document.querySelectorAll('.reveal, .stag').forEach(el=>io.observe(el));
+
+  const form = document.getElementById('rsvpForm');
+  const toast = document.getElementById('toast');
+  const btn = form.querySelector('.send-btn');
+  const btnLabel = form.querySelector('.btn-label');
+  let toastTimer = 0;
+  form.addEventListener('submit', e=>{
+    e.preventDefault();
+    const name = new FormData(form).get('name') || 'friend';
+    btn.disabled = true; btnLabel.textContent = 'Sending…';
+    setTimeout(()=>{
+      btn.disabled = false; btnLabel.textContent = 'Send Reply';
+      toast.querySelector('.t-title').textContent = 'ありがとう — your reply has been received';
+      toast.querySelector('.t-desc').textContent = `We can't wait to celebrate with you, ${name}.`;
+      toast.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(()=>toast.classList.remove('show'), 5000);
+      form.reset();
+    }, 900);
+  });
+})();
+</script>
+</body>
+</html>
