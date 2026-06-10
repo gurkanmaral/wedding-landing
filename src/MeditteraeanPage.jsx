@@ -8,45 +8,71 @@ import door from './assets/med-dream-spark/door.jpg'
 
 gsap.registerPlugin(ScrollTrigger)
 
-const moments = [
+const storyCards = [
   {
-    n: '01',
+    label: 'Couple block',
+    value: 'Name & Name',
+    note: 'Keep names and the invitation line prominent on the first fold.',
+  },
+  {
+    label: 'Venue block',
+    value: 'Seaside venue',
+    note: 'Use a short location line and one premium photo to set the mood.',
+  },
+  {
+    label: 'RSVP block',
+    value: 'Quick reply',
+    note: 'Leave enough space for RSVP, map, and travel details later.',
+  },
+]
+
+const showcaseMoments = [
+  {
+    name: 'Welcome',
+    title: 'Open with a softer introduction instead of a basic hero.',
+    description:
+      'This slide-like section is inspired by your mojito project. It gives the page a dedicated showcase area where names, welcome copy, and the primary image can rotate with a more premium feel.',
     img: lemons,
-    title: 'Welcome Story',
-    description:
-      'Introduce the couple, your opening message, or a short romantic welcome for guests.',
+    kicker: 'First scene',
   },
   {
-    n: '02',
+    name: 'Details',
+    title: 'Turn practical information into a designed invitation feature.',
+    description:
+      'Venue, schedule, RSVP deadline, and dress code can live inside a section that feels interactive and styled, rather than a plain list of facts.',
     img: table,
-    title: 'Event Details',
-    description:
-      'Use this block for venue, dress code, RSVP timing, or celebration flow.',
+    kicker: 'Middle scene',
   },
   {
-    n: '03',
-    img: boat,
-    title: 'Photo Moment',
+    name: 'Gallery',
+    title: 'Give one visual chapter its own focus and animation rhythm.',
     description:
-      'Show gallery images, couple portraits, or a signature memory from the day.',
+      'A featured image area helps the template feel more editorial. You can later swap in real couple photography while keeping the section structure the same.',
+    img: boat,
+    kicker: 'Final scene',
   },
 ]
 
 const timelineItems = [
   {
     time: '16:30',
-    title: 'Guest Arrival',
-    description: 'Welcome drinks, live music, and first gathering moments.',
+    title: 'Arrival & welcome',
+    description: 'Guests arrive, welcome drinks are served, and the first photos begin.',
   },
   {
     time: '18:00',
     title: 'Ceremony',
-    description: 'Main vows, couple entrance, and opening celebration photos.',
+    description: 'Main vows, entrance music, and the signature invitation moment.',
   },
   {
-    time: '20:00',
-    title: 'Dinner & Party',
-    description: 'Dinner service, speeches, cake, and dancing under the lights.',
+    time: '19:30',
+    title: 'Dinner',
+    description: 'Dinner service, speeches, table styling, and soft sunset lighting.',
+  },
+  {
+    time: '21:00',
+    title: 'Celebration',
+    description: 'Cake, dancing, after party, and the night-time social moments.',
   },
 ]
 
@@ -54,35 +80,45 @@ const detailCards = [
   {
     label: 'Dress code',
     value: 'Elegant coastal',
-    note: 'Swap this for formal, semi-formal, or custom styling notes.',
+    note: 'Replace with formal, sunset chic, black tie, or a custom note.',
   },
   {
     label: 'RSVP deadline',
     value: '01 July 2027',
-    note: 'Keep a clear response date for guests and planning.',
+    note: 'A clear deadline helps planning and keeps the template practical.',
+  },
+  {
+    label: 'Transport',
+    value: 'Shuttle info',
+    note: 'Use this space for parking, shuttle times, or meeting points.',
   },
   {
     label: 'After party',
     value: 'Beach lounge',
-    note: 'Perfect for an extra section with music or location details.',
+    note: 'Add a second location or keep it hidden when not needed.',
   },
 ]
 
 const faqItems = [
   {
-    question: 'Can this section show accommodation info?',
+    question: 'Can this layout be reused for different couples?',
     answer:
-      'Yes. Replace this answer with hotel blocks, shuttle details, or local recommendations.',
+      'Yes. The page is designed as a reusable template, so names, dates, photos, venue text, and RSVP details can be swapped quickly.',
   },
   {
-    question: 'Can I reuse this layout for another couple?',
+    question: 'Can the map be connected to a real venue later?',
     answer:
-      'Yes. This template is structured so names, dates, venue details, and photos can be changed quickly.',
+      'Yes. The current Google Maps block is a placeholder and can be replaced with the exact real venue link and coordinates.',
   },
   {
-    question: 'Can this be connected to a real RSVP form?',
+    question: 'Can this page include accommodation and travel notes?',
     answer:
-      'Yes. The CTA areas can later be connected to a form, WhatsApp link, or payment flow.',
+      'Yes. The guest information and FAQ areas are meant to hold hotel suggestions, local tips, transport plans, or family notes.',
+  },
+  {
+    question: 'Can this template work without changing the design?',
+    answer:
+      'Yes. That is the main goal. You should be able to change only the content and imagery while keeping the same section system.',
   },
 ]
 
@@ -123,22 +159,20 @@ function CountdownDigit({ value }) {
     if (!previousValue || !currentRef.current || !previousRef.current) return
 
     const ctx = gsap.context(() => {
-      gsap.set(currentRef.current, { yPercent: -115, opacity: 0 })
+      gsap.set(currentRef.current, { yPercent: -100, opacity: 0 })
 
       gsap.to(previousRef.current, {
-        yPercent: 135,
-        xPercent: 8,
-        rotate: 10,
+        yPercent: 110,
         opacity: 0,
-        duration: 0.5,
+        duration: 0.42,
         ease: 'power2.in',
       })
 
       gsap.to(currentRef.current, {
         yPercent: 0,
         opacity: 1,
-        duration: 0.58,
-        ease: 'bounce.out',
+        duration: 0.42,
+        ease: 'power2.out',
         onComplete: () => {
           setPreviousValue(null)
           gsap.set(currentRef.current, { clearProps: 'all' })
@@ -175,7 +209,12 @@ function CountdownDigit({ value }) {
 
 function MeditteraeanPage() {
   const root = useRef(null)
+  const faqRefs = useRef([])
+  const sceneCopyRef = useRef(null)
+  const sceneMediaRef = useRef(null)
   const [countdown, setCountdown] = useState(() => getCountdownParts(templateDate))
+  const [activeScene, setActiveScene] = useState(0)
+  const [openFaq, setOpenFaq] = useState(0)
 
   useEffect(() => {
     const intervalId = window.setInterval(() => {
@@ -190,20 +229,20 @@ function MeditteraeanPage() {
       const timeline = gsap.timeline({ defaults: { ease: 'power3.out' } })
 
       timeline
-        .from('.hero-eyebrow', { y: 20, opacity: 0, duration: 0.8 })
+        .from('.hero-eyebrow', { y: 16, opacity: 0, duration: 0.7 })
         .from(
           '.hero-word',
-          { y: 80, opacity: 0, duration: 1, stagger: 0.12 },
+          { y: 42, opacity: 0, duration: 0.9, stagger: 0.08 },
           '-=0.4',
         )
-        .from('.hero-sub', { y: 20, opacity: 0, duration: 0.8 }, '-=0.5')
-        .from('.hero-cta', { y: 20, opacity: 0, duration: 0.6 }, '-=0.4')
-        .from('.hero-meta', { opacity: 0, duration: 0.8, stagger: 0.1 }, '-=0.3')
-        .from('.hero-panel', { y: 24, opacity: 0, duration: 0.8, stagger: 0.1 }, '-=0.4')
+        .from('.hero-sub', { y: 16, opacity: 0, duration: 0.7 }, '-=0.45')
+        .from('.hero-cta', { y: 16, opacity: 0, duration: 0.55 }, '-=0.35')
+        .from('.hero-meta', { y: 14, opacity: 0, duration: 0.6, stagger: 0.08 }, '-=0.28')
+        .from('.hero-panel', { y: 18, opacity: 0, duration: 0.7, stagger: 0.08 }, '-=0.35')
 
       gsap.to('.hero-img', {
-        yPercent: 18,
-        scale: 1.08,
+        yPercent: 10,
+        scale: 1.04,
         ease: 'none',
         scrollTrigger: {
           trigger: '.hero',
@@ -214,10 +253,20 @@ function MeditteraeanPage() {
       })
 
       gsap.utils.toArray('.reveal').forEach((element) => {
+        if (
+          element.matches('[data-text-group]') ||
+          element.matches('[data-card-grid]') ||
+          element.matches('.countdown-shell') ||
+          element.matches('.scene-copy') ||
+          element.matches('.scene-media')
+        ) {
+          return
+        }
+
         gsap.from(element, {
-          y: 60,
+          y: 32,
           opacity: 0,
-          duration: 1.1,
+          duration: 0.85,
           ease: 'power3.out',
           scrollTrigger: {
             trigger: element,
@@ -231,11 +280,11 @@ function MeditteraeanPage() {
         if (!targets.length) return
 
         gsap.from(targets, {
-          y: 28,
+          y: 18,
           opacity: 0,
-          duration: 0.8,
-          ease: 'power3.out',
-          stagger: 0.12,
+          duration: 0.65,
+          ease: 'power2.out',
+          stagger: 0.08,
           scrollTrigger: {
             trigger: element,
             start: 'top 82%',
@@ -248,12 +297,12 @@ function MeditteraeanPage() {
         if (!cards.length) return
 
         gsap.from(cards, {
-          y: 36,
+          y: 24,
           opacity: 0,
-          scale: 0.97,
-          duration: 0.8,
-          ease: 'power3.out',
-          stagger: 0.1,
+          scale: 0.985,
+          duration: 0.7,
+          ease: 'power2.out',
+          stagger: 0.08,
           scrollTrigger: {
             trigger: element,
             start: 'top 80%',
@@ -262,10 +311,10 @@ function MeditteraeanPage() {
       })
 
       gsap.from('.countdown-shell', {
-        y: 40,
+        y: 24,
         opacity: 0,
-        duration: 1,
-        ease: 'power3.out',
+        duration: 0.8,
+        ease: 'power2.out',
         scrollTrigger: {
           trigger: '.countdown-shell',
           start: 'top 82%',
@@ -273,33 +322,24 @@ function MeditteraeanPage() {
       })
 
       gsap.from('.countdown-card', {
-        y: 42,
+        y: 18,
         opacity: 0,
-        scale: 0.92,
-        duration: 0.9,
-        stagger: 0.1,
-        ease: 'back.out(1.4)',
+        scale: 0.97,
+        duration: 0.65,
+        stagger: 0.08,
+        ease: 'power2.out',
         scrollTrigger: {
           trigger: '.countdown-grid',
           start: 'top 84%',
         },
       })
 
-      gsap.to('.countdown-card', {
-        y: -8,
-        duration: 2.2,
-        stagger: 0.16,
-        repeat: -1,
-        yoyo: true,
-        ease: 'sine.inOut',
-      })
-
       gsap.utils.toArray('.parallax-img').forEach((element) => {
         gsap.fromTo(
           element,
-          { yPercent: -8 },
+          { yPercent: -3 },
           {
-            yPercent: 8,
+            yPercent: 3,
             ease: 'none',
             scrollTrigger: {
               trigger: element,
@@ -333,25 +373,62 @@ function MeditteraeanPage() {
     return () => ctx.revert()
   }, [])
 
+  useEffect(() => {
+    if (!sceneCopyRef.current || !sceneMediaRef.current) return
+
+    const ctx = gsap.context(() => {
+      gsap.killTweensOf(sceneCopyRef.current.children)
+      gsap.killTweensOf(sceneMediaRef.current)
+
+      gsap.fromTo(
+        sceneCopyRef.current.children,
+        { y: 18, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.55, ease: 'power2.out', stagger: 0.06 },
+      )
+
+      gsap.fromTo(
+        sceneMediaRef.current,
+        { x: 24, opacity: 0, scale: 0.985 },
+        { x: 0, opacity: 1, scale: 1, duration: 0.65, ease: 'power2.out' },
+      )
+    }, root)
+
+    return () => ctx.revert()
+  }, [activeScene])
+
+  useEffect(() => {
+    faqRefs.current.forEach((element, index) => {
+      if (!element) return
+
+      const contentHeight = element.scrollHeight
+
+      gsap.to(element, {
+        height: openFaq === index ? contentHeight : 0,
+        opacity: openFaq === index ? 1 : 0,
+        duration: 0.45,
+        ease: 'power2.out',
+      })
+    })
+  }, [openFaq])
+
+  const activeMoment = showcaseMoments[activeScene]
+
   return (
-    <div
-      ref={root}
-      className="overflow-x-hidden bg-[#faf6ed] text-[#4d433b]"
-    >
+    <div ref={root} className="overflow-x-hidden bg-[#faf6ed] text-[#4d433b]">
       <header className="fixed inset-x-0 top-0 z-50">
         <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-6 py-6 lg:px-10">
           <a href="#top" className="font-display text-xl tracking-wide text-white">
-            Med<span className="text-[#c96a4b]">·</span>Template
+            Med<span className="text-[#ffd5a3]">·</span>Template
           </a>
           <nav className="hidden items-center gap-10 text-sm text-white/80 md:flex">
             <a href="#about" className="transition hover:text-white">
               Intro
             </a>
             <a href="#experiences" className="transition hover:text-white">
-              Sections
+              Showcase
             </a>
             <a href="#gallery" className="transition hover:text-white">
-              Feature
+              Gallery
             </a>
             <a href="#journal" className="transition hover:text-white">
               Quote
@@ -359,17 +436,14 @@ function MeditteraeanPage() {
           </nav>
           <a
             href="#book"
-            className="rounded-full bg-[#2f2a25] px-5 py-2.5 text-sm text-[#faf6ed] transition-colors hover:bg-[#c96a4b]"
+            className="rounded-full border border-white/20 bg-[#163847]/80 px-5 py-2.5 text-sm text-[#f7fcfd] backdrop-blur-sm transition-colors hover:bg-[#224c59]"
           >
             Contact
           </a>
         </div>
       </header>
 
-      <section
-        id="top"
-        className="hero relative min-h-[720px] w-full overflow-hidden"
-      >
+      <section id="top" className="hero relative min-h-[720px] w-full overflow-hidden">
         <div className="hero-img absolute inset-0 will-change-transform">
           <img
             src={boat}
@@ -396,9 +470,9 @@ function MeditteraeanPage() {
 
               <div className="mt-8 flex max-w-3xl flex-col gap-8 md:flex-row md:items-end md:justify-between">
                 <p className="hero-sub max-w-xl text-lg leading-8 text-white/88">
-                  Redesigned as a more premium wedding hero with calmer colors,
-                  stronger typography, and room for names, dates, and venue details
-                  to feel special from the first screen.
+                  A premium invitation hero with calmer colors, stronger typography,
+                  and room for names, dates, and venue details to feel special from
+                  the first screen.
                 </p>
                 <a
                   href="#about"
@@ -427,7 +501,7 @@ function MeditteraeanPage() {
               <div className="grid grid-cols-3 gap-3 text-white/92">
                 <div className="hero-meta hero-panel rounded-[1.5rem] border border-white/18 bg-white/12 px-4 py-4 text-center backdrop-blur-sm">
                   <div className="font-display text-3xl">
-                    <span data-count="6">0</span>
+                    <span data-count="8">0</span>
                   </div>
                   <div className="mt-2 text-[10px] uppercase tracking-[0.28em] text-white/68">
                     Sections
@@ -435,10 +509,10 @@ function MeditteraeanPage() {
                 </div>
                 <div className="hero-meta hero-panel rounded-[1.5rem] border border-white/18 bg-white/12 px-4 py-4 text-center backdrop-blur-sm">
                   <div className="font-display text-3xl">
-                    <span data-count="1">0</span>
+                    <span data-count="3">0</span>
                   </div>
                   <div className="mt-2 text-[10px] uppercase tracking-[0.28em] text-white/68">
-                    Theme
+                    Layouts
                   </div>
                 </div>
                 <div className="hero-meta hero-panel rounded-[1.5rem] border border-white/18 bg-white/12 px-4 py-4 text-center backdrop-blur-sm">
@@ -456,7 +530,32 @@ function MeditteraeanPage() {
       </section>
 
       <section className="mx-auto w-full max-w-7xl px-6 py-20 lg:px-10">
-        <div className="countdown-shell mx-auto max-w-3xl text-center">
+        <div className="countdown-shell relative mx-auto max-w-5xl text-center">
+          <div className="absolute left-0 top-10 hidden w-44 rounded-[1.5rem] border border-[#b8d8e1]/18 bg-white/45 p-4 text-left shadow-[0_24px_60px_-42px_rgba(34,76,89,0.35)] backdrop-blur md:block">
+            <div className="text-xs uppercase tracking-[0.3em] text-[#6a8790]">
+              Event note
+            </div>
+            <div className="mt-3 font-display text-2xl text-[#224c59]">
+              Countdown focus
+            </div>
+            <p className="mt-3 text-sm leading-7 text-[#5f7680]">
+              A strong middle section gives the page more purpose before guests reach
+              the details.
+            </p>
+          </div>
+
+          <div className="absolute right-0 top-20 hidden w-44 rounded-[1.5rem] border border-[#f1d4af]/40 bg-[#fff7ed]/70 p-4 text-left shadow-[0_24px_60px_-42px_rgba(175,124,82,0.34)] backdrop-blur md:block">
+            <div className="text-xs uppercase tracking-[0.3em] text-[#8b7358]">
+              Template use
+            </div>
+            <div className="mt-3 font-display text-2xl text-[#224c59]">
+              Replace date
+            </div>
+            <p className="mt-3 text-sm leading-7 text-[#6c6257]">
+              Keep this animation and only update the actual wedding date per couple.
+            </p>
+          </div>
+
           <div className="countdown-grid flex flex-wrap justify-center gap-4">
             {countdown.map((item) => (
               <article
@@ -474,10 +573,7 @@ function MeditteraeanPage() {
                 <div className="overflow-hidden">
                   <div className="font-display flex items-center justify-center gap-0.5 text-4xl leading-none text-white md:text-5xl">
                     {item.value.split('').map((digit, index) => (
-                      <CountdownDigit
-                        key={`${item.label}-${index}`}
-                        value={digit}
-                      />
+                      <CountdownDigit key={`${item.label}-${index}`} value={digit} />
                     ))}
                   </div>
                 </div>
@@ -490,191 +586,254 @@ function MeditteraeanPage() {
         </div>
       </section>
 
-
-      <section className="mx-auto w-full max-w-7xl px-6 py-24 lg:px-10">
-        <div className="grid gap-5 md:grid-cols-3" data-card-grid>
-          <article
-            data-card-item
-            className="rounded-[1.9rem] border border-[#b8d8e1]/28 bg-[linear-gradient(180deg,rgba(22,56,71,0.94),rgba(34,76,89,0.9))] p-6 text-white shadow-[0_28px_56px_-36px_rgba(16,55,66,0.68)] backdrop-blur-sm"
-          >
-            <p className="text-xs uppercase tracking-[0.32em] text-[#b8d8e1]">
-              Hero message
-            </p>
-            <h3 className="mt-4 font-display text-3xl text-white">Names and date first</h3>
-            <p className="mt-4 leading-7 text-white/72">
-              Keep the opening strong with couple names, a subtitle, and one
-              clear invitation message.
-            </p>
-          </article>
-          <article
-            data-card-item
-            className="rounded-[1.9rem] border border-[#b8d8e1]/28 bg-[linear-gradient(180deg,rgba(22,56,71,0.94),rgba(34,76,89,0.9))] p-6 text-white shadow-[0_28px_56px_-36px_rgba(16,55,66,0.68)] backdrop-blur-sm"
-          >
-            <p className="text-xs uppercase tracking-[0.32em] text-[#b8d8e1]">
-              Info blocks
-            </p>
-            <h3 className="mt-4 font-display text-3xl text-white">Useful guest details</h3>
-            <p className="mt-4 leading-7 text-white/72">
-              Add schedule, dress code, transport, and RSVP instructions without
-              breaking the visual style.
-            </p>
-          </article>
-          <article
-            data-card-item
-            className="rounded-[1.9rem] border border-[#b8d8e1]/28 bg-[linear-gradient(180deg,rgba(22,56,71,0.94),rgba(34,76,89,0.9))] p-6 text-white shadow-[0_28px_56px_-36px_rgba(16,55,66,0.68)] backdrop-blur-sm"
-          >
-            <p className="text-xs uppercase tracking-[0.32em] text-[#b8d8e1]">
-              Final CTA
-            </p>
-            <h3 className="mt-4 font-display text-3xl text-white">Map and contact finish</h3>
-            <p className="mt-4 leading-7 text-white/72">
-              End the page with location guidance, a map block, and the final call
-              to action.
-            </p>
-          </article>
-        </div>
-      </section>
-
-      <section id="about" className="mx-auto w-full max-w-7xl rounded-[2.4rem] border border-[#b8d8e1]/22 bg-[linear-gradient(145deg,rgba(22,56,71,0.98),rgba(34,76,89,0.94))] px-6 py-16 shadow-[0_34px_90px_-46px_rgba(16,55,66,0.78)] lg:px-10 lg:py-20">
-        <div className="grid items-start gap-12 md:grid-cols-12">
-          <div className="reveal md:col-span-5" data-text-group>
-            <p
-              data-text-item
-              className="mb-6 text-xs uppercase tracking-[0.4em] text-[#b8d8e1]"
-            >
-              Template intro
-            </p>
-            <h2
-              data-text-item
-              className="font-display text-balance text-5xl leading-[1.05] text-white md:text-6xl"
-            >
-              A reusable <em className="text-[#ffd5a3] not-italic">Mediterranean</em> wedding page.
-            </h2>
-          </div>
-          <div
-            className="reveal space-y-6 text-lg leading-relaxed text-white/74 md:col-span-6 md:col-start-7"
-            data-text-group
-          >
-            <p data-text-item>
-              This layout is now written as a generic invitation template instead
-              of a travel brand story, so you can reuse it for multiple couples
-              with minimal text changes.
-            </p>
-            <p data-text-item>
-              Keep the Mediterranean visual language, then replace only the names,
-              event date, venue, short love story, and gallery images for each
-              version you sell.
-            </p>
-            <div data-text-item className="grid grid-cols-2 gap-4 pt-6 sm:max-w-md">
-              <div className="rounded-2xl border border-white/16 bg-white/10 p-4 backdrop-blur-sm">
-                <div className="text-xs uppercase tracking-[0.28em] text-[#b8d8e1]">
-                  Couple
-                </div>
-                <div className="mt-2 font-display text-2xl text-white">Name &amp; Name</div>
-              </div>
-              <div className="rounded-2xl border border-white/16 bg-white/10 p-4 backdrop-blur-sm">
-                <div className="text-xs uppercase tracking-[0.28em] text-[#b8d8e1]">
-                  Venue
-                </div>
-                <div className="mt-2 font-display text-2xl text-white">Seaside Venue</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="mx-auto w-full max-w-7xl px-6 py-12 lg:px-10">
-        <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr]">
-          <div className="reveal rounded-[2rem] bg-[linear-gradient(145deg,#163847,#224c59)] p-8 text-[#f7fcfd] shadow-[0_24px_70px_-40px_rgba(16,55,66,0.7)]" data-text-group>
-            <p
-              data-text-item
-              className="text-xs uppercase tracking-[0.36em] text-[#b8d8e1]"
-            >
-              Event timeline
-            </p>
-            <h2
-              data-text-item
-              className="mt-4 font-display text-5xl leading-[1.05]"
-            >
-              Add a complete wedding flow guests can follow easily.
-            </h2>
-            <p data-text-item className="mt-5 max-w-xl leading-8 text-white/72">
-              This section gives the page more structure and helps guests
-              understand the day without asking extra questions.
-            </p>
-          </div>
-
-          <div className="grid gap-4" data-card-grid>
-            {timelineItems.map((item) => (
-              <article
-                key={item.time}
-                data-card-item
-                className="rounded-[1.8rem] border border-[#b8d8e1]/26 bg-[linear-gradient(180deg,rgba(22,56,71,0.94),rgba(34,76,89,0.9))] p-6 text-white shadow-[0_28px_56px_-36px_rgba(16,55,66,0.68)] backdrop-blur-sm"
-              >
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                  <div>
-                    <p className="text-xs uppercase tracking-[0.32em] text-[#b8d8e1]">
-                      {item.time}
-                    </p>
-                    <h3 className="mt-3 font-display text-3xl text-white">
-                      {item.title}
-                    </h3>
-                  </div>
-                  <span className="rounded-full border border-white/14 bg-white/10 px-4 py-2 text-xs uppercase tracking-[0.28em] text-[#d9eef3]">
-                    Template item
-                  </span>
-                </div>
-                <p className="mt-4 max-w-xl leading-7 text-white/72">
-                  {item.description}
-                </p>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section id="experiences" className="py-32">
-        <div className="mx-auto w-full max-w-7xl px-6 lg:px-10">
-          <div className="reveal mb-16 flex items-end justify-between" data-text-group>
+      <section
+        id="about"
+        className="mx-auto w-full max-w-7xl rounded-[2.8rem] border border-[#b8d8e1]/22 bg-[linear-gradient(145deg,rgba(22,56,71,0.98),rgba(34,76,89,0.94))] px-6 py-16 shadow-[0_34px_90px_-46px_rgba(16,55,66,0.78)] lg:px-10 lg:py-20"
+      >
+        <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr]">
+          <div className="reveal flex flex-col justify-between" data-text-group>
             <div>
               <p
                 data-text-item
-                className="mb-4 text-xs uppercase tracking-[0.4em] text-[#b8d8e1]"
+                className="mb-6 text-xs uppercase tracking-[0.4em] text-[#b8d8e1]"
               >
-                Editable blocks
+                Template intro
               </p>
               <h2
                 data-text-item
-                className="font-display text-balance max-w-2xl text-5xl text-[#224c59] md:text-6xl"
+                className="font-display text-balance text-5xl leading-[1.03] text-white md:text-6xl"
               >
-                Use the same layout for different <em>couples</em> and events.
+                One theme, but <em className="text-[#ffd5a3] not-italic">different</em>{' '}
+                section personalities.
               </h2>
+              <p
+                data-text-item
+                className="mt-6 max-w-xl text-lg leading-8 text-white/72"
+              >
+                Inspired by your mojito layout, this part now feels more like an
+                editorial mosaic instead of another repeated card row.
+              </p>
             </div>
-            <a
-              href="#book"
-              data-text-item
-              className="hidden text-sm uppercase tracking-widest text-[#6a8790] transition hover:text-[#224c59] md:inline"
-            >
-              Template CTA →
-            </a>
+
+            <div data-text-item className="mt-10 grid gap-4 sm:grid-cols-3">
+              {storyCards.map((item) => (
+                <div
+                  key={item.label}
+                  className="float-chip rounded-[1.5rem] border border-white/14 bg-white/10 p-4 backdrop-blur-sm"
+                >
+                  <div className="text-[10px] uppercase tracking-[0.28em] text-[#b8d8e1]">
+                    {item.label}
+                  </div>
+                  <div className="mt-3 font-display text-2xl text-white">{item.value}</div>
+                  <p className="mt-3 text-sm leading-7 text-white/68">{item.note}</p>
+                </div>
+              ))}
+            </div>
           </div>
 
-          <div className="grid gap-8 md:grid-cols-3" data-card-grid>
-            {moments.map((card) => (
-              <article key={card.n} className="reveal group rounded-[1.9rem] border border-[#b8d8e1]/24 bg-[linear-gradient(180deg,rgba(22,56,71,0.96),rgba(34,76,89,0.92))] p-4 text-white shadow-[0_28px_56px_-36px_rgba(16,55,66,0.68)]" data-card-item>
-                <div className="relative mb-6 aspect-[4/5] overflow-hidden rounded-[1.35rem] shadow-[0_20px_46px_-34px_rgba(37,90,103,0.34)]">
-                  <img
-                    src={card.img}
-                    alt={card.title}
-                    loading="lazy"
-                    className="parallax-img h-[120%] w-full object-cover transition-transform duration-700 group-hover:scale-105"
-                  />
-                  <div className="font-display absolute left-4 top-4 text-sm text-[#f7fcfd]">
-                    {card.n}
-                  </div>
+          <div className="grid gap-4 md:grid-cols-12" data-card-grid>
+            <article
+              data-card-item
+              className="relative overflow-hidden rounded-[1.8rem] border border-white/12 md:col-span-4"
+            >
+              <img
+                src={lemons}
+                alt="Mediterranean lemons styling detail"
+                className="parallax-img h-full min-h-[240px] w-full object-cover"
+              />
+              <div className="absolute inset-0 bg-[linear-gradient(180deg,transparent,rgba(8,28,37,0.72))]" />
+              <div className="absolute bottom-0 left-0 p-5 text-white">
+                <div className="text-xs uppercase tracking-[0.28em] text-[#b8d8e1]">
+                  Mood
                 </div>
-                <h3 className="font-display mb-2 text-2xl text-white">{card.title}</h3>
-                <p className="text-white/72">{card.description}</p>
+                <div className="mt-2 font-display text-3xl">Warm palette</div>
+              </div>
+            </article>
+
+            <article
+              data-card-item
+              className="relative overflow-hidden rounded-[1.8rem] border border-white/12 bg-white/8 p-6 text-white backdrop-blur-sm md:col-span-8"
+            >
+              <div className="text-xs uppercase tracking-[0.28em] text-[#b8d8e1]">
+                Layout idea
+              </div>
+              <h3 className="mt-4 font-display text-4xl leading-tight">
+                A mosaic section gives the page a more custom feel.
+              </h3>
+              <p className="mt-4 max-w-2xl leading-8 text-white/72">
+                Use one large statement, one image-driven block, and smaller
+                supporting panels. This prevents the page from feeling like every
+                section is the same card copied again.
+              </p>
+            </article>
+
+            <article
+              data-card-item
+              className="relative overflow-hidden rounded-[1.8rem] border border-white/12 md:col-span-7"
+            >
+              <img
+                src={table}
+                alt="Mediterranean table styling"
+                className="parallax-img h-full min-h-[260px] w-full object-cover"
+              />
+              <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(8,28,37,0.16),rgba(8,28,37,0.62))]" />
+              <div className="absolute bottom-0 left-0 max-w-md p-6 text-white">
+                <div className="text-xs uppercase tracking-[0.28em] text-[#f1d4af]">
+                  Styling block
+                </div>
+                <div className="mt-2 font-display text-3xl">Tablescape moment</div>
+              </div>
+            </article>
+
+            <article
+              data-card-item
+              className="rounded-[1.8rem] border border-white/12 bg-[#fff7ed]/10 p-6 text-white backdrop-blur-sm md:col-span-5"
+            >
+              <div className="text-xs uppercase tracking-[0.28em] text-[#f1d4af]">
+                Editable notes
+              </div>
+              <ul className="mt-5 space-y-4">
+                <li className="border-b border-white/10 pb-4">Change names and subtitle</li>
+                <li className="border-b border-white/10 pb-4">Update date and venue</li>
+                <li className="border-b border-white/10 pb-4">Replace photos per couple</li>
+                <li>Keep the same layout and motion</li>
+              </ul>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section id="experiences" className="mx-auto w-full max-w-7xl px-6 py-28 lg:px-10">
+        <div className="reveal mb-10 flex flex-col gap-6 md:flex-row md:items-end md:justify-between" data-text-group>
+          <div>
+            <p
+              data-text-item
+              className="mb-4 text-xs uppercase tracking-[0.4em] text-[#6a8790]"
+            >
+              Showcase section
+            </p>
+            <h2
+              data-text-item
+              className="font-display text-balance max-w-3xl text-5xl leading-[1.04] text-[#224c59] md:text-6xl"
+            >
+              Use a <em>slider-like</em> component so one section feels alive.
+            </h2>
+          </div>
+          <div data-text-item className="flex flex-wrap gap-3">
+            {showcaseMoments.map((item, index) => (
+              <button
+                key={item.name}
+                type="button"
+                onClick={() => setActiveScene(index)}
+                className={`rounded-full px-4 py-2 text-xs uppercase tracking-[0.28em] transition ${
+                  activeScene === index
+                    ? 'bg-[#224c59] text-[#f7fcfd]'
+                    : 'border border-[#d7e6eb] bg-white/70 text-[#6a8790]'
+                }`}
+              >
+                {item.name}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="grid items-center gap-8 lg:grid-cols-[0.78fr_1.22fr]">
+          <div
+            ref={sceneCopyRef}
+            className="scene-copy reveal rounded-[2rem] border border-[#dbe8ec] bg-white/75 p-7 shadow-[0_28px_56px_-40px_rgba(34,76,89,0.2)] backdrop-blur-sm"
+          >
+            <div className="text-xs uppercase tracking-[0.35em] text-[#6a8790]">
+              {activeMoment.kicker}
+            </div>
+            <h3 className="mt-4 font-display text-5xl leading-[1.04] text-[#224c59]">
+              {activeMoment.title}
+            </h3>
+            <p className="mt-5 leading-8 text-[#5f7680]">{activeMoment.description}</p>
+
+            <div className="mt-8 flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() =>
+                  setActiveScene(
+                    (activeScene - 1 + showcaseMoments.length) % showcaseMoments.length,
+                  )
+                }
+                className="rounded-full border border-[#d7e6eb] bg-white px-4 py-3 text-sm uppercase tracking-[0.28em] text-[#224c59]"
+              >
+                Prev
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveScene((activeScene + 1) % showcaseMoments.length)}
+                className="rounded-full bg-[#224c59] px-4 py-3 text-sm uppercase tracking-[0.28em] text-[#f7fcfd]"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+
+          <div
+            ref={sceneMediaRef}
+            className="scene-media reveal relative overflow-hidden rounded-[2.4rem] border border-[#b8d8e1]/24 bg-[linear-gradient(180deg,rgba(22,56,71,0.94),rgba(34,76,89,0.9))] p-4 shadow-[0_30px_70px_-42px_rgba(16,55,66,0.64)]"
+          >
+            <div className="relative overflow-hidden rounded-[2rem]">
+              <img
+                src={activeMoment.img}
+                alt={activeMoment.title}
+                className="h-[520px] w-full object-cover"
+              />
+              <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(8,28,37,0.1),rgba(8,28,37,0.6))]" />
+            </div>
+
+            <div className="pointer-events-none absolute left-8 top-8 rounded-full border border-white/16 bg-white/10 px-4 py-2 text-xs uppercase tracking-[0.3em] text-white backdrop-blur-sm">
+              {activeMoment.name}
+            </div>
+
+            <div className="absolute bottom-8 left-8 right-8 rounded-[1.7rem] border border-white/14 bg-white/10 p-5 text-white backdrop-blur-md">
+              <div className="text-xs uppercase tracking-[0.32em] text-[#b8d8e1]">
+                Template scene
+              </div>
+              <div className="mt-3 font-display text-4xl">{activeMoment.name}</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="mx-auto w-full max-w-7xl px-6 py-10 lg:px-10">
+        <div className="reveal mb-10 max-w-2xl" data-text-group>
+          <p
+            data-text-item
+            className="mb-4 text-xs uppercase tracking-[0.4em] text-[#6a8790]"
+          >
+            Timeline section
+          </p>
+          <h2
+            data-text-item
+            className="font-display text-5xl leading-[1.04] text-[#224c59] md:text-6xl"
+          >
+            The schedule should feel <em>editorial</em>, not generic.
+          </h2>
+        </div>
+
+        <div className="relative">
+          <div className="absolute left-0 right-0 top-11 hidden h-px bg-[#d7e6eb] lg:block" />
+          <div className="grid gap-5 lg:grid-cols-4" data-card-grid>
+            {timelineItems.map((item, index) => (
+              <article
+                key={item.time}
+                data-card-item
+                className={`rounded-[1.8rem] border border-[#d7e6eb] bg-white/80 p-6 shadow-[0_24px_50px_-40px_rgba(34,76,89,0.22)] backdrop-blur-sm ${
+                  index % 2 === 1 ? 'lg:mt-12' : ''
+                }`}
+              >
+                <div className="mb-5 h-3 w-3 rounded-full bg-[#224c59]" />
+                <div className="text-xs uppercase tracking-[0.3em] text-[#6a8790]">
+                  {item.time}
+                </div>
+                <h3 className="mt-4 font-display text-3xl text-[#224c59]">
+                  {item.title}
+                </h3>
+                <p className="mt-4 leading-7 text-[#5f7680]">{item.description}</p>
               </article>
             ))}
           </div>
@@ -682,139 +841,178 @@ function MeditteraeanPage() {
       </section>
 
       <section className="mx-auto w-full max-w-7xl px-6 py-28 lg:px-10">
-        <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
-          <div className="reveal rounded-[2rem] border border-[#b8d8e1]/24 bg-[linear-gradient(180deg,rgba(22,56,71,0.96),rgba(34,76,89,0.92))] p-7 text-white shadow-[0_28px_56px_-36px_rgba(16,55,66,0.68)]" data-text-group>
-            <p
-              data-text-item
-              className="text-xs uppercase tracking-[0.35em] text-[#b8d8e1]"
-            >
-              Guest information
-            </p>
-            <h2
-              data-text-item
-              className="mt-4 font-display text-5xl leading-[1.06] text-white"
-            >
-              Add practical details without losing the romantic design.
-            </h2>
-            <p data-text-item className="mt-5 max-w-2xl leading-8 text-white/72">
-              This is a good place for dress code, RSVP, transfer details, child
-              policy, or any note guests should know before the day.
-            </p>
-          </div>
-
-          <div className="grid gap-4" data-card-grid>
-            {detailCards.map((card) => (
-              <article
-                key={card.label}
-                data-card-item
-                className="rounded-[1.7rem] border border-[#b8d8e1]/24 bg-[linear-gradient(180deg,rgba(22,56,71,0.94),rgba(34,76,89,0.9))] p-6 text-white shadow-[0_28px_56px_-36px_rgba(16,55,66,0.62)]"
-              >
-                <p className="text-xs uppercase tracking-[0.32em] text-[#b8d8e1]">
-                  {card.label}
-                </p>
-                <h3 className="mt-3 font-display text-3xl text-white">
-                  {card.value}
-                </h3>
-                <p className="mt-4 leading-7 text-white/72">{card.note}</p>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section id="gallery" className="mx-auto w-full max-w-7xl px-6 py-32 lg:px-10">
-        <div className="grid items-center gap-8 md:grid-cols-12">
-          <div className="reveal relative md:col-span-7">
-            <div className="aspect-[4/5] overflow-hidden rounded-md">
+        <div className="grid items-center gap-10 lg:grid-cols-[0.94fr_1.06fr]">
+          <div className="reveal relative overflow-hidden rounded-[2.5rem] border border-[#b8d8e1]/24 bg-[linear-gradient(180deg,rgba(22,56,71,0.96),rgba(34,76,89,0.92))] p-4 shadow-[0_28px_56px_-36px_rgba(16,55,66,0.68)]">
+            <div className="overflow-hidden rounded-[2rem]">
               <img
-                src={door}
-                alt="Mediterranean architectural detail for wedding template mood"
-                loading="lazy"
-                className="parallax-img h-[115%] w-full object-cover"
+                src={table}
+                alt="Guest information themed image"
+                className="parallax-img h-[560px] w-full object-cover"
               />
             </div>
-          </div>
-          <div className="reveal rounded-[2rem] border border-[#b8d8e1]/24 bg-[linear-gradient(180deg,rgba(22,56,71,0.96),rgba(34,76,89,0.92))] p-7 text-white shadow-[0_28px_56px_-36px_rgba(16,55,66,0.68)] md:col-span-4 md:col-start-9" data-text-group>
-            <p
-              data-text-item
-              className="mb-6 text-xs uppercase tracking-[0.4em] text-[#b8d8e1]"
-            >
-              Featured section
-            </p>
-            <h2
-              data-text-item
-              className="font-display text-balance mb-6 text-5xl leading-[1.05] text-white"
-            >
-              Highlight one beautiful location, photo, or <em>ceremony detail</em>.
-            </h2>
-            <p data-text-item className="mb-8 leading-relaxed text-white/72">
-              This area works well for the main venue, a ceremony note, or a
-              featured visual story that helps sell the invitation design.
-            </p>
-            <dl
-              data-text-item
-              className="grid grid-cols-2 gap-6 border-t border-white/10 pt-6 text-sm"
-            >
-              <div>
-                <dt className="mb-1 text-xs uppercase tracking-widest text-[#b8d8e1]">
-                  Event date
-                </dt>
-                <dd className="font-display text-2xl text-white">12 Aug 2027</dd>
+            <div className="absolute bottom-8 left-8 right-8 rounded-[1.8rem] border border-white/14 bg-white/10 p-6 text-white backdrop-blur-md">
+              <div className="text-xs uppercase tracking-[0.35em] text-[#b8d8e1]">
+                Guest information
               </div>
-              <div>
-                <dt className="mb-1 text-xs uppercase tracking-widest text-[#b8d8e1]">
-                  Location
-                </dt>
-                <dd className="font-display text-2xl text-white">Coastal Venue</dd>
+              <div className="mt-3 font-display text-4xl">
+                Practical details can still feel elegant.
               </div>
-            </dl>
-            <a
-              href="#book"
-              data-text-item
-              className="mt-10 inline-block rounded-full bg-[#ffd5a3] px-7 py-3 text-sm uppercase tracking-widest text-[#163847] transition-colors hover:bg-[#f1d4af]"
-            >
-              Save your date
-            </a>
+            </div>
           </div>
-        </div>
-      </section>
 
-      <section className="py-28">
-        <div className="mx-auto w-full max-w-7xl px-6 lg:px-10">
-          <div className="grid gap-6 lg:grid-cols-[0.92fr_1.08fr]">
-            <div className="reveal rounded-[2rem] border border-[#b8d8e1]/24 bg-[linear-gradient(180deg,rgba(22,56,71,0.96),rgba(34,76,89,0.92))] p-7 text-white shadow-[0_28px_56px_-36px_rgba(16,55,66,0.68)]" data-text-group>
+          <div>
+            <div className="reveal mb-8" data-text-group>
               <p
                 data-text-item
-                className="text-xs uppercase tracking-[0.35em] text-[#b8d8e1]"
+                className="mb-4 text-xs uppercase tracking-[0.4em] text-[#6a8790]"
               >
-                Frequently asked
+                Information section
               </p>
               <h2
                 data-text-item
-                className="mt-4 font-display text-5xl leading-[1.05] text-white"
+                className="font-display text-5xl leading-[1.04] text-[#224c59] md:text-6xl"
               >
-                Add answers for common guest questions.
+                Use stacked info strips instead of repeating cards.
               </h2>
-              <p data-text-item className="mt-5 leading-8 text-white/72">
-                This makes the template feel complete and reduces the need for
-                guests to message the couple for small details.
-              </p>
             </div>
 
             <div className="grid gap-4" data-card-grid>
-              {faqItems.map((item) => (
+              {detailCards.map((card, index) => (
                 <article
-                  key={item.question}
+                  key={card.label}
                   data-card-item
-                  className="rounded-[1.8rem] border border-[#b8d8e1]/24 bg-[linear-gradient(180deg,rgba(22,56,71,0.94),rgba(34,76,89,0.9))] p-6 text-white shadow-[0_28px_56px_-36px_rgba(16,55,66,0.62)]"
+                  className={`rounded-[1.7rem] border p-5 shadow-[0_24px_50px_-40px_rgba(34,76,89,0.22)] ${
+                    index === 1
+                      ? 'border-[#f1d4af]/60 bg-[#fff7ed]'
+                      : 'border-[#d7e6eb] bg-white/80'
+                  }`}
                 >
-                  <h3 className="font-display text-3xl text-white">
-                    {item.question}
-                  </h3>
-                  <p className="mt-4 leading-7 text-white/72">{item.answer}</p>
+                  <div className="flex items-start gap-4">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#224c59] font-display text-lg text-white">
+                      0{index + 1}
+                    </div>
+                    <div>
+                      <div className="text-xs uppercase tracking-[0.3em] text-[#6a8790]">
+                        {card.label}
+                      </div>
+                      <div className="mt-2 font-display text-3xl text-[#224c59]">
+                        {card.value}
+                      </div>
+                      <p className="mt-3 leading-7 text-[#5f7680]">{card.note}</p>
+                    </div>
+                  </div>
                 </article>
               ))}
             </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="gallery" className="mx-auto w-full max-w-7xl px-6 py-16 lg:px-10">
+        <div className="reveal relative overflow-hidden rounded-[2.8rem] border border-[#b8d8e1]/24 shadow-[0_32px_70px_-44px_rgba(16,55,66,0.44)]">
+          <img
+            src={door}
+            alt="Mediterranean architectural detail for invitation gallery"
+            className="parallax-img h-[720px] w-full object-cover"
+          />
+          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(8,28,37,0.62)_0%,rgba(8,28,37,0.32)_34%,rgba(8,28,37,0.08)_100%)]" />
+
+          <div className="absolute inset-x-0 bottom-0 top-0 flex items-end p-6 md:p-10">
+            <div
+              className="max-w-xl rounded-[2rem] border border-white/16 bg-white/10 p-7 text-white backdrop-blur-md"
+              data-text-group
+            >
+              <p
+                data-text-item
+                className="mb-4 text-xs uppercase tracking-[0.35em] text-[#b8d8e1]"
+              >
+                Featured section
+              </p>
+              <h2
+                data-text-item
+                className="font-display text-5xl leading-[1.04] md:text-6xl"
+              >
+                A full-bleed visual chapter breaks the layout rhythm.
+              </h2>
+              <p data-text-item className="mt-5 max-w-lg leading-8 text-white/74">
+                Instead of another boxed section, this one works like a hero inside
+                the page. It is good for the venue, a gallery highlight, or the most
+                important celebration photo.
+              </p>
+
+              <div data-text-item className="mt-7 flex flex-wrap gap-3">
+                <div className="rounded-full border border-white/16 bg-white/10 px-4 py-2 text-xs uppercase tracking-[0.28em] text-[#d9eef3]">
+                  Event date
+                </div>
+                <div className="rounded-full border border-white/16 bg-white/10 px-4 py-2 text-xs uppercase tracking-[0.28em] text-[#d9eef3]">
+                  Venue note
+                </div>
+                <div className="rounded-full border border-[#f1d4af]/26 bg-[#fff7ed]/10 px-4 py-2 text-xs uppercase tracking-[0.28em] text-[#f1d4af]">
+                  Save the date
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="mx-auto w-full max-w-7xl px-6 py-24 lg:px-10">
+        <div className="grid gap-8 lg:grid-cols-[0.92fr_1.08fr]">
+          <div className="reveal rounded-[2rem] border border-[#d7e6eb] bg-white/80 p-7 shadow-[0_24px_50px_-40px_rgba(34,76,89,0.2)]" data-text-group>
+            <p
+              data-text-item
+              className="mb-4 text-xs uppercase tracking-[0.35em] text-[#6a8790]"
+            >
+              FAQ section
+            </p>
+            <h2
+              data-text-item
+              className="font-display text-5xl leading-[1.04] text-[#224c59] md:text-6xl"
+            >
+              Add interaction with a proper accordion.
+            </h2>
+            <p data-text-item className="mt-5 leading-8 text-[#5f7680]">
+              This keeps the lower part of the page more dynamic and makes the
+              section feel different from the others.
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            {faqItems.map((item, index) => (
+              <article
+                key={item.question}
+                className={`reveal overflow-hidden rounded-[1.7rem] border transition-colors ${
+                  openFaq === index
+                    ? 'border-[#224c59] bg-[linear-gradient(180deg,#163847,#224c59)] text-white'
+                    : 'border-[#d7e6eb] bg-white/80 text-[#224c59]'
+                }`}
+              >
+                <button
+                  type="button"
+                  onClick={() => setOpenFaq(openFaq === index ? -1 : index)}
+                  className="flex w-full items-center justify-between gap-6 px-6 py-5 text-left"
+                >
+                  <span className="font-display text-3xl">{item.question}</span>
+                  <span className="text-xs uppercase tracking-[0.3em]">
+                    {openFaq === index ? 'Close' : 'Open'}
+                  </span>
+                </button>
+                <div
+                  ref={(element) => {
+                    faqRefs.current[index] = element
+                  }}
+                  className="h-0 overflow-hidden px-6"
+                >
+                  <p
+                    className={`pb-6 leading-7 ${
+                      openFaq === index ? 'text-white/72' : 'text-[#5f7680]'
+                    }`}
+                  >
+                    {item.answer}
+                  </p>
+                </div>
+              </article>
+            ))}
           </div>
         </div>
       </section>
@@ -852,7 +1050,22 @@ function MeditteraeanPage() {
       </section>
 
       <section className="mx-auto w-full max-w-7xl px-6 py-28 lg:px-10">
-        <div className="grid gap-8 lg:grid-cols-[0.88fr_1.12fr]">
+        <div className="grid gap-8 lg:grid-cols-[1.18fr_0.82fr]">
+          <div className="reveal overflow-hidden rounded-[2.4rem] border border-[#d7e6eb] bg-white shadow-[0_30px_60px_-40px_rgba(34,76,89,0.24)]">
+            <div className="border-b border-[#d7e6eb] bg-[linear-gradient(145deg,#f4fafb,#eef5f7)] px-5 py-4">
+              <div className="text-xs uppercase tracking-[0.32em] text-[#6a8790]">
+                Google Maps placeholder
+              </div>
+            </div>
+            <iframe
+              title="Placeholder wedding venue map"
+              src="https://www.google.com/maps?q=Bodrum%20Turkey&z=12&output=embed"
+              className="h-[520px] w-full border-0"
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+            />
+          </div>
+
           <div className="reveal rounded-[2rem] border border-[#b8d8e1]/24 bg-[linear-gradient(180deg,rgba(22,56,71,0.96),rgba(34,76,89,0.92))] p-7 text-white shadow-[0_28px_56px_-36px_rgba(16,55,66,0.68)]" data-text-group>
             <p
               data-text-item
@@ -862,15 +1075,16 @@ function MeditteraeanPage() {
             </p>
             <h2
               data-text-item
-              className="mt-4 font-display text-5xl leading-[1.05] text-white"
+              className="mt-4 font-display text-5xl leading-[1.05]"
             >
-              Finish the invitation with a map and arrival details.
+              Finish with arrival details and a clean map block.
             </h2>
             <p data-text-item className="mt-5 leading-8 text-white/72">
-              This placeholder map can later be replaced with the real venue
-              location, exact coordinates, parking details, or shuttle guidance.
+              The map works better as a main visual on one side and a concise venue
+              summary on the other, rather than another duplicated info grid.
             </p>
-            <div data-text-item className="mt-6 grid gap-4 sm:grid-cols-2">
+
+            <div data-text-item className="mt-7 space-y-4">
               <div className="rounded-[1.4rem] border border-white/14 bg-white/10 p-4 backdrop-blur-sm">
                 <div className="text-xs uppercase tracking-[0.28em] text-[#b8d8e1]">
                   Venue
@@ -887,27 +1101,23 @@ function MeditteraeanPage() {
                   Seaside Road 12
                 </div>
               </div>
-            </div>
-          </div>
-
-          <div className="reveal overflow-hidden rounded-[2rem] border border-[#b8d8e1]/24 bg-[linear-gradient(180deg,rgba(22,56,71,0.96),rgba(34,76,89,0.92))] shadow-[0_28px_56px_-36px_rgba(16,55,66,0.68)]">
-            <div className="border-b border-white/10 bg-white/8 px-5 py-4">
-              <div className="text-xs uppercase tracking-[0.32em] text-[#b8d8e1]">
-                Google Maps placeholder
+              <div className="rounded-[1.4rem] border border-white/14 bg-white/10 p-4 backdrop-blur-sm">
+                <div className="text-xs uppercase tracking-[0.28em] text-[#b8d8e1]">
+                  Travel note
+                </div>
+                <div className="mt-2 text-white/72">
+                  Add parking, shuttle, or nearby hotel guidance in this block.
+                </div>
               </div>
             </div>
-            <iframe
-              title="Placeholder wedding venue map"
-              src="https://www.google.com/maps?q=Bodrum%20Turkey&z=12&output=embed"
-              className="h-[420px] w-full border-0"
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
-            />
           </div>
         </div>
       </section>
 
-      <footer id="book" className="bg-[linear-gradient(180deg,#102c38,#163847_42%,#0d2430_100%)] pb-12 pt-28 text-[#f7fcfd]">
+      <footer
+        id="book"
+        className="bg-[linear-gradient(180deg,#102c38,#163847_42%,#0d2430_100%)] pb-12 pt-28 text-[#f7fcfd]"
+      >
         <div className="mx-auto w-full max-w-7xl px-6 lg:px-10">
           <div
             className="grid gap-12 border-b border-white/15 pb-20 md:grid-cols-12"
@@ -925,8 +1135,8 @@ function MeditteraeanPage() {
             </div>
             <div className="reveal flex flex-col justify-end md:col-span-4 md:col-start-9">
               <p data-text-item className="mb-6 text-white/70">
-                Use this footer block for contact, booking, pricing, or a lead
-                capture form for clients who want this template customized.
+                Use this footer for contact, booking, pricing, or a lead capture
+                form for clients who want the template customized.
               </p>
               <form data-text-item className="flex border-b border-white/40 pb-3">
                 <input
