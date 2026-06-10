@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
-import hero from './assets/med-dream-spark/hero-mediterranean.jpg'
 import lemons from './assets/med-dream-spark/lemons.jpg'
 import table from './assets/med-dream-spark/table.jpg'
 import boat from './assets/med-dream-spark/boat.jpg'
@@ -373,63 +372,83 @@ function MeditteraeanPage() {
       >
         <div className="hero-img absolute inset-0 will-change-transform">
           <img
-            src={hero}
-            alt="Mediterranean coastal backdrop for a wedding template"
+            src={boat}
+            alt="Mediterranean sea view for wedding invitation hero background"
             width={1920}
             height={1080}
             className="h-full w-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-[#faf6ed]" />
+          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(8,28,37,0.38)_0%,rgba(8,28,37,0.18)_34%,rgba(8,28,37,0.28)_62%,rgba(250,246,237,0.95)_100%)]" />
         </div>
 
-        <div className="relative z-10 mx-auto flex h-full min-h-[720px] w-full max-w-7xl flex-col justify-end px-6 pb-24 lg:px-10">
-          <p className="hero-eyebrow mb-6 text-xs uppercase tracking-[0.4em] text-white/80">
-            Mediterranean Wedding Template
-          </p>
-          <h1 className="font-display text-balance text-[clamp(3.5rem,11vw,11rem)] leading-[0.95] text-white">
-            <span className="hero-word mr-4 inline-block">Warm</span>
-            <span className="hero-word mr-4 inline-block italic">light</span>
-            <span className="hero-word mr-4 inline-block">&amp;</span>
-            <span className="hero-word inline-block text-[#d77a59]">soft romance.</span>
-          </h1>
+        <div className="relative z-10 mx-auto flex h-full min-h-[720px] w-full max-w-7xl flex-col justify-end px-6 pb-18 pt-32 lg:px-10 lg:pb-24">
+          <div className="grid items-end gap-8 lg:grid-cols-[1.08fr_0.92fr]">
+            <div className="max-w-4xl rounded-[2.3rem] border border-white/25 bg-white/12 p-6 shadow-[0_30px_90px_-40px_rgba(0,0,0,0.45)] backdrop-blur-md lg:p-8">
+              <p className="hero-eyebrow mb-5 text-xs uppercase tracking-[0.4em] text-white/75">
+                Mediterranean Invitation Collection
+              </p>
+              <h1 className="font-display text-balance text-[clamp(3.2rem,9vw,8rem)] leading-[0.95] text-white">
+                <span className="hero-word mr-4 inline-block">Seaside</span>
+                <span className="hero-word mr-4 inline-block italic">vows</span>
+                <span className="hero-word mr-4 inline-block">with</span>
+                <span className="hero-word inline-block text-[#ffd5a3]">a softer entrance.</span>
+              </h1>
 
-          <div className="mt-10 flex max-w-5xl flex-col gap-8 md:flex-row md:items-end md:justify-between">
-            <p className="hero-sub max-w-md text-lg text-white/90">
-              Built as a flexible seaside invitation template. You can keep the
-              visual mood and only swap names, dates, venue details, and imagery.
-            </p>
-            <a
-              href="#about"
-              className="hero-cta inline-flex items-center gap-3 border-b border-white/60 pb-2 text-sm uppercase tracking-widest text-white transition-all hover:gap-5"
-            >
-              Explore template
-              <span>→</span>
-            </a>
-          </div>
-
-          <div className="mt-14 grid max-w-2xl grid-cols-3 gap-6 text-white/85">
-            <div className="hero-meta hero-panel">
-              <div className="font-display text-3xl">
-                <span data-count="6">0</span>
-              </div>
-              <div className="text-xs uppercase tracking-widest opacity-70">
-                Core sections
+              <div className="mt-8 flex max-w-3xl flex-col gap-8 md:flex-row md:items-end md:justify-between">
+                <p className="hero-sub max-w-xl text-lg leading-8 text-white/88">
+                  Redesigned as a more premium wedding hero with calmer colors,
+                  stronger typography, and room for names, dates, and venue details
+                  to feel special from the first screen.
+                </p>
+                <a
+                  href="#about"
+                  className="hero-cta inline-flex items-center gap-3 rounded-full border border-white/35 bg-white/10 px-5 py-3 text-sm uppercase tracking-[0.28em] text-white transition-all hover:bg-white/18 hover:gap-5"
+                >
+                  View invitation
+                  <span>→</span>
+                </a>
               </div>
             </div>
-            <div className="hero-meta hero-panel">
-              <div className="font-display text-3xl">
-                <span data-count="1">0</span>
+
+            <div className="grid gap-4 lg:justify-self-end lg:max-w-[360px]">
+              <div className="hero-panel rounded-[1.9rem] border border-white/18 bg-[#163847]/70 p-5 text-white shadow-[0_24px_70px_-36px_rgba(11,31,40,0.8)] backdrop-blur-sm">
+                <div className="text-xs uppercase tracking-[0.32em] text-[#b8d8e1]">
+                  Template mood
+                </div>
+                <div className="mt-3 font-display text-4xl text-white">
+                  Coastal romance
+                </div>
+                <p className="mt-3 leading-7 text-white/72">
+                  Best for elegant seaside weddings, destination celebrations, and
+                  warm evening ceremonies.
+                </p>
               </div>
-              <div className="text-xs uppercase tracking-widest opacity-70">
-                Theme direction
-              </div>
-            </div>
-            <div className="hero-meta hero-panel">
-              <div className="font-display text-3xl">
-                100<span className="text-[#d77a59]">%</span>
-              </div>
-              <div className="text-xs uppercase tracking-widest opacity-70">
-                Editable
+
+              <div className="grid grid-cols-3 gap-3 text-white/92">
+                <div className="hero-meta hero-panel rounded-[1.5rem] border border-white/18 bg-white/12 px-4 py-4 text-center backdrop-blur-sm">
+                  <div className="font-display text-3xl">
+                    <span data-count="6">0</span>
+                  </div>
+                  <div className="mt-2 text-[10px] uppercase tracking-[0.28em] text-white/68">
+                    Sections
+                  </div>
+                </div>
+                <div className="hero-meta hero-panel rounded-[1.5rem] border border-white/18 bg-white/12 px-4 py-4 text-center backdrop-blur-sm">
+                  <div className="font-display text-3xl">
+                    <span data-count="1">0</span>
+                  </div>
+                  <div className="mt-2 text-[10px] uppercase tracking-[0.28em] text-white/68">
+                    Theme
+                  </div>
+                </div>
+                <div className="hero-meta hero-panel rounded-[1.5rem] border border-white/18 bg-white/12 px-4 py-4 text-center backdrop-blur-sm">
+                  <div className="font-display text-3xl">
+                    100<span className="text-[#ffd5a3]">%</span>
+                  </div>
+                  <div className="mt-2 text-[10px] uppercase tracking-[0.28em] text-white/68">
+                    Editable
+                  </div>
+                </div>
               </div>
             </div>
           </div>
