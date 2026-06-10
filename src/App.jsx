@@ -245,6 +245,12 @@ function App() {
                   View template carousel
                 </a>
                 <a
+                  href="/meditteraean"
+                  className="rounded-full bg-rose-100 px-5 py-3 text-sm font-medium text-rose-700 transition hover:bg-rose-200"
+                >
+                  Open Mediterranean template
+                </a>
+                <a
                   href="#dashboard"
                   className="rounded-full border border-stone-300 px-5 py-3 text-sm font-medium text-stone-700 transition hover:border-rose-300 hover:text-rose-600"
                 >
