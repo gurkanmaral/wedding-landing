@@ -461,7 +461,7 @@ function MeditteraeanPage() {
             {countdown.map((item) => (
               <article
                 key={item.label}
-                className="countdown-card relative w-[112px] overflow-hidden rounded-[1.6rem] border border-[#d8e7ec] bg-[linear-gradient(180deg,#ffffff,#f4fafb)] px-4 py-5 text-center shadow-[0_20px_48px_-34px_rgba(37,90,103,0.38)]"
+                className="countdown-card relative w-[112px] overflow-hidden rounded-[1.6rem] border border-[#b8d8e1]/30 bg-[linear-gradient(180deg,rgba(22,56,71,0.92),rgba(34,76,89,0.88))] px-4 py-5 text-center shadow-[0_28px_56px_-34px_rgba(16,55,66,0.72)] backdrop-blur-sm"
               >
                 <div
                   className="pointer-events-none absolute inset-x-5 top-0 h-px bg-gradient-to-r from-transparent via-[#72b6c8] to-transparent"
@@ -472,7 +472,7 @@ function MeditteraeanPage() {
                   aria-hidden="true"
                 />
                 <div className="overflow-hidden">
-                  <div className="font-display flex items-center justify-center gap-0.5 text-4xl leading-none text-[#224c59] md:text-5xl">
+                  <div className="font-display flex items-center justify-center gap-0.5 text-4xl leading-none text-white md:text-5xl">
                     {item.value.split('').map((digit, index) => (
                       <CountdownDigit
                         key={`${item.label}-${index}`}
@@ -481,7 +481,7 @@ function MeditteraeanPage() {
                     ))}
                   </div>
                 </div>
-                <div className="mt-3 text-[10px] uppercase tracking-[0.32em] text-[#6b7f88]">
+                <div className="mt-3 text-[10px] uppercase tracking-[0.32em] text-[#c7dfe6]">
                   {item.label}
                 </div>
               </article>
@@ -495,39 +495,39 @@ function MeditteraeanPage() {
         <div className="grid gap-5 md:grid-cols-3" data-card-grid>
           <article
             data-card-item
-            className="rounded-[1.8rem] border border-[#e5dccf] bg-[#fffaf3] p-6"
+            className="rounded-[1.9rem] border border-[#b8d8e1]/28 bg-[linear-gradient(180deg,rgba(22,56,71,0.94),rgba(34,76,89,0.9))] p-6 text-white shadow-[0_28px_56px_-36px_rgba(16,55,66,0.68)] backdrop-blur-sm"
           >
-            <p className="text-xs uppercase tracking-[0.32em] text-[#8a7b6d]">
+            <p className="text-xs uppercase tracking-[0.32em] text-[#b8d8e1]">
               Hero message
             </p>
-            <h3 className="mt-4 font-display text-3xl">Names and date first</h3>
-            <p className="mt-4 leading-7 text-[#76685d]">
+            <h3 className="mt-4 font-display text-3xl text-white">Names and date first</h3>
+            <p className="mt-4 leading-7 text-white/72">
               Keep the opening strong with couple names, a subtitle, and one
               clear invitation message.
             </p>
           </article>
           <article
             data-card-item
-            className="rounded-[1.8rem] border border-[#e5dccf] bg-[#fffaf3] p-6"
+            className="rounded-[1.9rem] border border-[#b8d8e1]/28 bg-[linear-gradient(180deg,rgba(22,56,71,0.94),rgba(34,76,89,0.9))] p-6 text-white shadow-[0_28px_56px_-36px_rgba(16,55,66,0.68)] backdrop-blur-sm"
           >
-            <p className="text-xs uppercase tracking-[0.32em] text-[#8a7b6d]">
+            <p className="text-xs uppercase tracking-[0.32em] text-[#b8d8e1]">
               Info blocks
             </p>
-            <h3 className="mt-4 font-display text-3xl">Useful guest details</h3>
-            <p className="mt-4 leading-7 text-[#76685d]">
+            <h3 className="mt-4 font-display text-3xl text-white">Useful guest details</h3>
+            <p className="mt-4 leading-7 text-white/72">
               Add schedule, dress code, transport, and RSVP instructions without
               breaking the visual style.
             </p>
           </article>
           <article
             data-card-item
-            className="rounded-[1.8rem] border border-[#e5dccf] bg-[#fffaf3] p-6"
+            className="rounded-[1.9rem] border border-[#b8d8e1]/28 bg-[linear-gradient(180deg,rgba(22,56,71,0.94),rgba(34,76,89,0.9))] p-6 text-white shadow-[0_28px_56px_-36px_rgba(16,55,66,0.68)] backdrop-blur-sm"
           >
-            <p className="text-xs uppercase tracking-[0.32em] text-[#8a7b6d]">
+            <p className="text-xs uppercase tracking-[0.32em] text-[#b8d8e1]">
               Final CTA
             </p>
-            <h3 className="mt-4 font-display text-3xl">Map and contact finish</h3>
-            <p className="mt-4 leading-7 text-[#76685d]">
+            <h3 className="mt-4 font-display text-3xl text-white">Map and contact finish</h3>
+            <p className="mt-4 leading-7 text-white/72">
               End the page with location guidance, a map block, and the final call
               to action.
             </p>
@@ -535,24 +535,24 @@ function MeditteraeanPage() {
         </div>
       </section>
 
-      <section id="about" className="mx-auto w-full max-w-7xl px-6 py-32 lg:px-10">
+      <section id="about" className="mx-auto w-full max-w-7xl rounded-[2.4rem] border border-[#b8d8e1]/22 bg-[linear-gradient(145deg,rgba(22,56,71,0.98),rgba(34,76,89,0.94))] px-6 py-16 shadow-[0_34px_90px_-46px_rgba(16,55,66,0.78)] lg:px-10 lg:py-20">
         <div className="grid items-start gap-12 md:grid-cols-12">
           <div className="reveal md:col-span-5" data-text-group>
             <p
               data-text-item
-              className="mb-6 text-xs uppercase tracking-[0.4em] text-[#c96a4b]"
+              className="mb-6 text-xs uppercase tracking-[0.4em] text-[#b8d8e1]"
             >
               Template intro
             </p>
             <h2
               data-text-item
-              className="font-display text-balance text-5xl leading-[1.05] md:text-6xl"
+              className="font-display text-balance text-5xl leading-[1.05] text-white md:text-6xl"
             >
-              A reusable <em className="text-[#c96a4b]">Mediterranean</em> wedding page.
+              A reusable <em className="text-[#ffd5a3] not-italic">Mediterranean</em> wedding page.
             </h2>
           </div>
           <div
-            className="reveal space-y-6 text-lg leading-relaxed text-[#76685d] md:col-span-6 md:col-start-7"
+            className="reveal space-y-6 text-lg leading-relaxed text-white/74 md:col-span-6 md:col-start-7"
             data-text-group
           >
             <p data-text-item>
@@ -566,17 +566,17 @@ function MeditteraeanPage() {
               version you sell.
             </p>
             <div data-text-item className="grid grid-cols-2 gap-4 pt-6 sm:max-w-md">
-              <div className="rounded-2xl border border-[#e5dccf] bg-[#f7f2e8] p-4">
-                <div className="text-xs uppercase tracking-[0.28em] text-[#8a7b6d]">
+              <div className="rounded-2xl border border-white/16 bg-white/10 p-4 backdrop-blur-sm">
+                <div className="text-xs uppercase tracking-[0.28em] text-[#b8d8e1]">
                   Couple
                 </div>
-                <div className="mt-2 font-display text-2xl">Name &amp; Name</div>
+                <div className="mt-2 font-display text-2xl text-white">Name &amp; Name</div>
               </div>
-              <div className="rounded-2xl border border-[#e5dccf] bg-[#f7f2e8] p-4">
-                <div className="text-xs uppercase tracking-[0.28em] text-[#8a7b6d]">
+              <div className="rounded-2xl border border-white/16 bg-white/10 p-4 backdrop-blur-sm">
+                <div className="text-xs uppercase tracking-[0.28em] text-[#b8d8e1]">
                   Venue
                 </div>
-                <div className="mt-2 font-display text-2xl">Seaside Venue</div>
+                <div className="mt-2 font-display text-2xl text-white">Seaside Venue</div>
               </div>
             </div>
           </div>
@@ -585,10 +585,10 @@ function MeditteraeanPage() {
 
       <section className="mx-auto w-full max-w-7xl px-6 py-12 lg:px-10">
         <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr]">
-          <div className="reveal rounded-[2rem] bg-[#2f2a25] p-8 text-[#faf6ed]" data-text-group>
+          <div className="reveal rounded-[2rem] bg-[linear-gradient(145deg,#163847,#224c59)] p-8 text-[#f7fcfd] shadow-[0_24px_70px_-40px_rgba(16,55,66,0.7)]" data-text-group>
             <p
               data-text-item
-              className="text-xs uppercase tracking-[0.36em] text-[#d7b58f]"
+              className="text-xs uppercase tracking-[0.36em] text-[#b8d8e1]"
             >
               Event timeline
             </p>
@@ -598,7 +598,7 @@ function MeditteraeanPage() {
             >
               Add a complete wedding flow guests can follow easily.
             </h2>
-            <p data-text-item className="mt-5 max-w-xl leading-8 text-white/70">
+            <p data-text-item className="mt-5 max-w-xl leading-8 text-white/72">
               This section gives the page more structure and helps guests
               understand the day without asking extra questions.
             </p>
@@ -609,22 +609,22 @@ function MeditteraeanPage() {
               <article
                 key={item.time}
                 data-card-item
-                className="rounded-[1.8rem] border border-[#e5dccf] bg-white/80 p-6 shadow-sm"
+                className="rounded-[1.8rem] border border-[#b8d8e1]/26 bg-[linear-gradient(180deg,rgba(22,56,71,0.94),rgba(34,76,89,0.9))] p-6 text-white shadow-[0_28px_56px_-36px_rgba(16,55,66,0.68)] backdrop-blur-sm"
               >
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div>
-                    <p className="text-xs uppercase tracking-[0.32em] text-[#8a7b6d]">
+                    <p className="text-xs uppercase tracking-[0.32em] text-[#b8d8e1]">
                       {item.time}
                     </p>
-                    <h3 className="mt-3 font-display text-3xl text-[#3e352f]">
+                    <h3 className="mt-3 font-display text-3xl text-white">
                       {item.title}
                     </h3>
                   </div>
-                  <span className="rounded-full bg-[#f2ede4] px-4 py-2 text-xs uppercase tracking-[0.28em] text-[#8a7b6d]">
+                  <span className="rounded-full border border-white/14 bg-white/10 px-4 py-2 text-xs uppercase tracking-[0.28em] text-[#d9eef3]">
                     Template item
                   </span>
                 </div>
-                <p className="mt-4 max-w-xl leading-7 text-[#76685d]">
+                <p className="mt-4 max-w-xl leading-7 text-white/72">
                   {item.description}
                 </p>
               </article>
@@ -633,19 +633,19 @@ function MeditteraeanPage() {
         </div>
       </section>
 
-      <section id="experiences" className="bg-[#f2ede4] py-32">
+      <section id="experiences" className="py-32">
         <div className="mx-auto w-full max-w-7xl px-6 lg:px-10">
           <div className="reveal mb-16 flex items-end justify-between" data-text-group>
             <div>
               <p
                 data-text-item
-                className="mb-4 text-xs uppercase tracking-[0.4em] text-[#c96a4b]"
+                className="mb-4 text-xs uppercase tracking-[0.4em] text-[#b8d8e1]"
               >
                 Editable blocks
               </p>
               <h2
                 data-text-item
-                className="font-display text-balance max-w-2xl text-5xl md:text-6xl"
+                className="font-display text-balance max-w-2xl text-5xl text-[#224c59] md:text-6xl"
               >
                 Use the same layout for different <em>couples</em> and events.
               </h2>
@@ -653,7 +653,7 @@ function MeditteraeanPage() {
             <a
               href="#book"
               data-text-item
-              className="hidden text-sm uppercase tracking-widest transition hover:text-[#c96a4b] md:inline"
+              className="hidden text-sm uppercase tracking-widest text-[#6a8790] transition hover:text-[#224c59] md:inline"
             >
               Template CTA →
             </a>
@@ -661,20 +661,20 @@ function MeditteraeanPage() {
 
           <div className="grid gap-8 md:grid-cols-3" data-card-grid>
             {moments.map((card) => (
-              <article key={card.n} className="reveal group" data-card-item>
-                <div className="relative mb-6 aspect-[4/5] overflow-hidden rounded-md">
+              <article key={card.n} className="reveal group rounded-[1.9rem] border border-[#b8d8e1]/24 bg-[linear-gradient(180deg,rgba(22,56,71,0.96),rgba(34,76,89,0.92))] p-4 text-white shadow-[0_28px_56px_-36px_rgba(16,55,66,0.68)]" data-card-item>
+                <div className="relative mb-6 aspect-[4/5] overflow-hidden rounded-[1.35rem] shadow-[0_20px_46px_-34px_rgba(37,90,103,0.34)]">
                   <img
                     src={card.img}
                     alt={card.title}
                     loading="lazy"
                     className="parallax-img h-[120%] w-full object-cover transition-transform duration-700 group-hover:scale-105"
                   />
-                  <div className="font-display absolute left-4 top-4 text-sm text-[#faf6ed]">
+                  <div className="font-display absolute left-4 top-4 text-sm text-[#f7fcfd]">
                     {card.n}
                   </div>
                 </div>
-                <h3 className="font-display mb-2 text-2xl">{card.title}</h3>
-                <p className="text-[#76685d]">{card.description}</p>
+                <h3 className="font-display mb-2 text-2xl text-white">{card.title}</h3>
+                <p className="text-white/72">{card.description}</p>
               </article>
             ))}
           </div>
@@ -683,20 +683,20 @@ function MeditteraeanPage() {
 
       <section className="mx-auto w-full max-w-7xl px-6 py-28 lg:px-10">
         <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
-          <div className="reveal rounded-[2rem] border border-[#e5dccf] bg-[#fffaf3] p-7" data-text-group>
+          <div className="reveal rounded-[2rem] border border-[#b8d8e1]/24 bg-[linear-gradient(180deg,rgba(22,56,71,0.96),rgba(34,76,89,0.92))] p-7 text-white shadow-[0_28px_56px_-36px_rgba(16,55,66,0.68)]" data-text-group>
             <p
               data-text-item
-              className="text-xs uppercase tracking-[0.35em] text-[#c96a4b]"
+              className="text-xs uppercase tracking-[0.35em] text-[#b8d8e1]"
             >
               Guest information
             </p>
             <h2
               data-text-item
-              className="mt-4 font-display text-5xl leading-[1.06]"
+              className="mt-4 font-display text-5xl leading-[1.06] text-white"
             >
               Add practical details without losing the romantic design.
             </h2>
-            <p data-text-item className="mt-5 max-w-2xl leading-8 text-[#76685d]">
+            <p data-text-item className="mt-5 max-w-2xl leading-8 text-white/72">
               This is a good place for dress code, RSVP, transfer details, child
               policy, or any note guests should know before the day.
             </p>
@@ -707,15 +707,15 @@ function MeditteraeanPage() {
               <article
                 key={card.label}
                 data-card-item
-                className="rounded-[1.7rem] border border-[#e5dccf] bg-[#f7f2e8] p-6"
+                className="rounded-[1.7rem] border border-[#b8d8e1]/24 bg-[linear-gradient(180deg,rgba(22,56,71,0.94),rgba(34,76,89,0.9))] p-6 text-white shadow-[0_28px_56px_-36px_rgba(16,55,66,0.62)]"
               >
-                <p className="text-xs uppercase tracking-[0.32em] text-[#8a7b6d]">
+                <p className="text-xs uppercase tracking-[0.32em] text-[#b8d8e1]">
                   {card.label}
                 </p>
-                <h3 className="mt-3 font-display text-3xl text-[#3e352f]">
+                <h3 className="mt-3 font-display text-3xl text-white">
                   {card.value}
                 </h3>
-                <p className="mt-4 leading-7 text-[#76685d]">{card.note}</p>
+                <p className="mt-4 leading-7 text-white/72">{card.note}</p>
               </article>
             ))}
           </div>
@@ -734,44 +734,44 @@ function MeditteraeanPage() {
               />
             </div>
           </div>
-          <div className="reveal md:col-span-4 md:col-start-9" data-text-group>
+          <div className="reveal rounded-[2rem] border border-[#b8d8e1]/24 bg-[linear-gradient(180deg,rgba(22,56,71,0.96),rgba(34,76,89,0.92))] p-7 text-white shadow-[0_28px_56px_-36px_rgba(16,55,66,0.68)] md:col-span-4 md:col-start-9" data-text-group>
             <p
               data-text-item
-              className="mb-6 text-xs uppercase tracking-[0.4em] text-[#c96a4b]"
+              className="mb-6 text-xs uppercase tracking-[0.4em] text-[#b8d8e1]"
             >
               Featured section
             </p>
             <h2
               data-text-item
-              className="font-display text-balance mb-6 text-5xl leading-[1.05]"
+              className="font-display text-balance mb-6 text-5xl leading-[1.05] text-white"
             >
               Highlight one beautiful location, photo, or <em>ceremony detail</em>.
             </h2>
-            <p data-text-item className="mb-8 leading-relaxed text-[#76685d]">
+            <p data-text-item className="mb-8 leading-relaxed text-white/72">
               This area works well for the main venue, a ceremony note, or a
               featured visual story that helps sell the invitation design.
             </p>
             <dl
               data-text-item
-              className="grid grid-cols-2 gap-6 border-t border-[#e5dccf] pt-6 text-sm"
+              className="grid grid-cols-2 gap-6 border-t border-white/10 pt-6 text-sm"
             >
               <div>
-                <dt className="mb-1 text-xs uppercase tracking-widest text-[#8a7b6d]">
+                <dt className="mb-1 text-xs uppercase tracking-widest text-[#b8d8e1]">
                   Event date
                 </dt>
-                <dd className="font-display text-2xl">12 Aug 2027</dd>
+                <dd className="font-display text-2xl text-white">12 Aug 2027</dd>
               </div>
               <div>
-                <dt className="mb-1 text-xs uppercase tracking-widest text-[#8a7b6d]">
+                <dt className="mb-1 text-xs uppercase tracking-widest text-[#b8d8e1]">
                   Location
                 </dt>
-                <dd className="font-display text-2xl">Coastal Venue</dd>
+                <dd className="font-display text-2xl text-white">Coastal Venue</dd>
               </div>
             </dl>
             <a
               href="#book"
               data-text-item
-              className="mt-10 inline-block rounded-full bg-[#c96a4b] px-7 py-3 text-sm uppercase tracking-widest text-[#faf6ed] transition-colors hover:bg-[#2f2a25]"
+              className="mt-10 inline-block rounded-full bg-[#ffd5a3] px-7 py-3 text-sm uppercase tracking-widest text-[#163847] transition-colors hover:bg-[#f1d4af]"
             >
               Save your date
             </a>
@@ -779,23 +779,23 @@ function MeditteraeanPage() {
         </div>
       </section>
 
-      <section className="bg-[#f2ede4] py-28">
+      <section className="py-28">
         <div className="mx-auto w-full max-w-7xl px-6 lg:px-10">
           <div className="grid gap-6 lg:grid-cols-[0.92fr_1.08fr]">
-            <div className="reveal rounded-[2rem] bg-white/70 p-7" data-text-group>
+            <div className="reveal rounded-[2rem] border border-[#b8d8e1]/24 bg-[linear-gradient(180deg,rgba(22,56,71,0.96),rgba(34,76,89,0.92))] p-7 text-white shadow-[0_28px_56px_-36px_rgba(16,55,66,0.68)]" data-text-group>
               <p
                 data-text-item
-                className="text-xs uppercase tracking-[0.35em] text-[#c96a4b]"
+                className="text-xs uppercase tracking-[0.35em] text-[#b8d8e1]"
               >
                 Frequently asked
               </p>
               <h2
                 data-text-item
-                className="mt-4 font-display text-5xl leading-[1.05]"
+                className="mt-4 font-display text-5xl leading-[1.05] text-white"
               >
                 Add answers for common guest questions.
               </h2>
-              <p data-text-item className="mt-5 leading-8 text-[#76685d]">
+              <p data-text-item className="mt-5 leading-8 text-white/72">
                 This makes the template feel complete and reduces the need for
                 guests to message the couple for small details.
               </p>
@@ -806,12 +806,12 @@ function MeditteraeanPage() {
                 <article
                   key={item.question}
                   data-card-item
-                  className="rounded-[1.8rem] border border-[#e5dccf] bg-[#fffaf3] p-6"
+                  className="rounded-[1.8rem] border border-[#b8d8e1]/24 bg-[linear-gradient(180deg,rgba(22,56,71,0.94),rgba(34,76,89,0.9))] p-6 text-white shadow-[0_28px_56px_-36px_rgba(16,55,66,0.62)]"
                 >
-                  <h3 className="font-display text-3xl text-[#3e352f]">
+                  <h3 className="font-display text-3xl text-white">
                     {item.question}
                   </h3>
-                  <p className="mt-4 leading-7 text-[#76685d]">{item.answer}</p>
+                  <p className="mt-4 leading-7 text-white/72">{item.answer}</p>
                 </article>
               ))}
             </div>
@@ -820,9 +820,9 @@ function MeditteraeanPage() {
       </section>
 
       <section id="journal" className="relative overflow-hidden py-40">
-        <div className="absolute inset-0 -z-10 bg-[linear-gradient(135deg,#f2c86d_0%,#c96a4b_60%,#754134_100%)]" />
+        <div className="absolute inset-0 -z-10 bg-[linear-gradient(135deg,#163847_0%,#224c59_58%,#0d2430_100%)]" />
         <div
-          className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.18),transparent_40%),radial-gradient(circle_at_bottom_right,rgba(255,255,255,0.12),transparent_35%)]"
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(184,216,225,0.22),transparent_40%),radial-gradient(circle_at_bottom_right,rgba(255,213,163,0.14),transparent_35%)]"
           aria-hidden="true"
         />
         <div
@@ -853,46 +853,46 @@ function MeditteraeanPage() {
 
       <section className="mx-auto w-full max-w-7xl px-6 py-28 lg:px-10">
         <div className="grid gap-8 lg:grid-cols-[0.88fr_1.12fr]">
-          <div className="reveal rounded-[2rem] border border-[#e5dccf] bg-[#fffaf3] p-7" data-text-group>
+          <div className="reveal rounded-[2rem] border border-[#b8d8e1]/24 bg-[linear-gradient(180deg,rgba(22,56,71,0.96),rgba(34,76,89,0.92))] p-7 text-white shadow-[0_28px_56px_-36px_rgba(16,55,66,0.68)]" data-text-group>
             <p
               data-text-item
-              className="text-xs uppercase tracking-[0.35em] text-[#c96a4b]"
+              className="text-xs uppercase tracking-[0.35em] text-[#b8d8e1]"
             >
               Location map
             </p>
             <h2
               data-text-item
-              className="mt-4 font-display text-5xl leading-[1.05]"
+              className="mt-4 font-display text-5xl leading-[1.05] text-white"
             >
               Finish the invitation with a map and arrival details.
             </h2>
-            <p data-text-item className="mt-5 leading-8 text-[#76685d]">
+            <p data-text-item className="mt-5 leading-8 text-white/72">
               This placeholder map can later be replaced with the real venue
               location, exact coordinates, parking details, or shuttle guidance.
             </p>
             <div data-text-item className="mt-6 grid gap-4 sm:grid-cols-2">
-              <div className="rounded-[1.4rem] bg-[#f2ede4] p-4">
-                <div className="text-xs uppercase tracking-[0.28em] text-[#8a7b6d]">
+              <div className="rounded-[1.4rem] border border-white/14 bg-white/10 p-4 backdrop-blur-sm">
+                <div className="text-xs uppercase tracking-[0.28em] text-[#b8d8e1]">
                   Venue
                 </div>
-                <div className="mt-2 font-display text-2xl text-[#3e352f]">
+                <div className="mt-2 font-display text-2xl text-white">
                   Placeholder Beach Club
                 </div>
               </div>
-              <div className="rounded-[1.4rem] bg-[#f2ede4] p-4">
-                <div className="text-xs uppercase tracking-[0.28em] text-[#8a7b6d]">
+              <div className="rounded-[1.4rem] border border-[#f1d4af]/30 bg-[#fff5e8]/10 p-4 backdrop-blur-sm">
+                <div className="text-xs uppercase tracking-[0.28em] text-[#f1d4af]">
                   Address
                 </div>
-                <div className="mt-2 font-display text-2xl text-[#3e352f]">
+                <div className="mt-2 font-display text-2xl text-white">
                   Seaside Road 12
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="reveal overflow-hidden rounded-[2rem] border border-[#e5dccf] bg-white shadow-sm">
-            <div className="border-b border-[#e5dccf] bg-[#f7f2e8] px-5 py-4">
-              <div className="text-xs uppercase tracking-[0.32em] text-[#8a7b6d]">
+          <div className="reveal overflow-hidden rounded-[2rem] border border-[#b8d8e1]/24 bg-[linear-gradient(180deg,rgba(22,56,71,0.96),rgba(34,76,89,0.92))] shadow-[0_28px_56px_-36px_rgba(16,55,66,0.68)]">
+            <div className="border-b border-white/10 bg-white/8 px-5 py-4">
+              <div className="text-xs uppercase tracking-[0.32em] text-[#b8d8e1]">
                 Google Maps placeholder
               </div>
             </div>
@@ -907,7 +907,7 @@ function MeditteraeanPage() {
         </div>
       </section>
 
-      <footer id="book" className="bg-[#2f2a25] pb-12 pt-28 text-[#faf6ed]">
+      <footer id="book" className="bg-[linear-gradient(180deg,#102c38,#163847_42%,#0d2430_100%)] pb-12 pt-28 text-[#f7fcfd]">
         <div className="mx-auto w-full max-w-7xl px-6 lg:px-10">
           <div
             className="grid gap-12 border-b border-white/15 pb-20 md:grid-cols-12"
@@ -920,7 +920,7 @@ function MeditteraeanPage() {
               >
                 Ready for names,
                 <br />
-                <em className="text-[#d77a59]">details, and RSVP edits.</em>
+                <em className="text-[#ffd5a3]">details, and RSVP edits.</em>
               </h2>
             </div>
             <div className="reveal flex flex-col justify-end md:col-span-4 md:col-start-9">
@@ -936,7 +936,7 @@ function MeditteraeanPage() {
                 />
                 <button
                   type="button"
-                  className="text-sm uppercase tracking-widest transition hover:text-[#d77a59]"
+                  className="text-sm uppercase tracking-widest transition hover:text-[#ffd5a3]"
                 >
                   Send →
                 </button>
@@ -946,7 +946,7 @@ function MeditteraeanPage() {
 
           <div className="flex flex-col gap-6 pt-10 text-sm text-white/60 md:flex-row md:justify-between">
             <div className="font-display text-xl text-[#faf6ed]">
-              Med<span className="text-[#c96a4b]">·</span>Template
+              Med<span className="text-[#ffd5a3]">·</span>Template
             </div>
             <div className="flex gap-8">
               <a href="#top" className="transition hover:text-white">
