@@ -90,12 +90,20 @@ export default function MedDreamSparkPage() {
 
   useEffect(() => {
     const ctx = gsap.context(() => {
+      const prefersReducedMotion =
+        typeof window !== 'undefined' &&
+        window.matchMedia &&
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+      if (prefersReducedMotion) return
+
       const tl = gsap.timeline({ defaults: { ease: 'power3.out' } })
-      tl.from('.hero-eyebrow', { y: 20, opacity: 0, duration: 0.8 })
-        .from('.hero-word', { y: 80, opacity: 0, duration: 1, stagger: 0.12 }, '-=0.4')
-        .from('.hero-sub', { y: 20, opacity: 0, duration: 0.8 }, '-=0.5')
-        .from('.hero-cta', { y: 20, opacity: 0, duration: 0.6 }, '-=0.4')
-        .from('.hero-meta', { opacity: 0, duration: 0.8, stagger: 0.1 }, '-=0.3')
+      tl.from('.hero-eyebrow', { y: 18, opacity: 0, duration: 0.75 })
+        .from('.hero-word', { y: 90, opacity: 0, duration: 1.05, stagger: 0.12 }, '-=0.35')
+        .from('.hero-sub', { y: 18, opacity: 0, duration: 0.75 }, '-=0.55')
+        .from('.hero-cta', { y: 18, opacity: 0, duration: 0.65 }, '-=0.5')
+        .from('.hero-meta', { y: 10, opacity: 0, duration: 0.8, stagger: 0.12 }, '-=0.45')
+        .from('.hero-orb', { scale: 0.85, opacity: 0, duration: 0.9, stagger: 0.12 }, '-=0.7')
 
       gsap.to('.hero-img', {
         yPercent: 18,
@@ -104,14 +112,95 @@ export default function MedDreamSparkPage() {
         scrollTrigger: { trigger: '.hero', start: 'top top', end: 'bottom top', scrub: true },
       })
 
+      const headerBar = root.current?.querySelector('[data-header-bar]')
+      if (headerBar) {
+        gsap.fromTo(
+          headerBar,
+          { backgroundColor: 'rgba(23,56,71,0)', backdropFilter: 'blur(0px)' },
+          {
+            backgroundColor: 'rgba(23,56,71,0.45)',
+            backdropFilter: 'blur(10px)',
+            ease: 'none',
+            scrollTrigger: { trigger: '.hero', start: 'top top', end: 'bottom top', scrub: true },
+          },
+        )
+      }
+
       gsap.utils.toArray('.reveal').forEach((element) => {
-        gsap.from(element, {
-          y: 60,
-          opacity: 0,
-          duration: 1.1,
-          ease: 'power3.out',
-          scrollTrigger: { trigger: element, start: 'top 85%' },
-        })
+        gsap.fromTo(
+          element,
+          { y: 56, opacity: 0, filter: 'blur(10px)' },
+          {
+            y: 0,
+            opacity: 1,
+            filter: 'blur(0px)',
+            duration: 1.1,
+            ease: 'power3.out',
+            scrollTrigger: { trigger: element, start: 'top 85%' },
+          },
+        )
+      })
+
+      gsap.utils.toArray('.title-wipe').forEach((element) => {
+        gsap.fromTo(
+          element,
+          { y: 30, opacity: 0, clipPath: 'inset(0 0 100% 0)' },
+          {
+            y: 0,
+            opacity: 1,
+            clipPath: 'inset(0 0 0% 0)',
+            duration: 1.2,
+            ease: 'power4.out',
+            scrollTrigger: { trigger: element, start: 'top 85%' },
+          },
+        )
+      })
+
+      gsap.utils.toArray('.img-reveal').forEach((element) => {
+        gsap.fromTo(
+          element,
+          { clipPath: 'inset(14% 8% 14% 8% round 20px)', filter: 'saturate(0.9)', scale: 1.06 },
+          {
+            clipPath: 'inset(0% 0% 0% 0% round 20px)',
+            filter: 'saturate(1)',
+            scale: 1,
+            duration: 1.35,
+            ease: 'power3.out',
+            scrollTrigger: { trigger: element, start: 'top 78%' },
+          },
+        )
+      })
+
+      gsap.utils.toArray('.card-pop').forEach((element) => {
+        gsap.fromTo(
+          element,
+          { y: 70, opacity: 0, rotateX: 18, rotateZ: -1.5, transformPerspective: 900, scale: 0.98 },
+          {
+            y: 0,
+            opacity: 1,
+            rotateX: 0,
+            rotateZ: 0,
+            scale: 1,
+            duration: 1.1,
+            ease: 'power4.out',
+            scrollTrigger: { trigger: element, start: 'top 86%' },
+          },
+        )
+      })
+
+      gsap.utils.toArray('.sticker').forEach((element) => {
+        gsap.fromTo(
+          element,
+          { y: 18, rotate: -6, opacity: 0 },
+          {
+            y: 0,
+            rotate: 0,
+            opacity: 1,
+            duration: 0.9,
+            ease: 'elastic.out(1, 0.55)',
+            scrollTrigger: { trigger: element, start: 'top 88%' },
+          },
+        )
       })
 
       gsap.to('.marquee-track', {
@@ -131,6 +220,17 @@ export default function MedDreamSparkPage() {
             scrollTrigger: { trigger: element, start: 'top bottom', end: 'bottom top', scrub: true },
           },
         )
+      })
+
+      gsap.utils.toArray('.floaty').forEach((element) => {
+        gsap.to(element, {
+          y: () => gsap.utils.random(-18, -34),
+          x: () => gsap.utils.random(-10, 10),
+          duration: () => gsap.utils.random(3.2, 5.6),
+          ease: 'sine.inOut',
+          yoyo: true,
+          repeat: -1,
+        })
       })
 
       gsap.utils.toArray('[data-count]').forEach((element) => {
@@ -157,7 +257,10 @@ export default function MedDreamSparkPage() {
       className="overflow-x-hidden bg-[linear-gradient(180deg,#fffaf7_0%,#fbf7ef_45%,#f6fbfd_100%)] text-[#173847]"
     >
       <header className="fixed inset-x-0 top-0 z-50">
-        <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-6 py-6 lg:px-10">
+        <div
+          data-header-bar
+          className="mx-auto flex w-full max-w-7xl items-center justify-between rounded-b-3xl px-6 py-6 ring-1 ring-white/10 lg:px-10"
+        >
           <a href="#top" className="font-display text-xl tracking-wide text-white">
             {TEMPLATE.couple.partnerOne}
             <span className="text-[#ffd5a3]"> &amp; </span>
@@ -196,6 +299,12 @@ export default function MedDreamSparkPage() {
             className="h-full w-full object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-black/35 via-black/10 to-[#fbf7ef]" />
+        </div>
+
+        <div className="pointer-events-none absolute inset-0">
+          <div className="hero-orb floaty absolute left-[8%] top-[18%] h-24 w-24 rounded-full bg-[radial-gradient(circle_at_30%_30%,rgba(255,213,163,0.9),rgba(255,213,163,0.0)_70%)] blur-[1px]" />
+          <div className="hero-orb floaty absolute right-[10%] top-[28%] h-32 w-32 rounded-full bg-[radial-gradient(circle_at_30%_30%,rgba(158,209,223,0.9),rgba(158,209,223,0.0)_70%)] blur-[1px]" />
+          <div className="hero-orb floaty absolute bottom-[18%] left-[22%] h-20 w-20 rounded-full bg-[radial-gradient(circle_at_30%_30%,rgba(255,255,255,0.5),rgba(255,255,255,0.0)_70%)] blur-[1px]" />
         </div>
 
         <div className="relative z-10 mx-auto flex h-full w-full max-w-7xl flex-col justify-end px-6 pb-24 pt-32 lg:px-10">
@@ -272,17 +381,19 @@ export default function MedDreamSparkPage() {
 
       <section id="story" className="mx-auto w-full max-w-7xl px-6 py-32 lg:px-10">
         <div className="grid items-start gap-12 md:grid-cols-12">
-          <div className="reveal md:col-span-5">
+          <div className="md:col-span-5">
             <p className="mb-6 text-xs uppercase tracking-[0.4em] text-[#2f7186]">
               {TEMPLATE.story.eyebrow}
             </p>
-            <h2 className="font-display text-balance text-5xl leading-[1.05] md:text-6xl">
+            <h2 className="title-wipe font-display text-balance text-5xl leading-[1.05] md:text-6xl">
               {TEMPLATE.story.titleA} <em className="text-[#2f7186]">{TEMPLATE.story.titleB}</em>.
             </h2>
           </div>
-          <div className="reveal space-y-6 text-lg leading-relaxed text-[#5f7680] md:col-span-6 md:col-start-7">
+          <div className="space-y-6 text-lg leading-relaxed text-[#5f7680] md:col-span-6 md:col-start-7">
             {TEMPLATE.story.paragraphs.map((p) => (
-              <p key={p}>{p}</p>
+              <p key={p} className="reveal">
+                {p}
+              </p>
             ))}
             <div className="pt-6">
               <div className="font-display italic text-xl">{coupleName}</div>
@@ -296,12 +407,12 @@ export default function MedDreamSparkPage() {
 
       <section id="events" className="bg-white/70 py-32">
         <div className="mx-auto w-full max-w-7xl px-6 lg:px-10">
-          <div className="reveal mb-16 flex items-end justify-between gap-10">
+          <div className="mb-16 flex items-end justify-between gap-10">
             <div>
               <p className="mb-4 text-xs uppercase tracking-[0.4em] text-[#2f7186]">
                 {TEMPLATE.events.eyebrow}
               </p>
-              <h2 className="font-display max-w-2xl text-balance text-5xl md:text-6xl">
+              <h2 className="title-wipe font-display max-w-2xl text-balance text-5xl md:text-6xl">
                 {TEMPLATE.events.titleA} <em>{TEMPLATE.events.titleB}</em>
               </h2>
             </div>
@@ -315,8 +426,8 @@ export default function MedDreamSparkPage() {
 
           <div className="grid gap-8 md:grid-cols-3">
             {TEMPLATE.events.cards.map((c) => (
-              <article key={c.n} className="reveal group">
-                <div className="relative mb-6 aspect-[4/5] overflow-hidden rounded-xl">
+              <article key={c.n} className="card-pop group">
+                <div className="img-reveal relative mb-6 aspect-[4/5] overflow-hidden rounded-xl">
                   <img
                     src={c.img}
                     alt={c.title}
@@ -337,8 +448,8 @@ export default function MedDreamSparkPage() {
 
       <section id="gallery" className="mx-auto w-full max-w-7xl px-6 py-32 lg:px-10">
         <div className="grid items-center gap-8 md:grid-cols-12">
-          <div className="reveal relative md:col-span-7">
-            <div className="aspect-[4/5] overflow-hidden rounded-xl">
+          <div className="relative md:col-span-7">
+            <div className="img-reveal aspect-[4/5] overflow-hidden rounded-xl">
               <img
                 src={gallery}
                 alt="Wedding couple by the Mediterranean sea"
@@ -346,15 +457,19 @@ export default function MedDreamSparkPage() {
                 className="parallax-img h-[115%] w-full object-cover"
               />
             </div>
+            <div className="sticker absolute -bottom-6 left-6 rounded-2xl bg-white/90 px-5 py-4 shadow-[0_20px_60px_rgba(23,56,71,0.18)] ring-1 ring-[#e3eef2]">
+              <div className="text-xs uppercase tracking-[0.4em] text-[#2f7186]">Venue</div>
+              <div className="font-display text-2xl">{TEMPLATE.event.locationLabel}</div>
+            </div>
           </div>
-          <div className="reveal md:col-span-4 md:col-start-9">
+          <div className="md:col-span-4 md:col-start-9">
             <p className="mb-6 text-xs uppercase tracking-[0.4em] text-[#2f7186]">
               {TEMPLATE.venue.eyebrow}
             </p>
-            <h2 className="mb-6 font-display text-5xl leading-[1.05] text-balance">
+            <h2 className="title-wipe mb-6 font-display text-5xl leading-[1.05] text-balance">
               {TEMPLATE.venue.titleA} <em>{TEMPLATE.venue.titleB}</em>
             </h2>
-            <p className="mb-8 leading-relaxed text-[#5f7680]">{TEMPLATE.venue.description}</p>
+            <p className="reveal mb-8 leading-relaxed text-[#5f7680]">{TEMPLATE.venue.description}</p>
             <dl className="grid grid-cols-2 gap-6 border-t border-[#e3eef2] pt-6 text-sm">
               <div>
                 <dt className="mb-1 text-xs uppercase tracking-widest text-[#6a8790]">Date</dt>
@@ -378,12 +493,12 @@ export default function MedDreamSparkPage() {
       <section id="travel" className="relative overflow-hidden py-40">
         <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,rgba(255,213,163,0.9),transparent_45%),radial-gradient(circle_at_bottom_right,rgba(158,209,223,0.65),transparent_55%),linear-gradient(135deg,#173847,#224c59)]" />
         <div className="mx-auto w-full max-w-7xl px-6 text-center lg:px-10">
-          <div className="reveal">
+          <div>
             <p className="mb-8 text-xs uppercase tracking-[0.4em] text-white/80">— {TEMPLATE.quote.eyebrow}</p>
-            <blockquote className="mx-auto max-w-4xl text-balance font-display text-4xl leading-[1.1] text-white md:text-6xl">
+            <blockquote className="title-wipe mx-auto max-w-4xl text-balance font-display text-4xl leading-[1.1] text-white md:text-6xl">
               {TEMPLATE.quote.text}
             </blockquote>
-            <div className="mt-10 text-sm uppercase tracking-widest text-white/75">{coupleName}</div>
+            <div className="reveal mt-10 text-sm uppercase tracking-widest text-white/75">{coupleName}</div>
           </div>
         </div>
       </section>
@@ -391,18 +506,18 @@ export default function MedDreamSparkPage() {
       <footer id="rsvp" className="bg-[#173847] pt-28 pb-12 text-white">
         <div className="mx-auto w-full max-w-7xl px-6 lg:px-10">
           <div className="grid gap-12 border-b border-white/15 pb-20 md:grid-cols-12">
-            <div className="reveal md:col-span-7">
-              <h2 className="font-display text-balance text-5xl leading-[1.02] md:text-7xl">
+            <div className="md:col-span-7">
+              <h2 className="title-wipe font-display text-balance text-5xl leading-[1.02] md:text-7xl">
                 {TEMPLATE.rsvp.titleA}.<br />
                 <em className="text-[#ffd5a3]">{TEMPLATE.rsvp.titleB}</em>
               </h2>
             </div>
-            <div className="reveal flex flex-col justify-end md:col-span-4 md:col-start-9">
-              <p className="mb-6 text-white/70">
+            <div className="flex flex-col justify-end md:col-span-4 md:col-start-9">
+              <p className="reveal mb-6 text-white/70">
                 {TEMPLATE.rsvp.description} RSVP deadline: {TEMPLATE.event.rsvpDeadline}.
               </p>
               <form
-                className="flex border-b border-white/40 pb-3"
+                className="reveal flex border-b border-white/40 pb-3"
                 onSubmit={(e) => {
                   e.preventDefault()
                 }}
@@ -443,4 +558,3 @@ export default function MedDreamSparkPage() {
     </div>
   )
 }
-
