@@ -252,87 +252,353 @@ function MeditteraeanPage() {
         },
       })
 
-      gsap.utils.toArray('.reveal').forEach((element) => {
-        if (
-          element.matches('[data-text-group]') ||
-          element.matches('[data-card-grid]') ||
-          element.matches('.countdown-shell') ||
-          element.matches('.scene-copy') ||
-          element.matches('.scene-media')
-        ) {
-          return
-        }
-
-        gsap.from(element, {
-          y: 32,
-          opacity: 0,
-          duration: 0.85,
-          ease: 'power3.out',
-          scrollTrigger: {
-            trigger: element,
-            start: 'top 85%',
-          },
-        })
-      })
-
-      gsap.utils.toArray('[data-text-group]').forEach((element) => {
-        const targets = element.querySelectorAll('[data-text-item]')
-        if (!targets.length) return
-
-        gsap.from(targets, {
-          y: 18,
-          opacity: 0,
-          duration: 0.65,
-          ease: 'power2.out',
-          stagger: 0.08,
-          scrollTrigger: {
-            trigger: element,
-            start: 'top 82%',
-          },
-        })
-      })
-
-      gsap.utils.toArray('[data-card-grid]').forEach((element) => {
-        const cards = element.querySelectorAll('[data-card-item]')
-        if (!cards.length) return
-
-        gsap.from(cards, {
-          y: 24,
-          opacity: 0,
-          scale: 0.985,
-          duration: 0.7,
-          ease: 'power2.out',
-          stagger: 0.08,
-          scrollTrigger: {
-            trigger: element,
-            start: 'top 80%',
-          },
-        })
-      })
-
       gsap.from('.countdown-shell', {
-        y: 24,
+        scale: 0.94,
         opacity: 0,
-        duration: 0.8,
+        duration: 0.9,
         ease: 'power2.out',
         scrollTrigger: {
-          trigger: '.countdown-shell',
-          start: 'top 82%',
+          trigger: '#countdown-section',
+          start: 'top 78%',
+        },
+      })
+
+      gsap.from('.countdown-note', {
+        x: (index) => (index === 0 ? -36 : 36),
+        rotation: (index) => (index === 0 ? -4 : 4),
+        opacity: 0,
+        duration: 0.75,
+        stagger: 0.08,
+        ease: 'power2.out',
+        scrollTrigger: {
+          trigger: '#countdown-section',
+          start: 'top 78%',
         },
       })
 
       gsap.from('.countdown-card', {
-        y: 18,
+        y: (index) => (index % 2 === 0 ? 30 : 18),
+        rotation: (index) => (index % 2 === 0 ? -5 : 5),
         opacity: 0,
-        scale: 0.97,
-        duration: 0.65,
-        stagger: 0.08,
+        duration: 0.8,
+        stagger: 0.09,
         ease: 'power2.out',
         scrollTrigger: {
           trigger: '.countdown-grid',
-          start: 'top 84%',
+          start: 'top 82%',
         },
       })
+
+      const aboutTl = gsap.timeline({
+        scrollTrigger: {
+          trigger: '#about',
+          start: 'top 72%',
+        },
+      })
+
+      aboutTl
+        .from('.about-copy [data-text-item]', {
+          y: 24,
+          opacity: 0,
+          duration: 0.7,
+          stagger: 0.08,
+          ease: 'power2.out',
+        })
+        .from(
+          '.about-chip',
+          {
+            y: 26,
+            opacity: 0,
+            scale: 0.95,
+            rotation: (index) => (index - 1) * 3,
+            duration: 0.6,
+            stagger: 0.08,
+            ease: 'power2.out',
+          },
+          '-=0.35',
+        )
+        .from(
+          '.mosaic-card',
+          {
+            clipPath: 'inset(18% 12% 18% 12% round 1.8rem)',
+            opacity: 0,
+            duration: 0.9,
+            stagger: 0.1,
+            ease: 'power2.out',
+          },
+          '-=0.38',
+        )
+
+      const showcaseTl = gsap.timeline({
+        scrollTrigger: {
+          trigger: '#experiences',
+          start: 'top 74%',
+        },
+      })
+
+      showcaseTl
+        .from('.showcase-head [data-text-item]', {
+          y: 24,
+          opacity: 0,
+          duration: 0.65,
+          stagger: 0.08,
+          ease: 'power2.out',
+        })
+        .from(
+          '.showcase-tabs button',
+          {
+            y: 14,
+            opacity: 0,
+            scale: 0.95,
+            duration: 0.45,
+            stagger: 0.06,
+            ease: 'power2.out',
+          },
+          '-=0.35',
+        )
+        .from(
+          '.scene-copy',
+          {
+            x: -34,
+            opacity: 0,
+            duration: 0.7,
+            ease: 'power2.out',
+          },
+          '-=0.2',
+        )
+        .from(
+          '.scene-media',
+          {
+            x: 42,
+            opacity: 0,
+            scale: 0.97,
+            duration: 0.8,
+            ease: 'power2.out',
+          },
+          '<',
+        )
+
+      const timelineTl = gsap.timeline({
+        scrollTrigger: {
+          trigger: '#timeline-section',
+          start: 'top 74%',
+        },
+      })
+
+      timelineTl
+        .from('.timeline-copy [data-text-item]', {
+          y: 22,
+          opacity: 0,
+          duration: 0.65,
+          stagger: 0.08,
+          ease: 'power2.out',
+        })
+        .from(
+          '.timeline-line',
+          {
+            scaleX: 0,
+            transformOrigin: 'left center',
+            duration: 0.7,
+            ease: 'power2.out',
+          },
+          '-=0.15',
+        )
+        .from(
+          '.timeline-card',
+          {
+            y: (index) => (index % 2 === 0 ? 28 : -28),
+            opacity: 0,
+            duration: 0.7,
+            stagger: 0.12,
+            ease: 'power2.out',
+          },
+          '-=0.3',
+        )
+        .from(
+          '.timeline-dot',
+          {
+            scale: 0,
+            duration: 0.35,
+            stagger: 0.12,
+            ease: 'back.out(2)',
+          },
+          '-=0.5',
+        )
+
+      const infoTl = gsap.timeline({
+        scrollTrigger: {
+          trigger: '#info-section',
+          start: 'top 72%',
+        },
+      })
+
+      infoTl
+        .from('.info-visual', {
+          clipPath: 'inset(10% 0 10% 0 round 2.5rem)',
+          opacity: 0,
+          duration: 0.95,
+          ease: 'power2.out',
+        })
+        .from(
+          '.info-overlay',
+          {
+            y: 34,
+            opacity: 0,
+            duration: 0.7,
+            ease: 'power2.out',
+          },
+          '-=0.45',
+        )
+        .from(
+          '.info-copy [data-text-item]',
+          {
+            x: 26,
+            opacity: 0,
+            duration: 0.65,
+            stagger: 0.08,
+            ease: 'power2.out',
+          },
+          '-=0.55',
+        )
+        .from(
+          '.info-strip',
+          {
+            x: 40,
+            opacity: 0,
+            duration: 0.6,
+            stagger: 0.08,
+            ease: 'power2.out',
+          },
+          '-=0.35',
+        )
+
+      const galleryTl = gsap.timeline({
+        scrollTrigger: {
+          trigger: '#gallery',
+          start: 'top 72%',
+        },
+      })
+
+      galleryTl
+        .from('.gallery-stage', {
+          clipPath: 'inset(6% 4% 6% 4% round 2.8rem)',
+          opacity: 0,
+          duration: 1,
+          ease: 'power2.out',
+        })
+        .from(
+          '.gallery-panel [data-text-item]',
+          {
+            y: 26,
+            opacity: 0,
+            duration: 0.7,
+            stagger: 0.08,
+            ease: 'power2.out',
+          },
+          '-=0.5',
+        )
+        .from(
+          '.gallery-chip',
+          {
+            y: 12,
+            opacity: 0,
+            scale: 0.94,
+            duration: 0.45,
+            stagger: 0.06,
+            ease: 'power2.out',
+          },
+          '-=0.3',
+        )
+
+      const faqTl = gsap.timeline({
+        scrollTrigger: {
+          trigger: '#faq-section',
+          start: 'top 74%',
+        },
+      })
+
+      faqTl
+        .from('.faq-copy [data-text-item]', {
+          y: 22,
+          opacity: 0,
+          duration: 0.65,
+          stagger: 0.08,
+          ease: 'power2.out',
+        })
+        .from(
+          '.faq-item',
+          {
+            x: 34,
+            opacity: 0,
+            duration: 0.55,
+            stagger: 0.08,
+            ease: 'power2.out',
+          },
+          '-=0.25',
+        )
+
+      const journalTl = gsap.timeline({
+        scrollTrigger: {
+          trigger: '#journal',
+          start: 'top 76%',
+        },
+      })
+
+      journalTl
+        .from('.journal-copy [data-text-item]', {
+          y: 28,
+          opacity: 0,
+          duration: 0.75,
+          stagger: 0.1,
+          ease: 'power2.out',
+        })
+        .from(
+          '#journal',
+          {
+            backgroundPosition: '50% 0%',
+            duration: 1,
+            ease: 'none',
+          },
+          0,
+        )
+
+      const mapTl = gsap.timeline({
+        scrollTrigger: {
+          trigger: '#map-section',
+          start: 'top 74%',
+        },
+      })
+
+      mapTl
+        .from('.map-frame', {
+          x: -42,
+          opacity: 0,
+          clipPath: 'inset(0 0 18% 0 round 2.4rem)',
+          duration: 0.95,
+          ease: 'power2.out',
+        })
+        .from(
+          '.map-copy [data-text-item]',
+          {
+            x: 28,
+            opacity: 0,
+            duration: 0.65,
+            stagger: 0.08,
+            ease: 'power2.out',
+          },
+          '-=0.45',
+        )
+        .from(
+          '.map-detail',
+          {
+            x: 34,
+            opacity: 0,
+            duration: 0.55,
+            stagger: 0.08,
+            ease: 'power2.out',
+          },
+          '-=0.3',
+        )
 
       gsap.utils.toArray('.parallax-img').forEach((element) => {
         gsap.fromTo(
@@ -529,9 +795,12 @@ function MeditteraeanPage() {
         </div>
       </section>
 
-      <section className="mx-auto w-full max-w-7xl px-6 py-20 lg:px-10">
+      <section
+        id="countdown-section"
+        className="mx-auto w-full max-w-7xl px-6 py-20 lg:px-10"
+      >
         <div className="countdown-shell relative mx-auto max-w-5xl text-center">
-          <div className="absolute left-0 top-10 hidden w-44 rounded-[1.5rem] border border-[#b8d8e1]/18 bg-white/45 p-4 text-left shadow-[0_24px_60px_-42px_rgba(34,76,89,0.35)] backdrop-blur md:block">
+          <div className="countdown-note absolute left-0 top-10 hidden w-44 rounded-[1.5rem] border border-[#b8d8e1]/18 bg-white/45 p-4 text-left shadow-[0_24px_60px_-42px_rgba(34,76,89,0.35)] backdrop-blur md:block">
             <div className="text-xs uppercase tracking-[0.3em] text-[#6a8790]">
               Event note
             </div>
@@ -544,7 +813,7 @@ function MeditteraeanPage() {
             </p>
           </div>
 
-          <div className="absolute right-0 top-20 hidden w-44 rounded-[1.5rem] border border-[#f1d4af]/40 bg-[#fff7ed]/70 p-4 text-left shadow-[0_24px_60px_-42px_rgba(175,124,82,0.34)] backdrop-blur md:block">
+          <div className="countdown-note absolute right-0 top-20 hidden w-44 rounded-[1.5rem] border border-[#f1d4af]/40 bg-[#fff7ed]/70 p-4 text-left shadow-[0_24px_60px_-42px_rgba(175,124,82,0.34)] backdrop-blur md:block">
             <div className="text-xs uppercase tracking-[0.3em] text-[#8b7358]">
               Template use
             </div>
@@ -591,7 +860,7 @@ function MeditteraeanPage() {
         className="mx-auto w-full max-w-7xl rounded-[2.8rem] border border-[#b8d8e1]/22 bg-[linear-gradient(145deg,rgba(22,56,71,0.98),rgba(34,76,89,0.94))] px-6 py-16 shadow-[0_34px_90px_-46px_rgba(16,55,66,0.78)] lg:px-10 lg:py-20"
       >
         <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr]">
-          <div className="reveal flex flex-col justify-between" data-text-group>
+          <div className="about-copy flex flex-col justify-between" data-text-group>
             <div>
               <p
                 data-text-item
@@ -619,7 +888,7 @@ function MeditteraeanPage() {
               {storyCards.map((item) => (
                 <div
                   key={item.label}
-                  className="float-chip rounded-[1.5rem] border border-white/14 bg-white/10 p-4 backdrop-blur-sm"
+                  className="about-chip rounded-[1.5rem] border border-white/14 bg-white/10 p-4 backdrop-blur-sm"
                 >
                   <div className="text-[10px] uppercase tracking-[0.28em] text-[#b8d8e1]">
                     {item.label}
@@ -631,10 +900,10 @@ function MeditteraeanPage() {
             </div>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-12" data-card-grid>
+          <div className="about-mosaic grid gap-4 md:grid-cols-12" data-card-grid>
             <article
               data-card-item
-              className="relative overflow-hidden rounded-[1.8rem] border border-white/12 md:col-span-4"
+              className="mosaic-card relative overflow-hidden rounded-[1.8rem] border border-white/12 md:col-span-4"
             >
               <img
                 src={lemons}
@@ -652,7 +921,7 @@ function MeditteraeanPage() {
 
             <article
               data-card-item
-              className="relative overflow-hidden rounded-[1.8rem] border border-white/12 bg-white/8 p-6 text-white backdrop-blur-sm md:col-span-8"
+              className="mosaic-card relative overflow-hidden rounded-[1.8rem] border border-white/12 bg-white/8 p-6 text-white backdrop-blur-sm md:col-span-8"
             >
               <div className="text-xs uppercase tracking-[0.28em] text-[#b8d8e1]">
                 Layout idea
@@ -669,7 +938,7 @@ function MeditteraeanPage() {
 
             <article
               data-card-item
-              className="relative overflow-hidden rounded-[1.8rem] border border-white/12 md:col-span-7"
+              className="mosaic-card relative overflow-hidden rounded-[1.8rem] border border-white/12 md:col-span-7"
             >
               <img
                 src={table}
@@ -687,7 +956,7 @@ function MeditteraeanPage() {
 
             <article
               data-card-item
-              className="rounded-[1.8rem] border border-white/12 bg-[#fff7ed]/10 p-6 text-white backdrop-blur-sm md:col-span-5"
+              className="mosaic-card rounded-[1.8rem] border border-white/12 bg-[#fff7ed]/10 p-6 text-white backdrop-blur-sm md:col-span-5"
             >
               <div className="text-xs uppercase tracking-[0.28em] text-[#f1d4af]">
                 Editable notes
@@ -704,7 +973,7 @@ function MeditteraeanPage() {
       </section>
 
       <section id="experiences" className="mx-auto w-full max-w-7xl px-6 py-28 lg:px-10">
-        <div className="reveal mb-10 flex flex-col gap-6 md:flex-row md:items-end md:justify-between" data-text-group>
+        <div className="showcase-head mb-10 flex flex-col gap-6 md:flex-row md:items-end md:justify-between" data-text-group>
           <div>
             <p
               data-text-item
@@ -719,7 +988,7 @@ function MeditteraeanPage() {
               Use a <em>slider-like</em> component so one section feels alive.
             </h2>
           </div>
-          <div data-text-item className="flex flex-wrap gap-3">
+          <div data-text-item className="showcase-tabs flex flex-wrap gap-3">
             {showcaseMoments.map((item, index) => (
               <button
                 key={item.name}
@@ -740,7 +1009,7 @@ function MeditteraeanPage() {
         <div className="grid items-center gap-8 lg:grid-cols-[0.78fr_1.22fr]">
           <div
             ref={sceneCopyRef}
-            className="scene-copy reveal rounded-[2rem] border border-[#dbe8ec] bg-white/75 p-7 shadow-[0_28px_56px_-40px_rgba(34,76,89,0.2)] backdrop-blur-sm"
+            className="scene-copy rounded-[2rem] border border-[#dbe8ec] bg-white/75 p-7 shadow-[0_28px_56px_-40px_rgba(34,76,89,0.2)] backdrop-blur-sm"
           >
             <div className="text-xs uppercase tracking-[0.35em] text-[#6a8790]">
               {activeMoment.kicker}
@@ -774,7 +1043,7 @@ function MeditteraeanPage() {
 
           <div
             ref={sceneMediaRef}
-            className="scene-media reveal relative overflow-hidden rounded-[2.4rem] border border-[#b8d8e1]/24 bg-[linear-gradient(180deg,rgba(22,56,71,0.94),rgba(34,76,89,0.9))] p-4 shadow-[0_30px_70px_-42px_rgba(16,55,66,0.64)]"
+            className="scene-media relative overflow-hidden rounded-[2.4rem] border border-[#b8d8e1]/24 bg-[linear-gradient(180deg,rgba(22,56,71,0.94),rgba(34,76,89,0.9))] p-4 shadow-[0_30px_70px_-42px_rgba(16,55,66,0.64)]"
           >
             <div className="relative overflow-hidden rounded-[2rem]">
               <img
@@ -799,8 +1068,8 @@ function MeditteraeanPage() {
         </div>
       </section>
 
-      <section className="mx-auto w-full max-w-7xl px-6 py-10 lg:px-10">
-        <div className="reveal mb-10 max-w-2xl" data-text-group>
+      <section id="timeline-section" className="mx-auto w-full max-w-7xl px-6 py-10 lg:px-10">
+        <div className="timeline-copy mb-10 max-w-2xl" data-text-group>
           <p
             data-text-item
             className="mb-4 text-xs uppercase tracking-[0.4em] text-[#6a8790]"
@@ -816,17 +1085,16 @@ function MeditteraeanPage() {
         </div>
 
         <div className="relative">
-          <div className="absolute left-0 right-0 top-11 hidden h-px bg-[#d7e6eb] lg:block" />
-          <div className="grid gap-5 lg:grid-cols-4" data-card-grid>
+          <div className="timeline-line absolute left-0 right-0 top-11 hidden h-px bg-[#d7e6eb] lg:block" />
+          <div className="grid gap-5 lg:grid-cols-4">
             {timelineItems.map((item, index) => (
               <article
                 key={item.time}
-                data-card-item
-                className={`rounded-[1.8rem] border border-[#d7e6eb] bg-white/80 p-6 shadow-[0_24px_50px_-40px_rgba(34,76,89,0.22)] backdrop-blur-sm ${
+                className={`timeline-card rounded-[1.8rem] border border-[#d7e6eb] bg-white/80 p-6 shadow-[0_24px_50px_-40px_rgba(34,76,89,0.22)] backdrop-blur-sm ${
                   index % 2 === 1 ? 'lg:mt-12' : ''
                 }`}
               >
-                <div className="mb-5 h-3 w-3 rounded-full bg-[#224c59]" />
+                <div className="timeline-dot mb-5 h-3 w-3 rounded-full bg-[#224c59]" />
                 <div className="text-xs uppercase tracking-[0.3em] text-[#6a8790]">
                   {item.time}
                 </div>
@@ -840,9 +1108,9 @@ function MeditteraeanPage() {
         </div>
       </section>
 
-      <section className="mx-auto w-full max-w-7xl px-6 py-28 lg:px-10">
+      <section id="info-section" className="mx-auto w-full max-w-7xl px-6 py-28 lg:px-10">
         <div className="grid items-center gap-10 lg:grid-cols-[0.94fr_1.06fr]">
-          <div className="reveal relative overflow-hidden rounded-[2.5rem] border border-[#b8d8e1]/24 bg-[linear-gradient(180deg,rgba(22,56,71,0.96),rgba(34,76,89,0.92))] p-4 shadow-[0_28px_56px_-36px_rgba(16,55,66,0.68)]">
+          <div className="info-visual relative overflow-hidden rounded-[2.5rem] border border-[#b8d8e1]/24 bg-[linear-gradient(180deg,rgba(22,56,71,0.96),rgba(34,76,89,0.92))] p-4 shadow-[0_28px_56px_-36px_rgba(16,55,66,0.68)]">
             <div className="overflow-hidden rounded-[2rem]">
               <img
                 src={table}
@@ -850,7 +1118,7 @@ function MeditteraeanPage() {
                 className="parallax-img h-[560px] w-full object-cover"
               />
             </div>
-            <div className="absolute bottom-8 left-8 right-8 rounded-[1.8rem] border border-white/14 bg-white/10 p-6 text-white backdrop-blur-md">
+            <div className="info-overlay absolute bottom-8 left-8 right-8 rounded-[1.8rem] border border-white/14 bg-white/10 p-6 text-white backdrop-blur-md">
               <div className="text-xs uppercase tracking-[0.35em] text-[#b8d8e1]">
                 Guest information
               </div>
@@ -861,7 +1129,7 @@ function MeditteraeanPage() {
           </div>
 
           <div>
-            <div className="reveal mb-8" data-text-group>
+            <div className="info-copy mb-8" data-text-group>
               <p
                 data-text-item
                 className="mb-4 text-xs uppercase tracking-[0.4em] text-[#6a8790]"
@@ -876,12 +1144,11 @@ function MeditteraeanPage() {
               </h2>
             </div>
 
-            <div className="grid gap-4" data-card-grid>
+            <div className="grid gap-4">
               {detailCards.map((card, index) => (
                 <article
                   key={card.label}
-                  data-card-item
-                  className={`rounded-[1.7rem] border p-5 shadow-[0_24px_50px_-40px_rgba(34,76,89,0.22)] ${
+                  className={`info-strip rounded-[1.7rem] border p-5 shadow-[0_24px_50px_-40px_rgba(34,76,89,0.22)] ${
                     index === 1
                       ? 'border-[#f1d4af]/60 bg-[#fff7ed]'
                       : 'border-[#d7e6eb] bg-white/80'
@@ -909,7 +1176,7 @@ function MeditteraeanPage() {
       </section>
 
       <section id="gallery" className="mx-auto w-full max-w-7xl px-6 py-16 lg:px-10">
-        <div className="reveal relative overflow-hidden rounded-[2.8rem] border border-[#b8d8e1]/24 shadow-[0_32px_70px_-44px_rgba(16,55,66,0.44)]">
+        <div className="gallery-stage relative overflow-hidden rounded-[2.8rem] border border-[#b8d8e1]/24 shadow-[0_32px_70px_-44px_rgba(16,55,66,0.44)]">
           <img
             src={door}
             alt="Mediterranean architectural detail for invitation gallery"
@@ -919,7 +1186,7 @@ function MeditteraeanPage() {
 
           <div className="absolute inset-x-0 bottom-0 top-0 flex items-end p-6 md:p-10">
             <div
-              className="max-w-xl rounded-[2rem] border border-white/16 bg-white/10 p-7 text-white backdrop-blur-md"
+              className="gallery-panel max-w-xl rounded-[2rem] border border-white/16 bg-white/10 p-7 text-white backdrop-blur-md"
               data-text-group
             >
               <p
@@ -941,13 +1208,13 @@ function MeditteraeanPage() {
               </p>
 
               <div data-text-item className="mt-7 flex flex-wrap gap-3">
-                <div className="rounded-full border border-white/16 bg-white/10 px-4 py-2 text-xs uppercase tracking-[0.28em] text-[#d9eef3]">
+                <div className="gallery-chip rounded-full border border-white/16 bg-white/10 px-4 py-2 text-xs uppercase tracking-[0.28em] text-[#d9eef3]">
                   Event date
                 </div>
-                <div className="rounded-full border border-white/16 bg-white/10 px-4 py-2 text-xs uppercase tracking-[0.28em] text-[#d9eef3]">
+                <div className="gallery-chip rounded-full border border-white/16 bg-white/10 px-4 py-2 text-xs uppercase tracking-[0.28em] text-[#d9eef3]">
                   Venue note
                 </div>
-                <div className="rounded-full border border-[#f1d4af]/26 bg-[#fff7ed]/10 px-4 py-2 text-xs uppercase tracking-[0.28em] text-[#f1d4af]">
+                <div className="gallery-chip rounded-full border border-[#f1d4af]/26 bg-[#fff7ed]/10 px-4 py-2 text-xs uppercase tracking-[0.28em] text-[#f1d4af]">
                   Save the date
                 </div>
               </div>
@@ -956,9 +1223,9 @@ function MeditteraeanPage() {
         </div>
       </section>
 
-      <section className="mx-auto w-full max-w-7xl px-6 py-24 lg:px-10">
+      <section id="faq-section" className="mx-auto w-full max-w-7xl px-6 py-24 lg:px-10">
         <div className="grid gap-8 lg:grid-cols-[0.92fr_1.08fr]">
-          <div className="reveal rounded-[2rem] border border-[#d7e6eb] bg-white/80 p-7 shadow-[0_24px_50px_-40px_rgba(34,76,89,0.2)]" data-text-group>
+          <div className="faq-copy rounded-[2rem] border border-[#d7e6eb] bg-white/80 p-7 shadow-[0_24px_50px_-40px_rgba(34,76,89,0.2)]" data-text-group>
             <p
               data-text-item
               className="mb-4 text-xs uppercase tracking-[0.35em] text-[#6a8790]"
@@ -981,7 +1248,7 @@ function MeditteraeanPage() {
             {faqItems.map((item, index) => (
               <article
                 key={item.question}
-                className={`reveal overflow-hidden rounded-[1.7rem] border transition-colors ${
+                className={`faq-item overflow-hidden rounded-[1.7rem] border transition-colors ${
                   openFaq === index
                     ? 'border-[#224c59] bg-[linear-gradient(180deg,#163847,#224c59)] text-white'
                     : 'border-[#d7e6eb] bg-white/80 text-[#224c59]'
@@ -1024,7 +1291,7 @@ function MeditteraeanPage() {
           aria-hidden="true"
         />
         <div
-          className="reveal mx-auto w-full max-w-7xl px-6 text-center lg:px-10"
+          className="journal-copy mx-auto w-full max-w-7xl px-6 text-center lg:px-10"
           data-text-group
         >
           <p
@@ -1049,9 +1316,9 @@ function MeditteraeanPage() {
         </div>
       </section>
 
-      <section className="mx-auto w-full max-w-7xl px-6 py-28 lg:px-10">
+      <section id="map-section" className="mx-auto w-full max-w-7xl px-6 py-28 lg:px-10">
         <div className="grid gap-8 lg:grid-cols-[1.18fr_0.82fr]">
-          <div className="reveal overflow-hidden rounded-[2.4rem] border border-[#d7e6eb] bg-white shadow-[0_30px_60px_-40px_rgba(34,76,89,0.24)]">
+          <div className="map-frame overflow-hidden rounded-[2.4rem] border border-[#d7e6eb] bg-white shadow-[0_30px_60px_-40px_rgba(34,76,89,0.24)]">
             <div className="border-b border-[#d7e6eb] bg-[linear-gradient(145deg,#f4fafb,#eef5f7)] px-5 py-4">
               <div className="text-xs uppercase tracking-[0.32em] text-[#6a8790]">
                 Google Maps placeholder
@@ -1066,7 +1333,7 @@ function MeditteraeanPage() {
             />
           </div>
 
-          <div className="reveal rounded-[2rem] border border-[#b8d8e1]/24 bg-[linear-gradient(180deg,rgba(22,56,71,0.96),rgba(34,76,89,0.92))] p-7 text-white shadow-[0_28px_56px_-36px_rgba(16,55,66,0.68)]" data-text-group>
+          <div className="map-copy rounded-[2rem] border border-[#b8d8e1]/24 bg-[linear-gradient(180deg,rgba(22,56,71,0.96),rgba(34,76,89,0.92))] p-7 text-white shadow-[0_28px_56px_-36px_rgba(16,55,66,0.68)]" data-text-group>
             <p
               data-text-item
               className="text-xs uppercase tracking-[0.35em] text-[#b8d8e1]"
@@ -1085,7 +1352,7 @@ function MeditteraeanPage() {
             </p>
 
             <div data-text-item className="mt-7 space-y-4">
-              <div className="rounded-[1.4rem] border border-white/14 bg-white/10 p-4 backdrop-blur-sm">
+              <div className="map-detail rounded-[1.4rem] border border-white/14 bg-white/10 p-4 backdrop-blur-sm">
                 <div className="text-xs uppercase tracking-[0.28em] text-[#b8d8e1]">
                   Venue
                 </div>
@@ -1093,7 +1360,7 @@ function MeditteraeanPage() {
                   Placeholder Beach Club
                 </div>
               </div>
-              <div className="rounded-[1.4rem] border border-[#f1d4af]/30 bg-[#fff5e8]/10 p-4 backdrop-blur-sm">
+              <div className="map-detail rounded-[1.4rem] border border-[#f1d4af]/30 bg-[#fff5e8]/10 p-4 backdrop-blur-sm">
                 <div className="text-xs uppercase tracking-[0.28em] text-[#f1d4af]">
                   Address
                 </div>
@@ -1101,7 +1368,7 @@ function MeditteraeanPage() {
                   Seaside Road 12
                 </div>
               </div>
-              <div className="rounded-[1.4rem] border border-white/14 bg-white/10 p-4 backdrop-blur-sm">
+              <div className="map-detail rounded-[1.4rem] border border-white/14 bg-white/10 p-4 backdrop-blur-sm">
                 <div className="text-xs uppercase tracking-[0.28em] text-[#b8d8e1]">
                   Travel note
                 </div>
