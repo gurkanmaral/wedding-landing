@@ -57,6 +57,18 @@ const templates = [
     price: '$99',
     note: 'A polished premium concept for upscale wedding brands.',
   },
+  {
+    id: '06',
+    name: 'Celestial Wedding',
+    couple: 'Aurora & Elias',
+    date: '12 September 2026',
+    mood: 'Starlit RSVP',
+    gradient: 'from-indigo-950 via-slate-900 to-amber-100',
+    accent: 'bg-amber-300',
+    price: '$109',
+    note: 'A moonlit botanical-celestial page with countdown, story, venue, gallery and RSVP.',
+    href: '/celestial',
+  },
 ]
 
 const highlights = [
@@ -249,6 +261,12 @@ function App() {
                   className="rounded-full bg-rose-100 px-5 py-3 text-sm font-medium text-rose-700 transition hover:bg-rose-200"
                 >
                   Open Mediterranean template
+                </a>
+                <a
+                  href="/celestial"
+                  className="rounded-full bg-amber-100 px-5 py-3 text-sm font-medium text-amber-800 transition hover:bg-amber-200"
+                >
+                  Open Celestial template
                 </a>
                 <a
                   href="#dashboard"
@@ -449,6 +467,14 @@ function App() {
                   >
                     Next template
                   </button>
+                  {templates[activeIndex].href && (
+                    <a
+                      href={templates[activeIndex].href}
+                      className="rounded-full bg-white px-5 py-3 text-sm font-medium text-stone-900 transition hover:bg-rose-100"
+                    >
+                      Open page
+                    </a>
+                  )}
                 </div>
 
                 <div className="flex flex-wrap gap-2">
