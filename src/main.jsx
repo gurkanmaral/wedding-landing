@@ -6,13 +6,16 @@ import MedDreamSparkPage from './MedDreamSparkPage.jsx'
 import RoyalWeddingPage from './RoyalWeddingPage.jsx'
 import MedDreamSparkTemplatePage from './MedDreamSparkTemplatePage.jsx'
 import CelestialWeddingPage from './CelestialWeddingPage.jsx'
+import MedDreamSparkArtDecoTemplatePage from './MedDreamSparkArtDecoTemplatePage.jsx'
 
 const currentPath = window.location.pathname
 const Page =
   currentPath === '/meditteraean'
     ? MedDreamSparkPage
-    : currentPath === '/med-dream-spark'
+    : currentPath === '/spark'
       ? MedDreamSparkTemplatePage
+    : currentPath === '/artdeco'
+      ? MedDreamSparkArtDecoTemplatePage
     : currentPath === '/royal'
       ? RoyalWeddingPage
     : currentPath === '/celestial'

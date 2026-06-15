@@ -69,6 +69,30 @@ const templates = [
     note: 'A moonlit botanical-celestial page with countdown, story, venue, gallery and RSVP.',
     href: '/celestial',
   },
+  {
+    id: '07',
+    name: 'Spark Mediterranean',
+    couple: 'Elena & Marcus',
+    date: '14 September 2026',
+    mood: 'GSAP Landing',
+    gradient: 'from-[#fbf7ef] via-white to-sky-100',
+    accent: 'bg-sky-400',
+    price: '$119',
+    note: 'Spark-style hero, marquee, story, events, gallery, map, and RSVP.',
+    href: '/spark',
+  },
+  {
+    id: '08',
+    name: 'Art Deco Invitation',
+    couple: 'Elena & Marcus',
+    date: '14 September 2026',
+    mood: 'Gold & Emerald',
+    gradient: 'from-emerald-950 via-stone-950 to-amber-100',
+    accent: 'bg-amber-300',
+    price: '$129',
+    note: 'Art deco curtain reveal, gold typography, countdown, details, gallery, map and RSVP.',
+    href: '/artdeco',
+  },
 ]
 
 const highlights = [
@@ -377,6 +401,20 @@ function App() {
               The preview area now uses a carousel instead of a long grid. Each
               template gets a larger device mockup and GSAP-driven transitions.
             </p>
+            <div className="flex flex-wrap gap-3 pt-2">
+              <a
+                href="/spark"
+                className="rounded-full bg-sky-100 px-5 py-2.5 text-sm font-medium text-sky-800 transition hover:bg-sky-200"
+              >
+                Open Spark template
+              </a>
+              <a
+                href="/artdeco"
+                className="rounded-full bg-emerald-950 px-5 py-2.5 text-sm font-medium text-amber-200 transition hover:bg-emerald-900"
+              >
+                Open Art Deco template
+              </a>
+            </div>
           </div>
 
           <div className="rounded-[2rem] border border-stone-200 bg-white p-4 shadow-xl shadow-stone-100 lg:p-6">
@@ -514,6 +552,20 @@ function App() {
                 now highlights the active template and lets the user browse with a
                 carousel flow.
               </p>
+              <div className="flex flex-wrap gap-3 pt-2">
+                <a
+                  href="/spark"
+                  className="rounded-full bg-white px-5 py-3 text-sm font-medium text-stone-950 transition hover:bg-rose-100"
+                >
+                  Open Spark template
+                </a>
+                <a
+                  href="/artdeco"
+                  className="rounded-full border border-white/20 px-5 py-3 text-sm font-medium text-white transition hover:border-rose-300 hover:text-rose-200"
+                >
+                  Open Art Deco template
+                </a>
+              </div>
               <div className="grid gap-3">
                 <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-stone-200">
                   Better focus on each template before purchase
