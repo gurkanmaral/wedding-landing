@@ -1,4 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { gsap } from 'gsap'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
+
+gsap.registerPlugin(ScrollTrigger)
 
 const EVENT_DATE = new Date('2026-09-12T17:30:00-07:00')
 
@@ -122,23 +126,456 @@ export default function CelestialWeddingPage() {
   }, [])
 
   useEffect(() => {
+    const root = rootRef.current
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    const targets = [...rootRef.current.querySelectorAll('.cw-reveal:not(.in)')]
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (!entry.isIntersecting) return
-          entry.target.classList.add('in')
-          observer.unobserve(entry.target)
+
+    if (reduceMotion) {
+      root.querySelectorAll('.cw-reveal').forEach((target) => target.classList.add('in'))
+      return undefined
+    }
+
+    const hoverCleanups = []
+    const ctx = gsap.context(() => {
+      gsap.set('.cw-reveal:not(.in)', { autoAlpha: 0, y: 46 })
+      gsap.set('.cw-section-head', { autoAlpha: 1, y: 0 })
+      gsap.set('.cw-story-copy, .cw-venue-info', { autoAlpha: 0.45, y: 24 })
+      gsap.set('.cw-section-head h2, .cw-story-copy h2, .cw-venue-info h2', {
+        clipPath: 'inset(0 0 100% 0)',
+        y: 30,
+      })
+
+      const revealHeading = (selector, trigger) => {
+        gsap.to(selector, {
+          clipPath: 'inset(0 0 0% 0)',
+          y: 0,
+          duration: 1,
+          ease: 'expo.out',
+          scrollTrigger: {
+            trigger,
+            start: 'top 78%',
+            once: true,
+          },
         })
-      },
-      { threshold: 0.18 },
-    )
+      }
 
-    targets.forEach((target) => observer.observe(target))
-    if (reduceMotion) targets.forEach((target) => target.classList.add('in'))
+      const heroTl = gsap.timeline({ defaults: { ease: 'power4.out' } })
+      heroTl
+        .from('.cw-moon', {
+          autoAlpha: 0,
+          scale: 0.62,
+          rotate: -18,
+          duration: 1.25,
+        })
+        .fromTo(
+          '.cw-hero .cw-eyebrow',
+          { autoAlpha: 0, y: 28 },
+          { autoAlpha: 1, y: 0, duration: 0.85 },
+          '-=.55',
+        )
+        .fromTo(
+          '.cw-hero-names',
+          { autoAlpha: 0, yPercent: 28 },
+          { autoAlpha: 1, yPercent: 0, duration: 1.15 },
+          '-=.55',
+        )
+        .fromTo(
+          '.cw-hero-sub, .cw-hero-date',
+          { autoAlpha: 0, y: 24 },
+          { autoAlpha: 1, y: 0, duration: 0.9, stagger: 0.12 },
+          '-=.55',
+        )
+        .from(
+          '.cw-scroll-cue',
+          { autoAlpha: 0, y: -10, duration: 0.7 },
+          '-=.35',
+        )
 
-    return () => observer.disconnect()
+      gsap.to('.cw-moon', {
+        y: -24,
+        scale: 0.94,
+        ease: 'none',
+        scrollTrigger: {
+          trigger: '.cw-hero',
+          start: 'top top',
+          end: 'bottom top',
+          scrub: 2.2,
+        },
+      })
+
+      gsap.to('.cw-starfield', {
+        yPercent: 10,
+        opacity: 0.55,
+        ease: 'none',
+        scrollTrigger: {
+          trigger: '.cw-hero',
+          start: 'top top',
+          end: 'bottom top',
+          scrub: 2,
+        },
+      })
+
+      const countdownTl = gsap.timeline({
+        scrollTrigger: {
+          trigger: '.cw-countdown',
+          start: 'top 72%',
+          end: 'bottom 28%',
+          scrub: 1.35,
+        },
+      })
+      countdownTl
+        .to('.cw-countdown .cw-section-head', {
+          autoAlpha: 1,
+          y: 0,
+          duration: 1.1,
+          ease: 'power3.out',
+        })
+        .to('.cw-countdown .cw-section-head h2', {
+          clipPath: 'inset(0 0 0% 0)',
+          y: 0,
+          duration: 1.25,
+          ease: 'expo.out',
+        }, '-=.35')
+        .fromTo(
+          '.cw-count-cell',
+          { autoAlpha: 0.28, y: 44, rotateX: -26, transformPerspective: 900 },
+          {
+            autoAlpha: 1,
+            y: 0,
+            rotateX: 0,
+            duration: 1.8,
+            ease: 'back.out(1.4)',
+            stagger: 0.16,
+          },
+          '-=.15',
+        )
+
+      const storyTl = gsap.timeline({
+        scrollTrigger: {
+          trigger: '.cw-story',
+          start: 'top 72%',
+          end: 'bottom 25%',
+          scrub: 1.45,
+        },
+      })
+      storyTl
+        .fromTo(
+          '.cw-story-photo',
+          { autoAlpha: 0.3, clipPath: 'inset(0 74% 0 0)', x: -42 },
+          {
+            autoAlpha: 1,
+            clipPath: 'inset(0 0% 0 0)',
+            x: 0,
+            duration: 1.8,
+            ease: 'expo.out',
+          },
+        )
+        .fromTo(
+          '.cw-frame-ring',
+          { scale: 0.92, autoAlpha: 0 },
+          { scale: 1, autoAlpha: 1, duration: 1.2, ease: 'power3.out' },
+          '-=.75',
+        )
+        .to('.cw-story-copy', {
+          autoAlpha: 1,
+          y: 0,
+          duration: 1.15,
+          ease: 'power3.out',
+        }, '-=.55')
+        .to('.cw-story-copy h2', {
+          clipPath: 'inset(0 0 0% 0)',
+          y: 0,
+          duration: 1.4,
+          ease: 'expo.out',
+        }, '-=.2')
+        .fromTo(
+          '.cw-story-copy p, .cw-constellation',
+          { autoAlpha: 0.24, x: 28 },
+          { autoAlpha: 1, x: 0, duration: 1.15, stagger: 0.22, ease: 'power3.out' },
+          '+=.2',
+        )
+
+      gsap.to('.cw-story-photo', {
+        y: -46,
+        ease: 'none',
+        scrollTrigger: {
+          trigger: '.cw-story',
+          start: 'top bottom',
+          end: 'bottom top',
+          scrub: 1.4,
+        },
+      })
+
+      const scheduleTl = gsap.timeline({
+        scrollTrigger: {
+          trigger: '.cw-schedule',
+          start: 'top 75%',
+          end: 'bottom 20%',
+          scrub: 1.55,
+        },
+      })
+      scheduleTl
+        .to('.cw-schedule .cw-section-head', {
+          autoAlpha: 1,
+          y: 0,
+          duration: 1,
+          ease: 'power3.out',
+        })
+        .to('.cw-schedule .cw-section-head h2', {
+          clipPath: 'inset(0 0 0% 0)',
+          y: 0,
+          duration: 1.25,
+          ease: 'expo.out',
+        }, '-=.2')
+        .to('.cw-timeline', {
+          '--line-scale': 1,
+          duration: 2.1,
+          ease: 'power2.inOut',
+        }, '+=.25')
+        .fromTo(
+          '.cw-tl-item',
+          {
+            autoAlpha: 0.28,
+            x: (index) => (index % 2 === 0 ? -44 : 44),
+            y: 22,
+          },
+          {
+            autoAlpha: 1,
+            x: 0,
+            y: 0,
+            duration: 1.25,
+            stagger: 0.22,
+            ease: 'power3.out',
+          },
+          '-=1.15',
+        )
+        .fromTo(
+          '.cw-phase',
+          { rotate: -45, scale: 0.75 },
+          { rotate: 0, scale: 1, duration: 1, stagger: 0.16, ease: 'back.out(1.7)' },
+          '-=1.25',
+        )
+
+      const venueTl = gsap.timeline({
+        scrollTrigger: {
+          trigger: '.cw-venue',
+          start: 'top 72%',
+          end: 'bottom 25%',
+          scrub: 1.45,
+        },
+      })
+      venueTl
+        .to('.cw-venue .cw-section-head', {
+          autoAlpha: 1,
+          y: 0,
+          duration: 1,
+          ease: 'power3.out',
+        })
+        .to('.cw-venue .cw-section-head h2', {
+          clipPath: 'inset(0 0 0% 0)',
+          y: 0,
+          duration: 1.25,
+          ease: 'expo.out',
+        }, '-=.2')
+        .fromTo(
+          '.cw-starmap',
+          { autoAlpha: 0.32, clipPath: 'inset(16% 16% 16% 16%)', scale: 0.94, y: 34 },
+          {
+            autoAlpha: 1,
+            clipPath: 'inset(0% 0% 0% 0%)',
+            scale: 1,
+            y: 0,
+            duration: 1.75,
+            ease: 'expo.out',
+          },
+          '+=.2',
+        )
+        .fromTo(
+          '.cw-pin',
+          { autoAlpha: 0, y: -34, scale: 0.86 },
+          { autoAlpha: 1, y: 0, scale: 1, duration: 1.1, ease: 'bounce.out' },
+          '-=.25',
+        )
+        .to('.cw-venue-info', {
+          autoAlpha: 1,
+          y: 0,
+          duration: 1.1,
+          ease: 'power3.out',
+        }, '-=.55')
+        .to('.cw-venue-info h2', {
+          clipPath: 'inset(0 0 0% 0)',
+          y: 0,
+          duration: 1.25,
+          ease: 'expo.out',
+        }, '-=.2')
+        .fromTo(
+          '.cw-address, .cw-detail-row, .cw-venue-info .cw-btn',
+          { autoAlpha: 0.28, y: 20 },
+          { autoAlpha: 1, y: 0, duration: 0.9, stagger: 0.14, ease: 'power3.out' },
+          '+=.15',
+        )
+
+      gsap.to('.cw-starmap svg', {
+        scale: 1.12,
+        rotate: 2,
+        ease: 'none',
+        transformOrigin: '50% 50%',
+        scrollTrigger: {
+          trigger: '.cw-venue',
+          start: 'top bottom',
+          end: 'bottom top',
+          scrub: 1.4,
+        },
+      })
+
+      const galleryTl = gsap.timeline({
+        scrollTrigger: {
+          trigger: '.cw-gallery',
+          start: 'top 72%',
+          end: 'bottom 20%',
+          scrub: 1.5,
+        },
+      })
+      galleryTl
+        .to('.cw-gallery .cw-section-head', {
+          autoAlpha: 1,
+          y: 0,
+          duration: 1,
+          ease: 'power3.out',
+        })
+        .to('.cw-gallery .cw-section-head h2', {
+          clipPath: 'inset(0 0 0% 0)',
+          y: 0,
+          duration: 1.25,
+          ease: 'expo.out',
+        }, '-=.2')
+        .fromTo(
+          '.cw-gallery-cell',
+          {
+            autoAlpha: 0.3,
+            y: (index) => (index % 2 === 0 ? 46 : -34),
+            rotate: (index) => (index % 2 === 0 ? -2.5 : 2.5),
+            scale: 0.96,
+            clipPath: 'inset(22% 0 22% 0)',
+          },
+          {
+            autoAlpha: 1,
+            y: 0,
+            rotate: 0,
+            scale: 1,
+            clipPath: 'inset(0% 0 0% 0)',
+            duration: 1.8,
+            ease: 'power4.out',
+            stagger: { each: 0.16, from: 'center' },
+          },
+          '+=.25',
+        )
+
+      const rsvpTl = gsap.timeline({
+        scrollTrigger: {
+          trigger: '.cw-rsvp',
+          start: 'top 70%',
+          end: 'bottom 45%',
+          scrub: 1.1,
+        },
+      })
+      rsvpTl
+        .to('.cw-rsvp .cw-section-head', {
+          autoAlpha: 1,
+          y: 0,
+          duration: 0.75,
+          ease: 'power3.out',
+        })
+        .to('.cw-rsvp .cw-section-head h2', {
+          clipPath: 'inset(0 0 0% 0)',
+          y: 0,
+          duration: 0.9,
+          ease: 'expo.out',
+        }, '-=.4')
+        .fromTo(
+          '.cw-rsvp-card',
+          { autoAlpha: 0.35, y: 54, scale: 0.94, clipPath: 'inset(10% 0 10% 0)' },
+          {
+            autoAlpha: 1,
+            y: 0,
+            scale: 1,
+            clipPath: 'inset(0% 0 0% 0)',
+            duration: 1.05,
+            ease: 'expo.out',
+          },
+        )
+        .fromTo(
+          '.cw-corner',
+          { autoAlpha: 0, scale: 0.25, rotate: 18 },
+          { autoAlpha: 1, scale: 1, rotate: 0, duration: 0.45, stagger: 0.04, ease: 'back.out(2)' },
+          '-=.55',
+        )
+        .fromTo(
+          '.cw-attend, .cw-field, .cw-submit',
+          { autoAlpha: 0, y: 22 },
+          { autoAlpha: 1, y: 0, duration: 0.6, stagger: 0.06, ease: 'power3.out' },
+          '-=.35',
+        )
+
+      revealHeading('.cw-footer-names', '.cw-footer')
+
+      gsap.to('.cw-footer-names', {
+        autoAlpha: 1,
+        y: 0,
+        duration: 0.9,
+        ease: 'power3.out',
+        scrollTrigger: {
+          trigger: '.cw-footer',
+          start: 'top 80%',
+          once: true,
+        },
+      })
+
+      gsap.to('.cw-footer-meta', {
+        autoAlpha: 1,
+        y: 0,
+        duration: 0.75,
+        delay: 0.12,
+        ease: 'power3.out',
+        scrollTrigger: {
+          trigger: '.cw-footer',
+          start: 'top 80%',
+          once: true,
+        },
+      })
+
+      const hoverTargets = gsap.utils.toArray('.cw-btn, .cw-gallery-cell')
+      hoverTargets.forEach((target) => {
+        const moveX = gsap.quickTo(target, 'x', { duration: 0.35, ease: 'power3.out' })
+        const moveY = gsap.quickTo(target, 'y', { duration: 0.35, ease: 'power3.out' })
+        const rotate = gsap.quickTo(target, 'rotate', { duration: 0.35, ease: 'power3.out' })
+
+        const onMove = (event) => {
+          const rect = target.getBoundingClientRect()
+          const relX = event.clientX - rect.left - rect.width / 2
+          const relY = event.clientY - rect.top - rect.height / 2
+          moveX(relX * 0.08)
+          moveY(relY * 0.08)
+          rotate(relX * 0.012)
+        }
+        const onLeave = () => {
+          moveX(0)
+          moveY(0)
+          rotate(0)
+        }
+
+        target.addEventListener('pointermove', onMove)
+        target.addEventListener('pointerleave', onLeave)
+        hoverCleanups.push(() => {
+          target.removeEventListener('pointermove', onMove)
+          target.removeEventListener('pointerleave', onLeave)
+        })
+      })
+    }, root)
+
+    return () => {
+      hoverCleanups.forEach((cleanup) => cleanup())
+      ctx.revert()
+    }
   }, [])
 
   useEffect(() => {
@@ -287,24 +724,32 @@ export default function CelestialWeddingPage() {
         .cw-eyebrow.dim { color: var(--mist-dim); }
         .cw-script { font-style: italic; font-weight: 500; }
         .cw-wrap { width: min(1120px, calc(100% - 56px)); margin: 0 auto; }
-        .cw-section { padding: clamp(80px, 12vh, 150px) 0; }
-        .cw-section-head { margin-bottom: 64px; text-align: center; }
+        .cw-section {
+          height: 100svh;
+          display: flex;
+          align-items: center;
+          padding: clamp(36px, 6vh, 68px) 0;
+          overflow: hidden;
+        }
+        .cw-section > .cw-wrap { width: min(1120px, calc(100% - 56px)); }
+        .cw-section-head { margin-bottom: clamp(22px, 4vh, 42px); text-align: center; }
         .cw-section-head h2,
         .cw-story-copy h2,
         .cw-venue-info h2 {
           font-weight: 400;
           line-height: 1.05;
           letter-spacing: 0;
+          will-change: clip-path, transform;
         }
         .cw-section-head h2 {
           margin: 18px 0 0;
-          font-size: clamp(2.4rem, 5.5vw, 4rem);
+          font-size: clamp(2.15rem, 4.8vw, 3.55rem);
         }
         .cw-lead {
           max-width: 560px;
-          margin: 18px auto 0;
+          margin: 12px auto 0;
           color: var(--mist);
-          font-size: 1.2rem;
+          font-size: 1.05rem;
         }
         .cw-divider {
           display: flex;
@@ -328,14 +773,15 @@ export default function CelestialWeddingPage() {
         .cw-reveal {
           opacity: 0;
           transform: translateY(28px);
-          transition: opacity 1.1s cubic-bezier(.2,.7,.2,1), transform 1.1s cubic-bezier(.2,.7,.2,1);
+          transition: none;
+          will-change: opacity, transform;
         }
         .cw-reveal.in { opacity: 1; transform: none; }
         .cw-d1 { transition-delay: .12s; }
         .cw-d2 { transition-delay: .24s; }
         .cw-d3 { transition-delay: .36s; }
         .cw-hero {
-          min-height: 100svh;
+          height: 100svh;
           display: flex;
           flex-direction: column;
           align-items: center;
@@ -358,6 +804,7 @@ export default function CelestialWeddingPage() {
           border-radius: 50%;
           background: radial-gradient(circle at 35% 32%, oklch(0.96 0.02 92), oklch(0.86 0.05 86) 60%, oklch(0.74 0.08 80));
           box-shadow: 0 0 0 1px oklch(0.9 0.05 88 / .25), 0 0 60px oklch(0.86 0.09 86 / .55), 0 0 140px oklch(0.84 0.1 84 / .35);
+          will-change: opacity, transform;
         }
         .cw-moon::after {
           content: "";
@@ -460,10 +907,11 @@ export default function CelestialWeddingPage() {
           display: flex;
           flex-wrap: wrap;
           justify-content: center;
-          gap: clamp(14px, 4vw, 52px);
+          gap: clamp(12px, 3.2vw, 42px);
           margin-top: 20px;
+          perspective: 900px;
         }
-        .cw-count-cell { position: relative; width: clamp(96px, 20vw, 150px); }
+        .cw-count-cell { position: relative; width: clamp(96px, 20vw, 150px); transform-style: preserve-3d; will-change: opacity, transform; }
         .cw-count-orbit { position: absolute; inset: -12px; border: 1px solid var(--line); border-radius: 50%; opacity: .5; }
         .cw-count-dot {
           position: absolute;
@@ -479,7 +927,7 @@ export default function CelestialWeddingPage() {
         }
         .cw-count-num {
           color: var(--starlight);
-          font-size: clamp(3rem, 8vw, 5.2rem);
+          font-size: clamp(2.65rem, 7vw, 4.7rem);
           font-variant-numeric: tabular-nums;
           line-height: 1;
           text-shadow: 0 0 30px oklch(0.84 0.1 84 / .25);
@@ -499,7 +947,7 @@ export default function CelestialWeddingPage() {
           gap: clamp(36px, 6vw, 90px);
         }
         .cw-story-grid { grid-template-columns: 1fr 1fr; }
-        .cw-story-photo { position: relative; }
+        .cw-story-photo { position: relative; will-change: transform; }
         .cw-frame-ring { position: absolute; inset: -14px; border: 1px solid var(--line); pointer-events: none; }
         .cw-frame-ring::before,
         .cw-frame-ring::after {
@@ -528,6 +976,7 @@ export default function CelestialWeddingPage() {
           letter-spacing: .24em;
           text-align: center;
           text-transform: uppercase;
+          will-change: transform;
         }
         .cw-photo-orbit {
           position: absolute;
@@ -550,17 +999,23 @@ export default function CelestialWeddingPage() {
         .cw-story-copy h2,
         .cw-venue-info h2 {
           margin: 14px 0 22px;
-          font-size: clamp(2.2rem, 4.6vw, 3.4rem);
+          font-size: clamp(2rem, 4vw, 3.05rem);
         }
         .cw-story-copy p {
-          margin-bottom: 18px;
+          margin-bottom: 14px;
           color: var(--mist);
-          font-size: 1.18rem;
+          font-size: 1.05rem;
         }
         .cw-story-copy .hl { color: var(--gold-soft); font-style: italic; }
         .cw-constellation { margin-top: 30px; color: var(--gold); }
         .cw-schedule { background: linear-gradient(180deg, var(--night-0), var(--night-1) 40%, var(--night-0)); }
-        .cw-timeline { max-width: 760px; margin: 0 auto; position: relative; padding-left: 8px; }
+        .cw-timeline {
+          --line-scale: 0;
+          max-width: 760px;
+          margin: 0 auto;
+          position: relative;
+          padding-left: 8px;
+        }
         .cw-timeline::before {
           content: "";
           position: absolute;
@@ -569,13 +1024,15 @@ export default function CelestialWeddingPage() {
           bottom: 18px;
           width: 1px;
           background: linear-gradient(180deg, transparent, var(--line), transparent);
+          transform: scaleY(var(--line-scale));
+          transform-origin: top;
         }
         .cw-tl-item {
           display: grid;
           grid-template-columns: 64px 1fr;
           gap: 24px;
           align-items: start;
-          padding: 22px 0;
+          padding: 12px 0;
         }
         .cw-phase {
           width: 46px;
@@ -604,18 +1061,18 @@ export default function CelestialWeddingPage() {
           letter-spacing: .26em;
           text-transform: uppercase;
         }
-        .cw-tl-body h3 { margin: 6px 0; font-size: 1.9rem; font-weight: 400; line-height: 1.1; }
-        .cw-tl-body p { max-width: 46ch; color: var(--mist); font-size: 1.06rem; }
+        .cw-tl-body h3 { margin: 4px 0; font-size: 1.45rem; font-weight: 400; line-height: 1.08; }
+        .cw-tl-body p { max-width: 46ch; color: var(--mist); font-size: .95rem; }
         .cw-venue { background: var(--night-0); }
         .cw-venue-grid { grid-template-columns: 1.15fr .85fr; align-items: stretch; }
         .cw-starmap {
-          min-height: 420px;
+          min-height: min(48vh, 360px);
           position: relative;
           overflow: hidden;
           border: 1px solid var(--line);
           background: radial-gradient(80% 80% at 30% 20%, oklch(0.22 0.06 264), var(--night-1));
         }
-        .cw-starmap svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+        .cw-starmap svg { position: absolute; inset: 0; width: 100%; height: 100%; will-change: transform; }
         .cw-pin { position: absolute; left: 50%; top: 54%; z-index: 2; transform: translate(-50%, -100%); text-align: center; }
         .cw-pin-dot {
           width: 14px;
@@ -639,8 +1096,8 @@ export default function CelestialWeddingPage() {
           white-space: nowrap;
         }
         .cw-venue-info { display: flex; flex-direction: column; justify-content: center; }
-        .cw-address { margin-bottom: 24px; color: var(--gold-soft); font-size: 1.3rem; font-style: italic; }
-        .cw-detail-row { display: flex; gap: 16px; padding: 18px 0; border-top: 1px solid var(--line); }
+        .cw-address { margin-bottom: 16px; color: var(--gold-soft); font-size: 1.12rem; font-style: italic; }
+        .cw-detail-row { display: flex; gap: 16px; padding: 12px 0; border-top: 1px solid var(--line); }
         .cw-detail-row:last-of-type { border-bottom: 1px solid var(--line); }
         .cw-detail-key {
           width: 96px;
@@ -651,14 +1108,14 @@ export default function CelestialWeddingPage() {
           letter-spacing: .24em;
           text-transform: uppercase;
         }
-        .cw-detail-value { color: var(--mist); font-size: 1.12rem; }
+        .cw-detail-value { color: var(--mist); font-size: 1rem; }
         .cw-btn {
           display: inline-flex;
           align-items: center;
           justify-content: center;
           gap: 10px;
-          min-height: 50px;
-          margin-top: 30px;
+          min-height: 46px;
+          margin-top: 22px;
           border: 0;
           background: var(--gold);
           color: var(--night-0);
@@ -677,10 +1134,10 @@ export default function CelestialWeddingPage() {
         .cw-gallery-grid {
           display: grid;
           grid-template-columns: repeat(6, 1fr);
-          grid-auto-rows: 150px;
+          grid-auto-rows: min(18vh, 120px);
           gap: 14px;
         }
-        .cw-gallery-cell { position: relative; overflow: hidden; }
+        .cw-gallery-cell { position: relative; overflow: hidden; transform-origin: 50% 80%; will-change: opacity, transform; }
         .cw-gallery-cell::after {
           content: "";
           position: absolute;
@@ -705,14 +1162,14 @@ export default function CelestialWeddingPage() {
           position: relative;
           border: 1px solid var(--line);
           background: var(--panel);
-          padding: clamp(34px, 5vw, 64px);
+          padding: clamp(24px, 3.2vw, 42px);
         }
         .cw-corner { position: absolute; width: 16px; height: 16px; border: 1px solid var(--gold); }
         .cw-corner.tl { top: 14px; left: 14px; border-right: 0; border-bottom: 0; }
         .cw-corner.tr { top: 14px; right: 14px; border-left: 0; border-bottom: 0; }
         .cw-corner.bl { bottom: 14px; left: 14px; border-right: 0; border-top: 0; }
         .cw-corner.br { right: 14px; bottom: 14px; border-left: 0; border-top: 0; }
-        .cw-field { margin-bottom: 22px; text-align: left; }
+        .cw-field { margin-bottom: 12px; text-align: left; }
         .cw-field label {
           display: block;
           margin-bottom: 9px;
@@ -731,13 +1188,13 @@ export default function CelestialWeddingPage() {
           font-family: "Cormorant Garamond", Georgia, serif;
           font-size: 1.12rem;
           outline: none;
-          padding: 13px 16px;
+          padding: 10px 14px;
           transition: border-color .3s, box-shadow .3s;
         }
         .cw-field input:focus,
         .cw-field select:focus,
         .cw-field textarea:focus { border-color: var(--gold); box-shadow: 0 0 0 3px oklch(0.84 0.1 84 / .12); }
-        .cw-field textarea { min-height: 90px; resize: vertical; }
+        .cw-field textarea { min-height: 54px; resize: vertical; }
         .cw-field.err input { border-color: oklch(0.6 0.14 25); }
         .cw-msg {
           display: none;
@@ -748,20 +1205,20 @@ export default function CelestialWeddingPage() {
           letter-spacing: .1em;
         }
         .cw-field.err .cw-msg { display: block; }
-        .cw-row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .cw-attend { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 22px; }
+        .cw-row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .cw-attend { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
         .cw-attend input { display: none; }
         .cw-attend label {
           display: flex;
           align-items: center;
           justify-content: center;
-          min-height: 58px;
+          min-height: 46px;
           border: 1px solid var(--line);
           color: var(--mist);
           cursor: pointer;
           font-size: .8rem;
           letter-spacing: .16em;
-          padding: 16px;
+          padding: 12px;
           text-transform: uppercase;
           transition: .3s;
         }
@@ -805,6 +1262,9 @@ export default function CelestialWeddingPage() {
         }
         @media (prefers-reduced-motion: reduce) {
           .cw-reveal { opacity: 1; transform: none; transition: none; }
+          .cw-section-head h2,
+          .cw-story-copy h2,
+          .cw-venue-info h2 { clip-path: none !important; }
           .cw-moon-halo,
           .cw-count-dot,
           .cw-photo-orbit,

@@ -271,7 +271,7 @@ function App() {
                   <p className="mt-2 text-sm leading-6 text-stone-600">
                     {template.note}
                   </p>
-                  <div className="mt-5 flex items-center justify-between border-t border-stone-200 pt-4 text-sm">
+                  <div className="mt-5 grid gap-1 border-t border-stone-200 pt-4 text-sm">
                     <span>{template.price}</span>
                     <span className="text-stone-500">{template.date}</span>
                   </div>
