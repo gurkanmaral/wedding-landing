@@ -120,73 +120,6 @@ function disposeObject3D(object) {
   })
 }
 
-function createMoonTexture() {
-  const textureCanvas = document.createElement('canvas')
-  textureCanvas.width = 1024
-  textureCanvas.height = 512
-  const context = textureCanvas.getContext('2d')
-  const image = context.createImageData(textureCanvas.width, textureCanvas.height)
-
-  for (let index = 0; index < image.data.length; index += 4) {
-    const noise = Math.random() * 24 - 12
-    image.data[index] = 205 + noise
-    image.data[index + 1] = 207 + noise
-    image.data[index + 2] = 198 + noise * 0.85
-    image.data[index + 3] = 255
-  }
-
-  context.putImageData(image, 0, 0)
-  const softLight = context.createLinearGradient(0, 0, textureCanvas.width, textureCanvas.height)
-  softLight.addColorStop(0, 'rgba(255, 255, 245, 0.36)')
-  softLight.addColorStop(0.48, 'rgba(238, 242, 246, 0.08)')
-  softLight.addColorStop(1, 'rgba(58, 62, 70, 0.22)')
-  context.fillStyle = softLight
-  context.fillRect(0, 0, textureCanvas.width, textureCanvas.height)
-
-  context.globalCompositeOperation = 'multiply'
-  const craters = [
-    [210, 120, 26, 0.12],
-    [360, 300, 42, 0.1],
-    [520, 170, 24, 0.12],
-    [650, 350, 34, 0.1],
-    [760, 150, 18, 0.1],
-    [850, 270, 50, 0.08],
-    [120, 360, 34, 0.08],
-    [940, 92, 24, 0.09],
-    [460, 392, 18, 0.09],
-    [705, 78, 14, 0.08],
-  ]
-
-  craters.forEach(([x, y, radius, opacity]) => {
-    const craterGradient = context.createRadialGradient(x - radius * 0.35, y - radius * 0.35, 2, x, y, radius)
-    craterGradient.addColorStop(0, `rgba(245, 246, 238, ${opacity * 0.35})`)
-    craterGradient.addColorStop(0.48, `rgba(70, 72, 76, ${opacity})`)
-    craterGradient.addColorStop(1, 'rgba(255, 255, 255, 0)')
-    context.fillStyle = craterGradient
-    context.beginPath()
-    context.arc(x, y, radius, 0, Math.PI * 2)
-    context.fill()
-  })
-
-  context.globalCompositeOperation = 'screen'
-  context.fillStyle = 'rgba(255, 255, 255, 0.05)'
-  for (let index = 0; index < 180; index += 1) {
-    const x = Math.random() * textureCanvas.width
-    const y = Math.random() * textureCanvas.height
-    const radius = Math.random() * 1.2 + 0.3
-    context.beginPath()
-    context.arc(x, y, radius, 0, Math.PI * 2)
-    context.fill()
-  }
-
-  const texture = new THREE.CanvasTexture(textureCanvas)
-  texture.colorSpace = THREE.SRGBColorSpace
-  texture.wrapS = THREE.RepeatWrapping
-  texture.wrapT = THREE.ClampToEdgeWrapping
-  texture.anisotropy = 8
-  return texture
-}
-
 export default function CelestialWeddingPage() {
   const rootRef = useRef(null)
   const canvasRef = useRef(null)
@@ -334,7 +267,7 @@ export default function CelestialWeddingPage() {
           '-=.55',
         )
         .fromTo(
-          '.cw-hero-sub, .cw-hero-date',
+          '.cw-hero-line, .cw-hero-chip',
           { autoAlpha: 0, y: 24 },
           { autoAlpha: 1, y: 0, duration: 0.9, stagger: 0.12 },
           '-=.55',
@@ -791,6 +724,7 @@ export default function CelestialWeddingPage() {
     let frame = 0
     let width = 1
     let height = 1
+    let moonBaseY = 118
 
     camera.position.z = 420
     scene.add(starField)
@@ -865,20 +799,27 @@ export default function CelestialWeddingPage() {
     const meteor = new THREE.Line(meteorGeometry, meteorMaterial)
     scene.add(meteor)
 
-    const moonTexture = createMoonTexture()
-    const moonGeometry = new THREE.SphereGeometry(38, 96, 96)
+    const textureLoader = new THREE.TextureLoader()
+    const moonTexture = textureLoader.load('/assets/moon/lroc_color_2k.jpg')
+    const moonElevation = textureLoader.load('/assets/moon/ldem_3_8bit.jpg')
+    moonTexture.colorSpace = THREE.SRGBColorSpace
+    moonTexture.anisotropy = 8
+    moonElevation.anisotropy = 8
+    const moonGeometry = new THREE.SphereGeometry(52, 160, 160)
     const moonMaterial = new THREE.MeshStandardMaterial({
-      bumpMap: moonTexture,
-      bumpScale: 1.35,
-      color: '#d9d8cb',
-      emissive: '#171a25',
-      emissiveIntensity: 0.04,
+      bumpMap: moonElevation,
+      bumpScale: 2.6,
+      color: '#e5e1d5',
+      displacementMap: moonElevation,
+      displacementScale: 0.85,
+      emissive: '#10131d',
+      emissiveIntensity: 0.025,
       map: moonTexture,
       metalness: 0,
-      roughness: 0.92,
+      roughness: 1,
     })
     const moon = new THREE.Mesh(moonGeometry, moonMaterial)
-    const moonGlowGeometry = new THREE.SphereGeometry(45, 64, 64)
+    const moonGlowGeometry = new THREE.SphereGeometry(64, 72, 72)
     const moonGlowMaterial = new THREE.MeshBasicMaterial({
       color: '#dfe5ff',
       opacity: 0.12,
@@ -887,12 +828,12 @@ export default function CelestialWeddingPage() {
       depthWrite: false,
     })
     const moonGlow = new THREE.Mesh(moonGlowGeometry, moonGlowMaterial)
-    const moonKeyLight = new THREE.DirectionalLight('#f4f2df', 3.2)
-    const moonFillLight = new THREE.PointLight('#8f98ff', 1.05, 520)
-    const ambientLight = new THREE.AmbientLight('#5f6478', 0.58)
+    const moonKeyLight = new THREE.DirectionalLight('#fff7dc', 3.8)
+    const moonFillLight = new THREE.PointLight('#8f98ff', 0.7, 520)
+    const ambientLight = new THREE.AmbientLight('#4f5365', 0.42)
 
-    moonGroup.position.set(0, 118, 74)
-    moon.rotation.set(0.08, -0.4, -0.05)
+    moonGroup.position.set(0, -18, 74)
+    moon.rotation.set(0.08, -1.35, -0.05)
     moonGlow.scale.setScalar(1.08)
     moonGroup.add(moonGlow, moon)
     moonKeyLight.position.set(-130, 180, 260)
@@ -907,6 +848,9 @@ export default function CelestialWeddingPage() {
       renderer.setSize(width, height, false)
       camera.aspect = width / height
       camera.updateProjectionMatrix()
+      const moonScale = width < 600 ? 0.84 : width < 900 ? 1.28 : 2.05
+      moonBaseY = width < 600 ? -8 : width < 900 ? -12 : -18
+      moonGroup.scale.setScalar(moonScale)
     }
 
     const onPointerMove = (event) => {
@@ -948,7 +892,7 @@ export default function CelestialWeddingPage() {
       moonGroup.rotation.y = pointer.x * 0.18 + elapsed * 0.035
       moonGroup.rotation.x = pointer.y * 0.07
       moonGroup.position.x = pointer.x * 10
-      moonGroup.position.y = 118 + pointer.y * 6 + Math.sin(elapsed * 0.7) * 1.8
+      moonGroup.position.y = moonBaseY + pointer.y * 6 + Math.sin(elapsed * 0.7) * 1.8
       moon.rotation.y += reduceMotion ? 0.0008 : 0.0018
       moonGlow.material.opacity = 0.13 + Math.sin(elapsed * 1.2) * 0.025
 
@@ -987,6 +931,7 @@ export default function CelestialWeddingPage() {
       disposeObject3D(starField)
       disposeObject3D(moonGroup)
       moonTexture.dispose()
+      moonElevation.dispose()
       meteorGeometry.dispose()
       meteorMaterial.dispose()
       renderer.dispose()
@@ -1153,19 +1098,62 @@ export default function CelestialWeddingPage() {
           align-items: center;
           justify-content: center;
           overflow: hidden;
-          padding: 80px 24px 60px;
+          padding: clamp(44px, 7vh, 72px) 24px 60px;
           text-align: center;
           background:
-            radial-gradient(120% 90% at 50% 8%, oklch(0.26 0.07 270 / .55), transparent 60%),
-            radial-gradient(120% 120% at 50% 120%, oklch(0.30 0.06 300 / .35), transparent 55%),
+            radial-gradient(70% 46% at 50% 8%, oklch(0.42 0.06 268 / .22), transparent 72%),
+            radial-gradient(90% 60% at 50% 118%, oklch(0.30 0.06 300 / .32), transparent 64%),
             linear-gradient(180deg, var(--night-1), var(--night-0));
         }
+        .cw-hero::after {
+          content: "";
+          position: absolute;
+          inset: auto 0 0;
+          height: 34%;
+          pointer-events: none;
+          background: linear-gradient(180deg, transparent, oklch(0.10 0.03 268 / .56));
+          z-index: 1;
+        }
         .cw-starfield { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; }
-        .cw-hero-inner { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; }
+        .cw-hero-inner {
+          position: relative;
+          z-index: 2;
+          width: min(960px, 100%);
+          min-height: min(680px, calc(100svh - 112px));
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+        }
+        .cw-moon-stage {
+          width: clamp(360px, 48vw, 620px);
+          aspect-ratio: 1;
+          position: absolute;
+          left: 50%;
+          top: 48%;
+          display: grid;
+          place-items: center;
+          margin: 0;
+          opacity: .78;
+          transform: translate(-50%, -50%);
+          z-index: 0;
+          pointer-events: none;
+        }
+        .cw-moon-stage::before,
+        .cw-moon-stage::after {
+          content: "";
+          position: absolute;
+          inset: 4%;
+          border: 1px solid oklch(0.84 0.1 84 / .18);
+          border-radius: 50%;
+          box-shadow: inset 0 0 38px oklch(0.72 0.05 260 / .08);
+        }
+        .cw-moon-stage::after {
+          display: none;
+        }
         .cw-moon {
-          width: 120px;
-          height: 120px;
-          margin-bottom: 36px;
+          width: 56%;
+          height: 56%;
           position: relative;
           border-radius: 50%;
           background: transparent;
@@ -1176,11 +1164,7 @@ export default function CelestialWeddingPage() {
           display: none;
         }
         .cw-moon-halo {
-          position: absolute;
-          inset: -26px;
-          border: 1px solid var(--line);
-          border-radius: 50%;
-          animation: cw-spin 60s linear infinite;
+          display: none;
         }
         .cw-moon-halo::before {
           content: "";
@@ -1193,21 +1177,70 @@ export default function CelestialWeddingPage() {
           background: var(--gold);
           box-shadow: 0 0 10px var(--gold);
         }
+        .cw-hero .cw-eyebrow,
+        .cw-hero-names,
+        .cw-hero-line,
+        .cw-hero-meta {
+          position: relative;
+          z-index: 2;
+        }
+        .cw-hero .cw-eyebrow {
+          padding: 8px 12px;
+          background: oklch(0.09 0.025 268 / .28);
+          backdrop-filter: blur(10px);
+        }
         @keyframes cw-spin { to { transform: rotate(360deg); } }
+        @keyframes cw-orbit-spin {
+          from { transform: rotateX(62deg) rotateZ(18deg); }
+          to { transform: rotateX(62deg) rotateZ(378deg); }
+        }
         .cw-hero-names {
-          margin: 6px 0 4px;
-          font-size: clamp(3.6rem, 12vw, 8.5rem);
+          max-width: 780px;
+          margin: clamp(10px, 2vh, 16px) 0 0;
+          color: oklch(0.98 0.008 90);
+          font-size: clamp(4.2rem, 11vw, 8.7rem);
           font-weight: 400;
-          line-height: .92;
-          letter-spacing: .01em;
+          line-height: .84;
+          letter-spacing: 0;
+          text-shadow: 0 16px 60px oklch(0.04 0.02 270 / .45);
         }
         .cw-hero-names span {
           display: block;
-          margin: .18em 0;
+          margin: .11em 0 .08em;
           color: var(--gold);
-          font-size: .42em;
+          font-size: .32em;
           font-style: italic;
-          letter-spacing: .02em;
+          letter-spacing: 0;
+        }
+        .cw-hero-line {
+          width: min(560px, 72vw);
+          height: 1px;
+          margin: clamp(14px, 2.5vh, 22px) 0 0;
+          background: transparent;
+        }
+        .cw-hero-meta {
+          display: flex;
+          flex-wrap: wrap;
+          justify-content: center;
+          gap: 10px;
+          margin-top: clamp(14px, 2.4vh, 20px);
+        }
+        .cw-hero-chip {
+          min-height: 34px;
+          display: inline-flex;
+          align-items: center;
+          border: 1px solid oklch(0.84 0.1 84 / .22);
+          background: oklch(0.12 0.035 268 / .34);
+          color: var(--mist);
+          font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+          font-size: .66rem;
+          letter-spacing: .2em;
+          padding: 9px 14px;
+          text-transform: uppercase;
+          backdrop-filter: blur(14px);
+        }
+        .cw-hero-chip.strong {
+          color: var(--gold-soft);
         }
         .cw-hero-sub,
         .cw-scroll-cue,
@@ -1221,18 +1254,19 @@ export default function CelestialWeddingPage() {
           font-family: Inter, ui-sans-serif, system-ui, sans-serif;
         }
         .cw-hero-sub {
-          margin-top: 22px;
+          margin-top: 0;
           color: var(--mist);
-          font-size: .82rem;
+          font-size: .7rem;
           font-weight: 300;
-          letter-spacing: .34em;
+          letter-spacing: .42em;
           text-transform: uppercase;
         }
         .cw-hero-date {
-          margin-top: 14px;
+          margin-top: 0;
           color: var(--gold-soft);
-          font-size: 1.5rem;
-          letter-spacing: .04em;
+          font-size: .66rem;
+          letter-spacing: .2em;
+          text-transform: uppercase;
         }
         .cw-scroll-cue {
           position: absolute;
@@ -1627,6 +1661,13 @@ export default function CelestialWeddingPage() {
         @media (max-width: 820px) {
           .cw-motion-rail { display: none; }
           .cw-wrap { width: min(100% - 40px, 1120px); }
+          .cw-hero { padding: 44px 24px 64px; }
+          .cw-hero-inner { min-height: calc(100svh - 108px); }
+          .cw-moon-stage { width: min(112vw, 480px); top: 45%; opacity: .58; }
+          .cw-hero .cw-eyebrow { font-size: .62rem; letter-spacing: .34em; }
+          .cw-hero-names { font-size: clamp(3.6rem, 19vw, 6.2rem); }
+          .cw-hero-meta { gap: 8px; }
+          .cw-hero-chip { min-height: 32px; font-size: .62rem; letter-spacing: .18em; padding: 8px 12px; }
           .cw-story-grid,
           .cw-venue-grid { grid-template-columns: 1fr; }
           .cw-venue-info { order: 2; }
@@ -1655,18 +1696,20 @@ export default function CelestialWeddingPage() {
       <section className="cw-hero" id="hero">
         <canvas className="cw-starfield" ref={canvasRef} aria-hidden="true" />
         <div className="cw-hero-inner">
-          <div className="cw-moon">
-            <div className="cw-moon-halo" />
+          <div className="cw-moon-stage" aria-hidden="true">
+            <div className="cw-moon">
+              <div className="cw-moon-halo" />
+            </div>
           </div>
           <div className="cw-eyebrow cw-reveal in">Together with their families</div>
           <h1 className="cw-hero-names cw-reveal in cw-d1">
             Aurora<span>and</span>Elias
           </h1>
-          <div className="cw-hero-sub cw-reveal in cw-d2">
-            invite you to celebrate their wedding
-          </div>
-          <div className="cw-hero-date cw-reveal in cw-d2">
-            Saturday - the twelfth of September - 2026
+          <div className="cw-hero-line cw-reveal in cw-d2" aria-hidden="true" />
+          <div className="cw-hero-meta cw-reveal in cw-d2">
+            <div className="cw-hero-chip cw-hero-sub">Wedding Celebration</div>
+            <div className="cw-hero-chip strong cw-hero-date">12 September 2026</div>
+            <div className="cw-hero-chip">Napa Valley</div>
           </div>
         </div>
         <div className="cw-scroll-cue">
