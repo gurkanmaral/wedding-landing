@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import * as THREE from 'three'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -106,6 +107,86 @@ function PhotoSlot({ label, className = '' }) {
   )
 }
 
+function disposeObject3D(object) {
+  object.traverse((child) => {
+    if (child.geometry) child.geometry.dispose()
+    if (child.material) {
+      if (Array.isArray(child.material)) {
+        child.material.forEach((material) => material.dispose())
+      } else {
+        child.material.dispose()
+      }
+    }
+  })
+}
+
+function createMoonTexture() {
+  const textureCanvas = document.createElement('canvas')
+  textureCanvas.width = 1024
+  textureCanvas.height = 512
+  const context = textureCanvas.getContext('2d')
+  const image = context.createImageData(textureCanvas.width, textureCanvas.height)
+
+  for (let index = 0; index < image.data.length; index += 4) {
+    const noise = Math.random() * 24 - 12
+    image.data[index] = 205 + noise
+    image.data[index + 1] = 207 + noise
+    image.data[index + 2] = 198 + noise * 0.85
+    image.data[index + 3] = 255
+  }
+
+  context.putImageData(image, 0, 0)
+  const softLight = context.createLinearGradient(0, 0, textureCanvas.width, textureCanvas.height)
+  softLight.addColorStop(0, 'rgba(255, 255, 245, 0.36)')
+  softLight.addColorStop(0.48, 'rgba(238, 242, 246, 0.08)')
+  softLight.addColorStop(1, 'rgba(58, 62, 70, 0.22)')
+  context.fillStyle = softLight
+  context.fillRect(0, 0, textureCanvas.width, textureCanvas.height)
+
+  context.globalCompositeOperation = 'multiply'
+  const craters = [
+    [210, 120, 26, 0.12],
+    [360, 300, 42, 0.1],
+    [520, 170, 24, 0.12],
+    [650, 350, 34, 0.1],
+    [760, 150, 18, 0.1],
+    [850, 270, 50, 0.08],
+    [120, 360, 34, 0.08],
+    [940, 92, 24, 0.09],
+    [460, 392, 18, 0.09],
+    [705, 78, 14, 0.08],
+  ]
+
+  craters.forEach(([x, y, radius, opacity]) => {
+    const craterGradient = context.createRadialGradient(x - radius * 0.35, y - radius * 0.35, 2, x, y, radius)
+    craterGradient.addColorStop(0, `rgba(245, 246, 238, ${opacity * 0.35})`)
+    craterGradient.addColorStop(0.48, `rgba(70, 72, 76, ${opacity})`)
+    craterGradient.addColorStop(1, 'rgba(255, 255, 255, 0)')
+    context.fillStyle = craterGradient
+    context.beginPath()
+    context.arc(x, y, radius, 0, Math.PI * 2)
+    context.fill()
+  })
+
+  context.globalCompositeOperation = 'screen'
+  context.fillStyle = 'rgba(255, 255, 255, 0.05)'
+  for (let index = 0; index < 180; index += 1) {
+    const x = Math.random() * textureCanvas.width
+    const y = Math.random() * textureCanvas.height
+    const radius = Math.random() * 1.2 + 0.3
+    context.beginPath()
+    context.arc(x, y, radius, 0, Math.PI * 2)
+    context.fill()
+  }
+
+  const texture = new THREE.CanvasTexture(textureCanvas)
+  texture.colorSpace = THREE.SRGBColorSpace
+  texture.wrapS = THREE.RepeatWrapping
+  texture.wrapT = THREE.ClampToEdgeWrapping
+  texture.anisotropy = 8
+  return texture
+}
+
 export default function CelestialWeddingPage() {
   const rootRef = useRef(null)
   const canvasRef = useRef(null)
@@ -126,6 +207,16 @@ export default function CelestialWeddingPage() {
   }, [])
 
   useEffect(() => {
+    document.documentElement.classList.add('celestial-native-scroll')
+    document.body.classList.add('celestial-native-scroll')
+
+    return () => {
+      document.documentElement.classList.remove('celestial-native-scroll')
+      document.body.classList.remove('celestial-native-scroll')
+    }
+  }, [])
+
+  useEffect(() => {
     const root = rootRef.current
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
@@ -136,27 +227,91 @@ export default function CelestialWeddingPage() {
 
     const hoverCleanups = []
     const ctx = gsap.context(() => {
-      gsap.set('.cw-reveal:not(.in)', { autoAlpha: 0, y: 46 })
-      gsap.set('.cw-section-head', { autoAlpha: 1, y: 0 })
-      gsap.set('.cw-story-copy, .cw-venue-info', { autoAlpha: 0.45, y: 24 })
-      gsap.set('.cw-section-head h2, .cw-story-copy h2, .cw-venue-info h2', {
-        clipPath: 'inset(0 0 100% 0)',
-        y: 30,
+      const splitTargets = gsap.utils.toArray(
+        '.cw-section-head h2, .cw-story-copy h2, .cw-venue-info h2, .cw-footer-names',
+      )
+
+      splitTargets.forEach((target) => {
+        if (target.dataset.split) return
+        const text = target.textContent
+        target.dataset.split = 'true'
+        target.setAttribute('aria-label', text)
+        target.innerHTML = text
+          .split('')
+          .map((char) => {
+            const value = char === ' ' ? '&nbsp;' : char
+            return `<span class="cw-char" aria-hidden="true">${value}</span>`
+          })
+          .join('')
       })
 
-      const revealHeading = (selector, trigger) => {
-        gsap.to(selector, {
-          clipPath: 'inset(0 0 0% 0)',
-          y: 0,
-          duration: 1,
+      gsap.set('.cw-reveal:not(.in)', { autoAlpha: 0, y: 46 })
+      gsap.set('.cw-section-head', { autoAlpha: 1, y: 0 })
+      gsap.set('.cw-count-grid, .cw-timeline, .cw-gallery-grid', { autoAlpha: 1, y: 0 })
+      gsap.set('.cw-story-copy, .cw-venue-info', { autoAlpha: 0.45, y: 24 })
+      gsap.set('.cw-char', { yPercent: 115, rotate: 4, autoAlpha: 0 })
+      gsap.utils.toArray('.cw-constellation path, .cw-starmap path').forEach((path) => {
+        const length = path.getTotalLength()
+        gsap.set(path, { strokeDasharray: length, strokeDashoffset: length })
+      })
+      gsap.set('.cw-section-head h2, .cw-story-copy h2, .cw-venue-info h2', {
+        clipPath: 'inset(0 0 0 0)',
+        y: 0,
+      })
+
+      const revealHeading = (selector, trigger, start = 'top 76%') => {
+        const chars = document.querySelectorAll(`${selector} .cw-char`)
+        return gsap.to(chars, {
+          autoAlpha: 1,
+          yPercent: 0,
+          rotate: 0,
+          stagger: 0.018,
+          duration: 0.85,
           ease: 'expo.out',
           scrollTrigger: {
             trigger,
-            start: 'top 78%',
+            start,
             once: true,
           },
         })
       }
+
+      gsap.utils.toArray('.cw-section').forEach((section) => {
+        ScrollTrigger.create({
+          trigger: section,
+          start: 'top bottom',
+          end: 'bottom top',
+          scrub: true,
+          onUpdate: (self) => {
+            section.style.setProperty('--section-progress', self.progress.toFixed(3))
+          },
+        })
+      })
+
+      gsap.to('.cw-motion-dot', {
+        y: () => window.innerHeight - 96,
+        ease: 'none',
+        scrollTrigger: {
+          trigger: root,
+          start: 'top top',
+          end: 'bottom bottom',
+          scrub: 1.2,
+        },
+      })
+
+      gsap.to('.cw-motion-line', {
+        scaleY: 1,
+        ease: 'none',
+        transformOrigin: 'top',
+        scrollTrigger: {
+          trigger: root,
+          start: 'top top',
+          end: 'bottom bottom',
+          scrub: 1.2,
+        },
+      })
+
+      revealHeading('.cw-footer-names', '.cw-footer', 'top 84%')
 
       const heroTl = gsap.timeline({ defaults: { ease: 'power4.out' } })
       heroTl
@@ -215,26 +370,27 @@ export default function CelestialWeddingPage() {
       })
 
       const countdownTl = gsap.timeline({
+        defaults: { ease: 'power3.out' },
         scrollTrigger: {
           trigger: '.cw-countdown',
           start: 'top 72%',
-          end: 'bottom 28%',
-          scrub: 1.35,
+          once: true,
         },
       })
       countdownTl
         .to('.cw-countdown .cw-section-head', {
           autoAlpha: 1,
           y: 0,
-          duration: 1.1,
-          ease: 'power3.out',
-        })
-        .to('.cw-countdown .cw-section-head h2', {
-          clipPath: 'inset(0 0 0% 0)',
-          y: 0,
-          duration: 1.25,
+          duration: 0.72,
+        }, 0)
+        .to('.cw-countdown .cw-section-head h2 .cw-char', {
+          autoAlpha: 1,
+          yPercent: 0,
+          rotate: 0,
+          duration: 0.44,
           ease: 'expo.out',
-        }, '-=.35')
+          stagger: 0.006,
+        }, 0.05)
         .fromTo(
           '.cw-count-cell',
           { autoAlpha: 0.28, y: 44, rotateX: -26, transformPerspective: 900 },
@@ -242,19 +398,31 @@ export default function CelestialWeddingPage() {
             autoAlpha: 1,
             y: 0,
             rotateX: 0,
-            duration: 1.8,
+            duration: 0.95,
             ease: 'back.out(1.4)',
-            stagger: 0.16,
+            stagger: 0.09,
           },
-          '-=.15',
+          0.18,
+        )
+        .fromTo(
+          '.cw-count-orbit',
+          { scale: 0.72, rotate: -36, opacity: 0 },
+          {
+            scale: 1,
+            rotate: 0,
+            opacity: 0.5,
+            duration: 0.85,
+            stagger: 0.06,
+          },
+          0.26,
         )
 
       const storyTl = gsap.timeline({
+        defaults: { ease: 'power3.out' },
         scrollTrigger: {
           trigger: '.cw-story',
-          start: 'top 72%',
-          end: 'bottom 25%',
-          scrub: 1.45,
+          start: 'top 78%',
+          once: true,
         },
       })
       storyTl
@@ -265,33 +433,46 @@ export default function CelestialWeddingPage() {
             autoAlpha: 1,
             clipPath: 'inset(0 0% 0 0)',
             x: 0,
-            duration: 1.8,
+            duration: 1.05,
             ease: 'expo.out',
           },
+          0,
         )
         .fromTo(
           '.cw-frame-ring',
           { scale: 0.92, autoAlpha: 0 },
-          { scale: 1, autoAlpha: 1, duration: 1.2, ease: 'power3.out' },
-          '-=.75',
+          { scale: 1, autoAlpha: 1, duration: 0.82 },
+          0.18,
         )
         .to('.cw-story-copy', {
           autoAlpha: 1,
           y: 0,
-          duration: 1.15,
-          ease: 'power3.out',
-        }, '-=.55')
-        .to('.cw-story-copy h2', {
-          clipPath: 'inset(0 0 0% 0)',
-          y: 0,
-          duration: 1.4,
+          duration: 0.82,
+        }, 0.08)
+        .to('.cw-story-copy h2 .cw-char', {
+          autoAlpha: 1,
+          yPercent: 0,
+          rotate: 0,
+          duration: 0.44,
           ease: 'expo.out',
-        }, '-=.2')
+          stagger: 0.006,
+        }, 0.14)
         .fromTo(
           '.cw-story-copy p, .cw-constellation',
           { autoAlpha: 0.24, x: 28 },
-          { autoAlpha: 1, x: 0, duration: 1.15, stagger: 0.22, ease: 'power3.out' },
-          '+=.2',
+          { autoAlpha: 1, x: 0, duration: 0.78, stagger: 0.13 },
+          0.38,
+        )
+        .to(
+          '.cw-constellation path',
+          { strokeDashoffset: 0, duration: 0.95, ease: 'power2.inOut' },
+          0.58,
+        )
+        .fromTo(
+          '.cw-constellation circle',
+          { scale: 0, transformOrigin: '50% 50%' },
+          { scale: 1, duration: 0.58, stagger: 0.055, ease: 'back.out(2)' },
+          0.76,
         )
 
       gsap.to('.cw-story-photo', {
@@ -306,31 +487,32 @@ export default function CelestialWeddingPage() {
       })
 
       const scheduleTl = gsap.timeline({
+        defaults: { ease: 'power3.out' },
         scrollTrigger: {
           trigger: '.cw-schedule',
-          start: 'top 75%',
-          end: 'bottom 20%',
-          scrub: 1.55,
+          start: 'top 74%',
+          once: true,
         },
       })
       scheduleTl
         .to('.cw-schedule .cw-section-head', {
           autoAlpha: 1,
           y: 0,
-          duration: 1,
-          ease: 'power3.out',
-        })
-        .to('.cw-schedule .cw-section-head h2', {
-          clipPath: 'inset(0 0 0% 0)',
-          y: 0,
-          duration: 1.25,
+          duration: 0.72,
+        }, 0)
+        .to('.cw-schedule .cw-section-head h2 .cw-char', {
+          autoAlpha: 1,
+          yPercent: 0,
+          rotate: 0,
+          duration: 0.44,
           ease: 'expo.out',
-        }, '-=.2')
+          stagger: 0.006,
+        }, 0.05)
         .to('.cw-timeline', {
           '--line-scale': 1,
-          duration: 2.1,
+          duration: 0.72,
           ease: 'power2.inOut',
-        }, '+=.25')
+        }, 0.14)
         .fromTo(
           '.cw-tl-item',
           {
@@ -342,40 +524,40 @@ export default function CelestialWeddingPage() {
             autoAlpha: 1,
             x: 0,
             y: 0,
-            duration: 1.25,
-            stagger: 0.22,
-            ease: 'power3.out',
+            duration: 0.58,
+            stagger: 0.065,
           },
-          '-=1.15',
+          0.24,
         )
         .fromTo(
           '.cw-phase',
           { rotate: -45, scale: 0.75 },
-          { rotate: 0, scale: 1, duration: 1, stagger: 0.16, ease: 'back.out(1.7)' },
-          '-=1.25',
+          { rotate: 0, scale: 1, duration: 0.5, stagger: 0.05, ease: 'back.out(1.7)' },
+          0.28,
         )
 
       const venueTl = gsap.timeline({
+        defaults: { ease: 'power3.out' },
         scrollTrigger: {
           trigger: '.cw-venue',
-          start: 'top 72%',
-          end: 'bottom 25%',
-          scrub: 1.45,
+          start: 'top 76%',
+          once: true,
         },
       })
       venueTl
         .to('.cw-venue .cw-section-head', {
           autoAlpha: 1,
           y: 0,
-          duration: 1,
-          ease: 'power3.out',
-        })
-        .to('.cw-venue .cw-section-head h2', {
-          clipPath: 'inset(0 0 0% 0)',
-          y: 0,
-          duration: 1.25,
+          duration: 0.72,
+        }, 0)
+        .to('.cw-venue .cw-section-head h2 .cw-char', {
+          autoAlpha: 1,
+          yPercent: 0,
+          rotate: 0,
+          duration: 0.44,
           ease: 'expo.out',
-        }, '-=.2')
+          stagger: 0.006,
+        }, 0.05)
         .fromTo(
           '.cw-starmap',
           { autoAlpha: 0.32, clipPath: 'inset(16% 16% 16% 16%)', scale: 0.94, y: 34 },
@@ -384,34 +566,46 @@ export default function CelestialWeddingPage() {
             clipPath: 'inset(0% 0% 0% 0%)',
             scale: 1,
             y: 0,
-            duration: 1.75,
+            duration: 0.95,
             ease: 'expo.out',
           },
-          '+=.2',
+          0.16,
         )
         .fromTo(
           '.cw-pin',
           { autoAlpha: 0, y: -34, scale: 0.86 },
-          { autoAlpha: 1, y: 0, scale: 1, duration: 1.1, ease: 'bounce.out' },
-          '-=.25',
+          { autoAlpha: 1, y: 0, scale: 1, duration: 0.7, ease: 'bounce.out' },
+          0.34,
+        )
+        .to(
+          '.cw-starmap path',
+          { strokeDashoffset: 0, duration: 0.82, stagger: 0.045, ease: 'power2.inOut' },
+          0.4,
+        )
+        .fromTo(
+          '.cw-starmap circle',
+          { scale: 0, transformOrigin: '50% 50%' },
+          { scale: 1, duration: 0.42, stagger: 0.025, ease: 'back.out(2.4)' },
+          0.56,
         )
         .to('.cw-venue-info', {
           autoAlpha: 1,
           y: 0,
-          duration: 1.1,
-          ease: 'power3.out',
-        }, '-=.55')
-        .to('.cw-venue-info h2', {
-          clipPath: 'inset(0 0 0% 0)',
-          y: 0,
-          duration: 1.25,
+          duration: 0.68,
+        }, 0.22)
+        .to('.cw-venue-info h2 .cw-char', {
+          autoAlpha: 1,
+          yPercent: 0,
+          rotate: 0,
+          duration: 0.42,
           ease: 'expo.out',
-        }, '-=.2')
+          stagger: 0.006,
+        }, 0.28)
         .fromTo(
           '.cw-address, .cw-detail-row, .cw-venue-info .cw-btn',
           { autoAlpha: 0.28, y: 20 },
-          { autoAlpha: 1, y: 0, duration: 0.9, stagger: 0.14, ease: 'power3.out' },
-          '+=.15',
+          { autoAlpha: 1, y: 0, duration: 0.48, stagger: 0.055 },
+          0.52,
         )
 
       gsap.to('.cw-starmap svg', {
@@ -428,34 +622,35 @@ export default function CelestialWeddingPage() {
       })
 
       const galleryTl = gsap.timeline({
+        defaults: { ease: 'power3.out' },
         scrollTrigger: {
           trigger: '.cw-gallery',
-          start: 'top 72%',
-          end: 'bottom 20%',
-          scrub: 1.5,
+          start: 'top 74%',
+          once: true,
         },
       })
       galleryTl
         .to('.cw-gallery .cw-section-head', {
           autoAlpha: 1,
           y: 0,
-          duration: 1,
-          ease: 'power3.out',
-        })
-        .to('.cw-gallery .cw-section-head h2', {
-          clipPath: 'inset(0 0 0% 0)',
-          y: 0,
-          duration: 1.25,
+          duration: 0.72,
+        }, 0)
+        .to('.cw-gallery .cw-section-head h2 .cw-char', {
+          autoAlpha: 1,
+          yPercent: 0,
+          rotate: 0,
+          duration: 0.44,
           ease: 'expo.out',
-        }, '-=.2')
+          stagger: 0.006,
+        }, 0.05)
         .fromTo(
           '.cw-gallery-cell',
           {
-            autoAlpha: 0.3,
+            autoAlpha: 0.46,
             y: (index) => (index % 2 === 0 ? 46 : -34),
             rotate: (index) => (index % 2 === 0 ? -2.5 : 2.5),
             scale: 0.96,
-            clipPath: 'inset(22% 0 22% 0)',
+            clipPath: 'inset(14% 0 14% 0)',
           },
           {
             autoAlpha: 1,
@@ -463,34 +658,35 @@ export default function CelestialWeddingPage() {
             rotate: 0,
             scale: 1,
             clipPath: 'inset(0% 0 0% 0)',
-            duration: 1.8,
+            duration: 0.68,
             ease: 'power4.out',
-            stagger: { each: 0.16, from: 'center' },
+            stagger: { each: 0.045, from: 'center' },
           },
-          '+=.25',
+          0.18,
         )
 
       const rsvpTl = gsap.timeline({
+        defaults: { ease: 'power3.out' },
         scrollTrigger: {
           trigger: '.cw-rsvp',
-          start: 'top 70%',
-          end: 'bottom 45%',
-          scrub: 1.1,
+          start: 'top 74%',
+          once: true,
         },
       })
       rsvpTl
         .to('.cw-rsvp .cw-section-head', {
           autoAlpha: 1,
           y: 0,
-          duration: 0.75,
-          ease: 'power3.out',
-        })
-        .to('.cw-rsvp .cw-section-head h2', {
-          clipPath: 'inset(0 0 0% 0)',
-          y: 0,
-          duration: 0.9,
+          duration: 0.62,
+        }, 0)
+        .to('.cw-rsvp .cw-section-head h2 .cw-char', {
+          autoAlpha: 1,
+          yPercent: 0,
+          rotate: 0,
+          duration: 0.42,
           ease: 'expo.out',
-        }, '-=.4')
+          stagger: 0.006,
+        }, 0.05)
         .fromTo(
           '.cw-rsvp-card',
           { autoAlpha: 0.35, y: 54, scale: 0.94, clipPath: 'inset(10% 0 10% 0)' },
@@ -499,24 +695,23 @@ export default function CelestialWeddingPage() {
             y: 0,
             scale: 1,
             clipPath: 'inset(0% 0 0% 0)',
-            duration: 1.05,
+            duration: 0.82,
             ease: 'expo.out',
           },
+          0.18,
         )
         .fromTo(
           '.cw-corner',
           { autoAlpha: 0, scale: 0.25, rotate: 18 },
-          { autoAlpha: 1, scale: 1, rotate: 0, duration: 0.45, stagger: 0.04, ease: 'back.out(2)' },
-          '-=.55',
+          { autoAlpha: 1, scale: 1, rotate: 0, duration: 0.36, stagger: 0.03, ease: 'back.out(2)' },
+          0.34,
         )
         .fromTo(
           '.cw-attend, .cw-field, .cw-submit',
           { autoAlpha: 0, y: 22 },
-          { autoAlpha: 1, y: 0, duration: 0.6, stagger: 0.06, ease: 'power3.out' },
-          '-=.35',
+          { autoAlpha: 1, y: 0, duration: 0.46, stagger: 0.045 },
+          0.44,
         )
-
-      revealHeading('.cw-footer-names', '.cw-footer')
 
       gsap.to('.cw-footer-names', {
         autoAlpha: 1,
@@ -580,96 +775,221 @@ export default function CelestialWeddingPage() {
 
   useEffect(() => {
     const canvas = canvasRef.current
-    const ctx = canvas.getContext('2d')
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    let width = 0
-    let height = 0
+    const renderer = new THREE.WebGLRenderer({
+      alpha: true,
+      antialias: true,
+      canvas,
+    })
+    const scene = new THREE.Scene()
+    const camera = new THREE.PerspectiveCamera(55, 1, 1, 1200)
+    const starField = new THREE.Group()
+    const moonGroup = new THREE.Group()
+    const pointer = new THREE.Vector2(0, 0)
+    const targetPointer = new THREE.Vector2(0, 0)
+    const clock = new THREE.Clock()
     let frame = 0
-    let stars = []
-    let meteors = []
+    let width = 1
+    let height = 1
+
+    camera.position.z = 420
+    scene.add(starField)
+    scene.add(moonGroup)
+
+    const makeStarLayer = ({ count, depth, size, color, spread, opacity }) => {
+      const positions = new Float32Array(count * 3)
+      const phases = new Float32Array(count)
+
+      for (let index = 0; index < count; index += 1) {
+        const i3 = index * 3
+        positions[i3] = (Math.random() - 0.5) * spread
+        positions[i3 + 1] = (Math.random() - 0.5) * spread * 0.62
+        positions[i3 + 2] = depth + (Math.random() - 0.5) * 90
+        phases[index] = Math.random() * Math.PI * 2
+      }
+
+      const geometry = new THREE.BufferGeometry()
+      geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
+      geometry.setAttribute('phase', new THREE.BufferAttribute(phases, 1))
+
+      const material = new THREE.PointsMaterial({
+        color,
+        depthWrite: false,
+        opacity,
+        size,
+        sizeAttenuation: true,
+        transparent: true,
+      })
+
+      const points = new THREE.Points(geometry, material)
+      points.userData.baseOpacity = opacity
+      points.userData.floatSpeed = 0.05 + Math.random() * 0.04
+      starField.add(points)
+      return points
+    }
+
+    const farStars = makeStarLayer({
+      color: '#e9ecff',
+      count: 260,
+      depth: -170,
+      opacity: 0.52,
+      size: 1.45,
+      spread: 980,
+    })
+    const nearStars = makeStarLayer({
+      color: '#f4d38a',
+      count: 80,
+      depth: 40,
+      opacity: 0.72,
+      size: 2.1,
+      spread: 760,
+    })
+    const dustStars = makeStarLayer({
+      color: '#ffffff',
+      count: 140,
+      depth: -20,
+      opacity: 0.28,
+      size: 0.95,
+      spread: 1080,
+    })
+
+    const meteorGeometry = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(0, 0, 0),
+      new THREE.Vector3(-95, -28, 0),
+    ])
+    const meteorMaterial = new THREE.LineBasicMaterial({
+      color: '#ffe7af',
+      opacity: 0,
+      transparent: true,
+    })
+    const meteor = new THREE.Line(meteorGeometry, meteorMaterial)
+    scene.add(meteor)
+
+    const moonTexture = createMoonTexture()
+    const moonGeometry = new THREE.SphereGeometry(38, 96, 96)
+    const moonMaterial = new THREE.MeshStandardMaterial({
+      bumpMap: moonTexture,
+      bumpScale: 1.35,
+      color: '#d9d8cb',
+      emissive: '#171a25',
+      emissiveIntensity: 0.04,
+      map: moonTexture,
+      metalness: 0,
+      roughness: 0.92,
+    })
+    const moon = new THREE.Mesh(moonGeometry, moonMaterial)
+    const moonGlowGeometry = new THREE.SphereGeometry(45, 64, 64)
+    const moonGlowMaterial = new THREE.MeshBasicMaterial({
+      color: '#dfe5ff',
+      opacity: 0.12,
+      transparent: true,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    })
+    const moonGlow = new THREE.Mesh(moonGlowGeometry, moonGlowMaterial)
+    const moonKeyLight = new THREE.DirectionalLight('#f4f2df', 3.2)
+    const moonFillLight = new THREE.PointLight('#8f98ff', 1.05, 520)
+    const ambientLight = new THREE.AmbientLight('#5f6478', 0.58)
+
+    moonGroup.position.set(0, 118, 74)
+    moon.rotation.set(0.08, -0.4, -0.05)
+    moonGlow.scale.setScalar(1.08)
+    moonGroup.add(moonGlow, moon)
+    moonKeyLight.position.set(-130, 180, 260)
+    moonFillLight.position.set(180, -120, 120)
+    scene.add(moonKeyLight, moonFillLight, ambientLight)
 
     const resize = () => {
       const rect = canvas.getBoundingClientRect()
-      const ratio = window.devicePixelRatio || 1
-      width = canvas.width = rect.width * ratio
-      height = canvas.height = rect.height * ratio
-      const count = Math.min(220, Math.floor((rect.width * rect.height) / 4200))
-      stars = Array.from({ length: count }, () => ({
-        x: Math.random() * width,
-        y: Math.random() * height,
-        r: (Math.random() * 1.4 + 0.3) * ratio,
-        glow: Math.random() < 0.12,
-        phase: Math.random(),
-        speed: Math.random() * 0.02 + 0.004,
-      }))
+      width = Math.max(1, rect.width)
+      height = Math.max(1, rect.height)
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2))
+      renderer.setSize(width, height, false)
+      camera.aspect = width / height
+      camera.updateProjectionMatrix()
     }
 
-    const spawnMeteor = () => {
+    const onPointerMove = (event) => {
+      const rect = canvas.getBoundingClientRect()
+      targetPointer.x = ((event.clientX - rect.left) / rect.width - 0.5) * 2
+      targetPointer.y = -(((event.clientY - rect.top) / rect.height - 0.5) * 2)
+    }
+
+    const launchMeteor = () => {
       if (reduceMotion) return
-      meteors.push({
-        x: Math.random() * width * 0.7,
-        y: Math.random() * height * 0.4,
-        length: (Math.random() * 120 + 90) * (window.devicePixelRatio || 1),
-        speed: (Math.random() * 7 + 7) * (window.devicePixelRatio || 1),
-        alpha: 1,
+      meteor.position.set(
+        (Math.random() - 0.5) * 380,
+        150 + Math.random() * 120,
+        20,
+      )
+      meteor.rotation.z = -0.28
+      meteorMaterial.opacity = 0.85
+      gsap.to(meteor.position, {
+        duration: 1.4,
+        ease: 'power2.out',
+        x: meteor.position.x + 260,
+        y: meteor.position.y - 80,
+      })
+      gsap.to(meteorMaterial, {
+        duration: 1.4,
+        ease: 'power2.out',
+        opacity: 0,
       })
     }
 
-    const draw = () => {
-      ctx.clearRect(0, 0, width, height)
+    const animate = () => {
+      const elapsed = clock.getElapsedTime()
+      pointer.lerp(targetPointer, reduceMotion ? 0.03 : 0.075)
 
-      stars.forEach((star) => {
-        star.phase += star.speed
-        const twinkle = 0.5 + 0.5 * Math.sin(star.phase * Math.PI * 2)
-        ctx.beginPath()
-        ctx.arc(star.x, star.y, star.r, 0, 7)
-        ctx.fillStyle = star.glow
-          ? `rgba(240,210,150,${0.35 + twinkle * 0.6})`
-          : `rgba(232,235,250,${0.25 + twinkle * 0.65})`
-        ctx.shadowBlur = star.glow ? 8 * (window.devicePixelRatio || 1) : 0
-        ctx.shadowColor = 'rgba(240,210,150,.7)'
-        ctx.fill()
+      starField.rotation.y = pointer.x * 0.055
+      starField.rotation.x = pointer.y * 0.035
+      starField.position.x = pointer.x * 30
+      starField.position.y = pointer.y * 20
+      moonGroup.rotation.y = pointer.x * 0.18 + elapsed * 0.035
+      moonGroup.rotation.x = pointer.y * 0.07
+      moonGroup.position.x = pointer.x * 10
+      moonGroup.position.y = 118 + pointer.y * 6 + Math.sin(elapsed * 0.7) * 1.8
+      moon.rotation.y += reduceMotion ? 0.0008 : 0.0018
+      moonGlow.material.opacity = 0.13 + Math.sin(elapsed * 1.2) * 0.025
+
+      farStars.position.x = pointer.x * -16
+      farStars.position.y = pointer.y * -9
+      nearStars.position.x = pointer.x * 38
+      nearStars.position.y = pointer.y * 24
+      dustStars.position.x = pointer.x * 20
+      dustStars.position.y = pointer.y * 12
+
+      starField.children.forEach((layer, index) => {
+        layer.rotation.z = elapsed * layer.userData.floatSpeed * (index % 2 ? -1 : 1)
+        layer.material.opacity =
+          layer.userData.baseOpacity +
+          Math.sin(elapsed * 1.1 + index) * (reduceMotion ? 0.015 : 0.08)
       })
 
-      ctx.shadowBlur = 0
-      for (let i = meteors.length - 1; i >= 0; i -= 1) {
-        const meteor = meteors[i]
-        const gradient = ctx.createLinearGradient(
-          meteor.x,
-          meteor.y,
-          meteor.x - meteor.length,
-          meteor.y - meteor.length * 0.45,
-        )
-        gradient.addColorStop(0, `rgba(255,240,200,${meteor.alpha})`)
-        gradient.addColorStop(1, 'rgba(255,240,200,0)')
-        ctx.strokeStyle = gradient
-        ctx.lineWidth = 1.6 * (window.devicePixelRatio || 1)
-        ctx.beginPath()
-        ctx.moveTo(meteor.x, meteor.y)
-        ctx.lineTo(meteor.x - meteor.length, meteor.y - meteor.length * 0.45)
-        ctx.stroke()
-        meteor.x += meteor.speed
-        meteor.y += meteor.speed * 0.45
-        meteor.alpha -= 0.012
-        if (meteor.alpha <= 0) meteors.splice(i, 1)
-      }
-
-      frame = window.requestAnimationFrame(draw)
+      renderer.render(scene, camera)
+      frame = window.requestAnimationFrame(animate)
     }
 
     resize()
-    draw()
-    const meteorTimer = window.setInterval(() => {
-      if (Math.random() < 0.6) spawnMeteor()
-    }, 3800)
-    const firstMeteor = window.setTimeout(spawnMeteor, 1400)
+    animate()
+
+    const meteorTimer = window.setInterval(launchMeteor, 4200)
+    const firstMeteor = window.setTimeout(launchMeteor, 1300)
     window.addEventListener('resize', resize)
+    window.addEventListener('pointermove', onPointerMove)
 
     return () => {
       window.cancelAnimationFrame(frame)
       window.clearInterval(meteorTimer)
       window.clearTimeout(firstMeteor)
       window.removeEventListener('resize', resize)
+      window.removeEventListener('pointermove', onPointerMove)
+      disposeObject3D(starField)
+      disposeObject3D(moonGroup)
+      moonTexture.dispose()
+      meteorGeometry.dispose()
+      meteorMaterial.dispose()
+      renderer.dispose()
     }
   }, [])
 
@@ -711,7 +1031,19 @@ export default function CelestialWeddingPage() {
           font-family: "Cormorant Garamond", Georgia, serif;
           overflow-x: hidden;
         }
+        html.celestial-native-scroll {
+          scroll-behavior: auto;
+          scroll-snap-type: none;
+        }
+        body.celestial-native-scroll {
+          scroll-snap-type: none;
+        }
         .celestial-page * { box-sizing: border-box; }
+        .celestial-page,
+        .celestial-page * {
+          scroll-snap-align: none;
+          scroll-snap-stop: normal;
+        }
         .celestial-page section { position: relative; }
         .cw-eyebrow {
           color: var(--gold);
@@ -725,7 +1057,7 @@ export default function CelestialWeddingPage() {
         .cw-script { font-style: italic; font-weight: 500; }
         .cw-wrap { width: min(1120px, calc(100% - 56px)); margin: 0 auto; }
         .cw-section {
-          height: 100svh;
+          min-height: min(920px, 92svh);
           display: flex;
           align-items: center;
           padding: clamp(36px, 6vh, 68px) 0;
@@ -777,11 +1109,45 @@ export default function CelestialWeddingPage() {
           will-change: opacity, transform;
         }
         .cw-reveal.in { opacity: 1; transform: none; }
+        .cw-char {
+          display: inline-block;
+          transform-origin: 50% 100%;
+          will-change: opacity, transform;
+        }
+        .cw-motion-rail {
+          position: fixed;
+          top: 48px;
+          right: 28px;
+          bottom: 48px;
+          z-index: 20;
+          width: 1px;
+          background: oklch(0.84 0.1 84 / .14);
+          pointer-events: none;
+        }
+        .cw-motion-line {
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(180deg, var(--gold), transparent);
+          transform: scaleY(0);
+          transform-origin: top;
+        }
+        .cw-motion-dot {
+          position: absolute;
+          top: 0;
+          left: 50%;
+          width: 9px;
+          height: 9px;
+          border: 1px solid var(--gold);
+          border-radius: 50%;
+          background: var(--night-0);
+          box-shadow: 0 0 16px oklch(0.84 0.1 84 / .45);
+          transform: translateX(-50%);
+        }
         .cw-d1 { transition-delay: .12s; }
         .cw-d2 { transition-delay: .24s; }
         .cw-d3 { transition-delay: .36s; }
         .cw-hero {
-          height: 100svh;
+          min-height: 100svh;
           display: flex;
           flex-direction: column;
           align-items: center;
@@ -802,19 +1168,12 @@ export default function CelestialWeddingPage() {
           margin-bottom: 36px;
           position: relative;
           border-radius: 50%;
-          background: radial-gradient(circle at 35% 32%, oklch(0.96 0.02 92), oklch(0.86 0.05 86) 60%, oklch(0.74 0.08 80));
-          box-shadow: 0 0 0 1px oklch(0.9 0.05 88 / .25), 0 0 60px oklch(0.86 0.09 86 / .55), 0 0 140px oklch(0.84 0.1 84 / .35);
+          background: transparent;
+          box-shadow: none;
           will-change: opacity, transform;
         }
         .cw-moon::after {
-          content: "";
-          position: absolute;
-          inset: 0;
-          border-radius: 50%;
-          background:
-            radial-gradient(circle at 70% 64%, oklch(0.74 0.06 80 / .55), transparent 42%),
-            radial-gradient(circle at 52% 30%, oklch(0.70 0.05 78 / .45), transparent 26%);
-          mix-blend-mode: multiply;
+          display: none;
         }
         .cw-moon-halo {
           position: absolute;
@@ -903,6 +1262,22 @@ export default function CelestialWeddingPage() {
           100% { transform: translateY(16px); opacity: 0; }
         }
         .cw-countdown { background: linear-gradient(180deg, var(--night-0), var(--night-1)); text-align: center; }
+        .cw-countdown::before,
+        .cw-story::before,
+        .cw-schedule::before,
+        .cw-venue::before,
+        .cw-gallery::before,
+        .cw-rsvp::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          pointer-events: none;
+          opacity: calc(.08 + var(--section-progress, 0) * .18);
+          background:
+            linear-gradient(115deg, transparent 0 42%, oklch(0.84 0.1 84 / .18) 50%, transparent 58% 100%);
+          transform: translateX(calc((-35% + var(--section-progress, 0) * 70%)));
+          will-change: transform, opacity;
+        }
         .cw-count-grid {
           display: flex;
           flex-wrap: wrap;
@@ -1250,6 +1625,7 @@ export default function CelestialWeddingPage() {
           text-transform: uppercase;
         }
         @media (max-width: 820px) {
+          .cw-motion-rail { display: none; }
           .cw-wrap { width: min(100% - 40px, 1120px); }
           .cw-story-grid,
           .cw-venue-grid { grid-template-columns: 1fr; }
@@ -1271,6 +1647,10 @@ export default function CelestialWeddingPage() {
           .cw-scroll-cue span:last-child { animation: none; }
         }
       `}</style>
+      <div className="cw-motion-rail" aria-hidden="true">
+        <span className="cw-motion-line" />
+        <span className="cw-motion-dot" />
+      </div>
 
       <section className="cw-hero" id="hero">
         <canvas className="cw-starfield" ref={canvasRef} aria-hidden="true" />
