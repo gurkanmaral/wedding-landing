@@ -2,11 +2,19 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import * as THREE from 'three'
-import { Body, GeoMoon, HelioDistance, Illumination, KM_PER_AU, MoonPhase } from 'astronomy-engine'
+import { Body, Equator, GeoMoon, HelioDistance, Horizon, Illumination, KM_PER_AU, MoonPhase, Observer } from 'astronomy-engine'
 
 gsap.registerPlugin(ScrollTrigger)
 
 const EVENT_DATE = new Date('2026-09-12T17:30:00-07:00')
+const EVENT_LOCATION = {
+  label: 'Napa Valley',
+  region: 'Napa Valley, California',
+  latitude: 38.2975,
+  longitude: -122.2869,
+  elevationMeters: 0,
+  timeZone: 'America/Los_Angeles',
+}
 
 const schedule = [
   {
@@ -75,9 +83,20 @@ const skyStars = [
 
 function formatEventDate(date, options) {
   return new Intl.DateTimeFormat('en-US', {
-    timeZone: 'America/Los_Angeles',
+    timeZone: EVENT_LOCATION.timeZone,
     ...options,
   }).format(date)
+}
+
+function formatNumericEventDate(date) {
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: EVENT_LOCATION.timeZone,
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  }).formatToParts(date)
+  const valueByType = Object.fromEntries(parts.map((part) => [part.type, part.value]))
+  return `${valueByType.day} - ${valueByType.month} - ${valueByType.year}`
 }
 
 function getMoonPhaseName(angle) {
@@ -91,11 +110,98 @@ function getMoonPhaseName(angle) {
   return 'Waning crescent'
 }
 
-function getSkySnapshot(date) {
+function getCardinalDirection(azimuth) {
+  const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
+  return directions[Math.round((((azimuth % 360) + 360) % 360) / 45) % 8]
+}
+
+function getMoonViewingNote(angle, date, location) {
+  try {
+    const observer = new Observer(location.latitude, location.longitude, location.elevationMeters)
+    const moonEquator = Equator(Body.Moon, date, observer, true, true)
+    const moonHorizon = Horizon(date, observer, moonEquator.ra, moonEquator.dec, 'normal')
+    const direction = getCardinalDirection(moonHorizon.azimuth)
+    const altitude = Math.abs(moonHorizon.altitude).toFixed(0)
+    const phaseName = getMoonPhaseName(angle)
+
+    return {
+      value: `${direction} at event time`,
+      meta: moonHorizon.altitude >= 0
+        ? `${phaseName} ${altitude}° above horizon`
+        : `${phaseName} ${altitude}° below horizon`,
+    }
+  } catch {
+    // Fall through to a phase-only note if horizon math cannot run.
+  }
+
+  if (angle < 7 || angle >= 353) {
+    return {
+      value: 'Near the Sun',
+      meta: 'New moon is mostly hidden in solar glare',
+    }
+  }
+  if (angle < 83) {
+    return {
+      value: 'West after sunset',
+      meta: 'Slim crescent near the evening horizon',
+    }
+  }
+  if (angle < 97) {
+    return {
+      value: 'South at sunset',
+      meta: 'First quarter moon high in the evening sky',
+    }
+  }
+  if (angle < 173) {
+    return {
+      value: 'East by evening',
+      meta: 'Waxing gibbous brightens the night',
+    }
+  }
+  if (angle < 187) {
+    return {
+      value: 'East after sunset',
+      meta: 'Full moon rising opposite the Sun',
+    }
+  }
+  if (angle < 263) {
+    return {
+      value: 'East late evening',
+      meta: 'Waning gibbous visible through the night',
+    }
+  }
+  if (angle < 277) {
+    return {
+      value: 'South before sunrise',
+      meta: 'Last quarter moon in the morning sky',
+    }
+  }
+  return {
+    value: 'East before sunrise',
+    meta: 'Waning crescent near the morning horizon',
+  }
+}
+
+function getMoonShadowStyle(date) {
+  const angle = MoonPhase(date)
+  const illumination = Illumination(Body.Moon, date).phase_fraction * 100
+
+  if (illumination >= 95) return { opacity: 0 }
+  if (illumination <= 5) return { inset: '-1px', opacity: 0.92 }
+
+  if (angle < 180) {
+    return { inset: '-1px 16% -1px -1px', opacity: 1 }
+  }
+
+  return { inset: '-1px -1px -1px 16%', opacity: 1 }
+}
+
+function getSkySnapshot(date, location) {
   const moonAngle = MoonPhase(date)
   const moonIllumination = Illumination(Body.Moon, date).phase_fraction * 100
   const moonDistanceKm = GeoMoon(date).Length() * KM_PER_AU
   const mercuryDistanceAu = HelioDistance(Body.Mercury, date)
+  const viewingNote = getMoonViewingNote(moonAngle, date, location)
 
   return [
     {
@@ -106,7 +212,7 @@ function getSkySnapshot(date) {
     {
       label: 'Moon distance',
       value: `${Math.round(moonDistanceKm / 1000).toLocaleString('en-US')},000 km`,
-      meta: 'Earth to Moon on this date',
+      meta: 'Earth to Moon at event time',
     },
     {
       label: 'Mercury',
@@ -115,8 +221,8 @@ function getSkySnapshot(date) {
     },
     {
       label: 'Best direction',
-      value: 'West after sunset',
-      meta: 'Slim crescent near the evening horizon',
+      value: viewingNote.value,
+      meta: viewingNote.meta,
     },
   ]
 }
@@ -190,13 +296,19 @@ export default function CelestialWeddingPage() {
     () => formState.name.trim().split(' ')[0] || 'friend',
     [formState.name],
   )
-  const skySnapshot = useMemo(() => getSkySnapshot(EVENT_DATE), [])
+  const skySnapshot = useMemo(() => getSkySnapshot(EVENT_DATE, EVENT_LOCATION), [])
+  const moonShadowStyle = useMemo(() => getMoonShadowStyle(EVENT_DATE), [])
+  const moonPhaseLabel = skySnapshot.find((item) => item.label === 'Moon phase')?.value ?? 'Moon phase'
   const eventDateLong = useMemo(
     () => formatEventDate(EVENT_DATE, { day: 'numeric', month: 'long', year: 'numeric' }),
     [],
   )
   const eventDateShort = useMemo(
     () => formatEventDate(EVENT_DATE, { day: 'numeric', month: 'short', year: 'numeric' }),
+    [],
+  )
+  const eventDateNumeric = useMemo(
+    () => formatNumericEventDate(EVENT_DATE),
     [],
   )
 
@@ -2013,7 +2125,7 @@ export default function CelestialWeddingPage() {
           <div className="cw-hero-meta cw-reveal in cw-d2">
             <div className="cw-hero-chip cw-hero-sub">Wedding Celebration</div>
             <div className="cw-hero-chip strong cw-hero-date">{eventDateLong}</div>
-            <div className="cw-hero-chip">Napa Valley</div>
+            <div className="cw-hero-chip">{EVENT_LOCATION.label}</div>
           </div>
         </div>
         <div className="cw-scroll-cue">
@@ -2058,7 +2170,7 @@ export default function CelestialWeddingPage() {
             </div>
             <h2>Ay ve yıldızların konumu</h2>
             <p className="cw-lead">
-              A stylized look at the Moon, Mercury and the evening stars over Napa
+              A stylized look at the Moon, Mercury and the evening stars over {EVENT_LOCATION.label}
               on {eventDateLong}.
             </p>
           </div>
@@ -2066,8 +2178,8 @@ export default function CelestialWeddingPage() {
             <div className="cw-sky-map cw-reveal">
               <div className="cw-sky-orbit o1" />
               <div className="cw-sky-orbit o2" />
-              <div className="cw-sky-moon-phase" aria-label="Waxing crescent moon">
-                <span />
+              <div className="cw-sky-moon-phase" aria-label={moonPhaseLabel}>
+                <span style={moonShadowStyle} />
               </div>
               <div className="cw-sky-planet">Mercury</div>
               {skyStars.map((star) => (
@@ -2081,7 +2193,7 @@ export default function CelestialWeddingPage() {
               ))}
             </div>
             <div className="cw-sky-body cw-reveal cw-d1">
-              <div className="cw-eyebrow">{eventDateShort} • Napa Valley</div>
+              <div className="cw-eyebrow">{eventDateShort} • {EVENT_LOCATION.label}</div>
               <h3>The sky above the vows</h3>
               <p>
                 On the wedding evening, the Moon is shown as a slim waxing crescent.
@@ -2385,7 +2497,7 @@ export default function CelestialWeddingPage() {
         <div className="cw-footer-names">
           Aurora <span>&amp;</span> Elias
         </div>
-        <div className="cw-footer-meta">12 - 09 - 2026 - Napa Valley, California</div>
+        <div className="cw-footer-meta">{eventDateNumeric} - {EVENT_LOCATION.region}</div>
       </footer>
     </div>
   )

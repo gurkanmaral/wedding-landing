@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import * as THREE from 'three'
 
 import decoHero from './assets/med-dream-spark/deco-hero.jpg'
 import decoLeaf from './assets/med-dream-spark/deco-leaf.png'
@@ -24,6 +25,7 @@ function getCountdown() {
 
 export default function MedDreamSparkArtDecoTemplatePage() {
   const root = useRef(null)
+  const jewelCanvas = useRef(null)
   const [time, setTime] = useState(() => getCountdown())
 
   useEffect(() => {
@@ -33,8 +35,15 @@ export default function MedDreamSparkArtDecoTemplatePage() {
 
   useEffect(() => {
     if (!root.current) return
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     const cleanups = []
     const ctx = gsap.context(() => {
+      if (reduceMotion) {
+        gsap.set('.curtain-overlay', { display: 'none' })
+        gsap.set('.hero-letter, .hero-sub, .fade-up, .deco-card, .deco-panel', { clearProps: 'all' })
+        return
+      }
+
       gsap.to('.curtain-left', { xPercent: -100, duration: 1.6, delay: 0.2, ease: 'expo.inOut' })
       gsap.to('.curtain-right', {
         xPercent: 100,
@@ -58,6 +67,21 @@ export default function MedDreamSparkArtDecoTemplatePage() {
       })
 
       gsap.from('.hero-sub', { opacity: 0, y: 20, delay: 1.6, duration: 1, ease: 'power2.out' })
+      gsap.from('.hero-frame-line', {
+        scaleX: 0,
+        transformOrigin: 'center',
+        delay: 1.2,
+        duration: 1.4,
+        stagger: 0.08,
+        ease: 'expo.out',
+      })
+      gsap.from('.hero-arch', {
+        scale: 0.86,
+        opacity: 0,
+        delay: 1.05,
+        duration: 1.5,
+        ease: 'power4.out',
+      })
 
       gsap.utils.toArray('.parallax-leaf').forEach((el, i) => {
         gsap.to(el, {
@@ -83,7 +107,143 @@ export default function MedDreamSparkArtDecoTemplatePage() {
       })
 
       gsap.utils.toArray('.fade-up').forEach((el) => {
-        gsap.from(el, { y: 60, opacity: 0, duration: 1, ease: 'power3.out', scrollTrigger: { trigger: el, start: 'top 88%' } })
+        gsap.from(el, {
+          y: 60,
+          opacity: 0,
+          duration: 1,
+          immediateRender: false,
+          ease: 'power3.out',
+          scrollTrigger: { trigger: el, start: 'top 88%', toggleActions: 'play none none reverse' },
+        })
+      })
+
+      gsap.utils.toArray('.deco-card:not(.ad-count-cell):not(.ad-detail-card):not(.ad-gallery-tile)').forEach((card, index) => {
+        gsap.from(card, {
+          y: 46,
+          rotateX: -8,
+          opacity: 0,
+          duration: 1.05,
+          delay: index * 0.04,
+          immediateRender: false,
+          ease: 'power3.out',
+          scrollTrigger: { trigger: card, start: 'top 86%', toggleActions: 'play none none reverse' },
+        })
+      })
+
+      gsap.utils.toArray('.deco-panel:not(.ad-story-photo):not(.ad-map-panel)').forEach((panel) => {
+        gsap.from(panel, {
+          clipPath: 'inset(0 50% 0 50%)',
+          opacity: 0.25,
+          duration: 1.2,
+          immediateRender: false,
+          ease: 'expo.out',
+          scrollTrigger: { trigger: panel, start: 'top 82%', toggleActions: 'play none none reverse' },
+        })
+      })
+
+      gsap.from('.ad-count-cell', {
+        y: 72,
+        rotateX: -38,
+        transformOrigin: '50% 100%',
+        opacity: 0,
+        duration: 1.05,
+        immediateRender: false,
+        stagger: 0.09,
+        ease: 'expo.out',
+        scrollTrigger: {
+          trigger: '.ad-count-section',
+          start: 'top 72%',
+          toggleActions: 'play none none reverse',
+        },
+      })
+
+      gsap.fromTo(
+        '.ad-story-photo img',
+        { scale: 1.18, filter: 'brightness(0.55) saturate(0.75)' },
+        {
+          scale: 1,
+          filter: 'brightness(0.9) saturate(1.05)',
+          duration: 1.5,
+          immediateRender: false,
+          ease: 'power3.out',
+          scrollTrigger: {
+            trigger: '.ad-story-section',
+            start: 'top 72%',
+            toggleActions: 'play none none reverse',
+          },
+        },
+      )
+
+      gsap.from('.ad-story-copy > *', {
+        x: 42,
+        opacity: 0,
+        duration: 0.9,
+        immediateRender: false,
+        stagger: 0.08,
+        ease: 'power3.out',
+        scrollTrigger: {
+          trigger: '.ad-story-copy',
+          start: 'top 78%',
+          toggleActions: 'play none none reverse',
+        },
+      })
+
+      gsap.from('.ad-detail-card', {
+        clipPath: 'polygon(0 0, 0 0, 0 100%, 0 100%)',
+        x: -36,
+        opacity: 0,
+        duration: 1.05,
+        immediateRender: false,
+        stagger: 0.12,
+        ease: 'expo.out',
+        scrollTrigger: {
+          trigger: '.ad-details-grid',
+          start: 'top 78%',
+          toggleActions: 'play none none reverse',
+        },
+      })
+
+      gsap.from('.ad-gallery-tile', {
+        y: (index) => (index % 2 === 0 ? 72 : -42),
+        rotate: (index) => (index % 2 === 0 ? -2.5 : 2.5),
+        opacity: 0,
+        duration: 1,
+        immediateRender: false,
+        stagger: 0.055,
+        ease: 'power3.out',
+        scrollTrigger: {
+          trigger: '.ad-gallery-grid',
+          start: 'top 78%',
+          toggleActions: 'play none none reverse',
+        },
+      })
+
+      gsap.from('.ad-map-panel, .ad-venue-copy > *', {
+        y: 54,
+        opacity: 0,
+        duration: 0.95,
+        immediateRender: false,
+        stagger: 0.09,
+        ease: 'power3.out',
+        scrollTrigger: {
+          trigger: '.ad-venue-section',
+          start: 'top 76%',
+          toggleActions: 'play none none reverse',
+        },
+      })
+
+      gsap.from('.ad-rsvp-shell', {
+        y: 64,
+        scale: 0.96,
+        opacity: 0,
+        duration: 1.15,
+        immediateRender: false,
+        ease: 'expo.out',
+        scrollTrigger: {
+          trigger: '.ad-rsvp-section',
+          start: 'top 76%',
+          toggleActions: 'play none none reverse',
+        },
       })
 
       gsap.utils.toArray('.magnetic').forEach((btn) => {
@@ -113,11 +273,123 @@ export default function MedDreamSparkArtDecoTemplatePage() {
       })
 
       gsap.to('.rotate-slow', { rotation: 360, duration: 40, ease: 'none', repeat: -1 })
+      window.setTimeout(() => ScrollTrigger.refresh(), 250)
     }, root)
 
     return () => {
       cleanups.forEach((fn) => fn())
       ctx.revert()
+    }
+  }, [])
+
+  useEffect(() => {
+    const canvas = jewelCanvas.current
+    if (!canvas) return undefined
+
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true })
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+
+    const scene = new THREE.Scene()
+    const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 100)
+    camera.position.set(0, 0.15, 8)
+
+    const group = new THREE.Group()
+    scene.add(group)
+
+    const gold = new THREE.MeshPhysicalMaterial({
+      color: 0xd8a847,
+      metalness: 0.78,
+      roughness: 0.28,
+      clearcoat: 0.55,
+      clearcoatRoughness: 0.18,
+    })
+    const champagne = new THREE.MeshPhysicalMaterial({
+      color: 0xf1d992,
+      metalness: 0.62,
+      roughness: 0.2,
+      transparent: true,
+      opacity: 0.9,
+    })
+    const onyx = new THREE.MeshPhysicalMaterial({
+      color: 0x09201d,
+      metalness: 0.35,
+      roughness: 0.32,
+      clearcoat: 0.6,
+    })
+
+    const jewel = new THREE.Mesh(new THREE.OctahedronGeometry(1.25, 2), onyx)
+    jewel.rotation.set(0.45, 0.12, 0.78)
+    group.add(jewel)
+
+    const crown = new THREE.Mesh(new THREE.TorusGeometry(1.95, 0.035, 12, 96), gold)
+    crown.rotation.x = Math.PI / 2
+    group.add(crown)
+
+    const innerRing = new THREE.Mesh(new THREE.TorusGeometry(1.52, 0.025, 12, 96), champagne)
+    innerRing.rotation.x = Math.PI / 2
+    group.add(innerRing)
+
+    for (let i = 0; i < 28; i += 1) {
+      const angle = (i / 28) * Math.PI * 2
+      const length = i % 2 === 0 ? 1.05 : 0.62
+      const ray = new THREE.Mesh(new THREE.BoxGeometry(0.028, length, 0.028), i % 2 === 0 ? gold : champagne)
+      ray.position.set(Math.cos(angle) * (2.22 + length * 0.25), Math.sin(angle) * (2.22 + length * 0.25), -0.18)
+      ray.rotation.z = angle - Math.PI / 2
+      group.add(ray)
+    }
+
+    const ambient = new THREE.AmbientLight(0xf8e6b2, 1.1)
+    scene.add(ambient)
+    const key = new THREE.DirectionalLight(0xf7d77a, 2.4)
+    key.position.set(3, 4, 5)
+    scene.add(key)
+    const rim = new THREE.PointLight(0x8ccac1, 1.2, 12)
+    rim.position.set(-3, -1.5, 4)
+    scene.add(rim)
+
+    const pointer = { x: 0, y: 0 }
+    const onPointerMove = (event) => {
+      const rect = canvas.getBoundingClientRect()
+      pointer.x = ((event.clientX - rect.left) / rect.width - 0.5) * 2
+      pointer.y = ((event.clientY - rect.top) / rect.height - 0.5) * -2
+    }
+    window.addEventListener('pointermove', onPointerMove)
+
+    const resize = () => {
+      const rect = canvas.getBoundingClientRect()
+      const width = Math.max(1, rect.width)
+      const height = Math.max(1, rect.height)
+      renderer.setSize(width, height, false)
+      camera.aspect = width / height
+      camera.updateProjectionMatrix()
+    }
+    resize()
+    window.addEventListener('resize', resize)
+
+    let frameId = 0
+    const startTime = window.performance.now()
+    const render = () => {
+      const elapsed = (window.performance.now() - startTime) / 1000
+      group.rotation.y += ((pointer.x * 0.24) - group.rotation.y) * 0.045
+      group.rotation.x += ((pointer.y * 0.12) - group.rotation.x) * 0.045
+      jewel.rotation.y = elapsed * 0.28
+      crown.rotation.z = elapsed * 0.08
+      innerRing.rotation.z = -elapsed * 0.11
+      renderer.render(scene, camera)
+      if (!reduceMotion) frameId = window.requestAnimationFrame(render)
+    }
+    render()
+
+    return () => {
+      window.cancelAnimationFrame(frameId)
+      window.removeEventListener('pointermove', onPointerMove)
+      window.removeEventListener('resize', resize)
+      scene.traverse((object) => {
+        if (object.geometry) object.geometry.dispose()
+        if (object.material) object.material.dispose()
+      })
+      renderer.dispose()
     }
   }, [])
 
@@ -128,7 +400,7 @@ export default function MedDreamSparkArtDecoTemplatePage() {
         <div className="curtain-right absolute inset-y-0 right-0 w-1/2 bg-[oklch(0.14_0.03_165)]" />
       </div>
 
-      <header className="fixed top-0 left-0 right-0 z-40 backdrop-blur-md bg-[oklch(0.18_0.04_165/0.7)] border-b border-primary/20">
+      <header className="fixed top-0 left-0 right-0 z-40 backdrop-blur-md bg-[oklch(0.15_0.045_185/0.72)] border-b border-primary/20">
         <div className="container-x flex items-center justify-between py-3">
           <a href="#top" className="font-display text-lg tracking-[0.3em] gold-text">
             E &amp; M
@@ -156,9 +428,13 @@ export default function MedDreamSparkArtDecoTemplatePage() {
         </div>
       </header>
 
-      <section id="top" className="relative min-h-[100svh] flex items-center justify-center px-4 pt-20 pb-32">
-        <img src={decoHero} alt="" className="absolute inset-0 h-full w-full object-cover opacity-25" width={1280} height={1600} />
-        <div className="absolute inset-0 bg-gradient-to-b from-background via-background/60 to-background" />
+      <section id="top" className="relative min-h-[100svh] flex items-center justify-center px-4 pt-20 pb-32 overflow-hidden">
+        <img src={decoHero} alt="" className="absolute inset-0 h-full w-full object-cover opacity-20" width={1280} height={1600} />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,oklch(0.34_0.08_80/0.36),transparent_32%),linear-gradient(180deg,oklch(0.12_0.04_205/0.92),oklch(0.16_0.05_172/0.72)_42%,oklch(0.09_0.025_220)_100%)]" />
+        <div className="hero-arch absolute inset-x-5 top-24 bottom-16 md:inset-x-[12vw] border border-primary/35" />
+        <div className="hero-frame-line absolute left-1/2 top-28 h-px w-[72vw] -translate-x-1/2 bg-gradient-to-r from-transparent via-primary/70 to-transparent" />
+        <div className="hero-frame-line absolute left-1/2 bottom-20 h-px w-[64vw] -translate-x-1/2 bg-gradient-to-r from-transparent via-primary/70 to-transparent" />
+        <canvas ref={jewelCanvas} className="pointer-events-none absolute left-1/2 top-[47%] z-[1] h-[520px] w-[min(92vw,620px)] -translate-x-1/2 -translate-y-1/2 opacity-65 mix-blend-screen" aria-hidden="true" />
 
         <img
           src={decoLeaf}
@@ -184,7 +460,7 @@ export default function MedDreamSparkArtDecoTemplatePage() {
             <span className="h-px w-10 bg-primary" />
           </div>
 
-          <h1 className="font-display text-[18vw] md:text-[9rem] leading-[0.95] font-light">
+          <h1 className="deco-hero-title font-display text-[18vw] md:text-[9rem] leading-[0.95] font-light">
             <div className="overflow-hidden">
               {'Elena'.split('').map((c, i) => (
                 <span key={`e${i}`} className="hero-letter inline-block">
@@ -222,7 +498,7 @@ export default function MedDreamSparkArtDecoTemplatePage() {
         </div>
       </section>
 
-      <section className="border-y border-primary/20 py-5 overflow-hidden bg-[oklch(0.14_0.03_165)]">
+      <section className="border-y border-primary/20 py-5 overflow-hidden bg-[oklch(0.10_0.035_205)]">
         <div className="marquee-track flex gap-12 whitespace-nowrap font-display text-2xl md:text-3xl italic text-primary">
           {Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className="flex items-center gap-12 shrink-0">
@@ -239,7 +515,7 @@ export default function MedDreamSparkArtDecoTemplatePage() {
         </div>
       </section>
 
-      <section className="container-x py-20 md:py-32 text-center relative">
+      <section className="ad-count-section container-x py-20 md:py-32 text-center relative">
         <img
           src={decoLeaf}
           alt=""
@@ -263,7 +539,7 @@ export default function MedDreamSparkArtDecoTemplatePage() {
               { v: time.minutes, l: 'Minutes' },
               { v: time.seconds, l: 'Seconds' },
             ].map((t) => (
-              <div key={t.l} className="fade-up gold-border bg-card/40 backdrop-blur p-3 md:p-6">
+              <div key={t.l} className="ad-count-cell deco-card gold-border bg-card/70 backdrop-blur p-3 md:p-6">
                 <div className="font-display text-3xl md:text-6xl gold-text tabular-nums">
                   {String(t.v).padStart(2, '0')}
                 </div>
@@ -276,8 +552,8 @@ export default function MedDreamSparkArtDecoTemplatePage() {
         </div>
       </section>
 
-      <section id="story" className="container-x py-20 md:py-32 grid md:grid-cols-2 gap-12 items-center">
-        <div className="fade-up relative">
+      <section id="story" className="ad-story-section container-x py-20 md:py-32 grid md:grid-cols-2 gap-12 items-center">
+        <div className="ad-story-photo deco-panel relative">
           <div className="absolute -inset-4 gold-border opacity-50" />
           <img
             src={decoCouple}
@@ -288,7 +564,7 @@ export default function MedDreamSparkArtDecoTemplatePage() {
             height={1280}
           />
         </div>
-        <div>
+        <div className="ad-story-copy">
           <div className="text-xs uppercase tracking-[0.4em] text-primary mb-3">Our Story</div>
           <h2 className="reveal-words font-display text-4xl md:text-5xl mb-6">A chance meeting in a Paris café</h2>
           <p className="fade-up text-muted-foreground leading-relaxed mb-4">
@@ -309,15 +585,15 @@ export default function MedDreamSparkArtDecoTemplatePage() {
         </div>
       </section>
 
-      <section id="details" className="relative py-20 md:py-32 bg-[oklch(0.14_0.03_165)]">
-        <img src={decoFrame} alt="" className="absolute inset-0 w-full h-full object-cover opacity-10" loading="lazy" />
+      <section id="details" className="ad-details-section relative py-20 md:py-32">
+        <img src={decoFrame} alt="" className="absolute inset-0 w-full h-full object-cover opacity-12 mix-blend-screen" loading="lazy" />
         <div className="container-x relative">
           <div className="text-center mb-16">
             <div className="text-xs uppercase tracking-[0.4em] text-primary mb-3">The Details</div>
             <h2 className="reveal-words font-display text-4xl md:text-6xl">An evening of glamour</h2>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="ad-details-grid grid md:grid-cols-3 gap-6">
             {[
               {
                 time: '16:00',
@@ -340,7 +616,7 @@ export default function MedDreamSparkArtDecoTemplatePage() {
             ].map((d) => (
               <div
                 key={d.title}
-                className="fade-up group relative gold-border bg-background/60 backdrop-blur p-8 text-center hover:bg-primary/5 transition"
+                className="ad-detail-card deco-card group relative gold-border bg-card/75 backdrop-blur p-8 text-center hover:bg-primary/8 transition"
               >
                 <div className="font-display text-5xl gold-text mb-2">{d.time}</div>
                 <div className="h-px w-12 bg-primary mx-auto my-4" />
@@ -357,23 +633,23 @@ export default function MedDreamSparkArtDecoTemplatePage() {
         </div>
       </section>
 
-      <section id="gallery" className="container-x py-20 md:py-32">
+      <section id="gallery" className="ad-gallery-section container-x py-20 md:py-32">
         <div className="text-center mb-12">
           <div className="text-xs uppercase tracking-[0.4em] text-primary mb-3">Moments</div>
           <h2 className="reveal-words font-display text-4xl md:text-6xl">From us to you</h2>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+        <div className="ad-gallery-grid grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
           {[decoCouple, decoFeather, decoHero, decoFrame, decoFeather, decoCouple, decoFrame, decoHero].map((src, i) => (
-            <div key={i} className="fade-up overflow-hidden aspect-[3/4] gold-border">
+            <div key={i} className="ad-gallery-tile deco-card overflow-hidden aspect-[3/4] gold-border">
               <img src={src} alt="" className="gallery-img h-full w-full object-cover" loading="lazy" />
             </div>
           ))}
         </div>
       </section>
 
-      <section className="container-x py-20 md:py-32 grid md:grid-cols-2 gap-8 items-stretch">
-        <div className="fade-up gold-border overflow-hidden aspect-[4/3] md:aspect-auto">
+      <section className="ad-venue-section container-x py-20 md:py-32 grid md:grid-cols-2 gap-8 items-stretch">
+        <div className="ad-map-panel deco-panel gold-border overflow-hidden aspect-[4/3] md:aspect-auto">
           <iframe
             title="Villa Aurelia"
             src="https://www.google.com/maps?q=Villa+Aurelia+Rome&output=embed"
@@ -381,7 +657,7 @@ export default function MedDreamSparkArtDecoTemplatePage() {
             loading="lazy"
           />
         </div>
-        <div className="fade-up flex flex-col justify-center">
+        <div className="ad-venue-copy flex flex-col justify-center">
           <div className="text-xs uppercase tracking-[0.4em] text-primary mb-3">The Venue</div>
           <h2 className="font-display text-4xl md:text-5xl mb-6">Villa Aurelia</h2>
           <p className="text-muted-foreground leading-relaxed mb-2">
@@ -402,18 +678,18 @@ export default function MedDreamSparkArtDecoTemplatePage() {
         </div>
       </section>
 
-      <section id="rsvp" className="relative py-20 md:py-32">
-        <img src={decoHero} alt="" className="absolute inset-0 w-full h-full object-cover opacity-20" loading="lazy" />
-        <div className="absolute inset-0 bg-gradient-to-b from-background via-background/80 to-background" />
+      <section id="rsvp" className="ad-rsvp-section relative py-20 md:py-32">
+        <img src={decoHero} alt="" className="absolute inset-0 w-full h-full object-cover opacity-14" loading="lazy" />
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,oklch(0.10_0.035_205),oklch(0.15_0.052_188/0.94),oklch(0.08_0.028_220))]" />
 
-        <div className="container-x relative max-w-xl text-center">
+        <div className="ad-rsvp-shell container-x relative max-w-xl text-center">
           <img src={decoLeaf} alt="" className="mx-auto w-24 opacity-70 mb-6" loading="lazy" />
           <div className="text-xs uppercase tracking-[0.4em] text-primary mb-3">Kindly Reply</div>
           <h2 className="reveal-words font-display text-4xl md:text-6xl mb-3">Will you join us?</h2>
           <p className="font-script text-3xl md:text-4xl text-primary mb-10">by the first of August</p>
 
           <form
-            className="space-y-4 text-left"
+            className="ad-rsvp-form space-y-4 text-left"
             onSubmit={(e) => {
               e.preventDefault()
               window.alert('Merci! Your reply has been noted.')
@@ -423,20 +699,20 @@ export default function MedDreamSparkArtDecoTemplatePage() {
               type="text"
               placeholder="Your full name"
               required
-              className="w-full bg-transparent gold-border px-4 py-3 text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:bg-primary/5"
+              className="w-full bg-card/70 gold-border px-4 py-3 text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:bg-primary/8"
             />
             <input
               type="email"
               placeholder="Email address"
               required
-              className="w-full bg-transparent gold-border px-4 py-3 text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:bg-primary/5"
+              className="w-full bg-card/70 gold-border px-4 py-3 text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:bg-primary/8"
             />
             <div className="grid grid-cols-2 gap-3">
-              <select className="bg-background gold-border px-4 py-3 text-foreground focus:outline-none">
+              <select className="bg-card gold-border px-4 py-3 text-foreground focus:outline-none">
                 <option>Joyfully accepts</option>
                 <option>Regretfully declines</option>
               </select>
-              <select className="bg-background gold-border px-4 py-3 text-foreground focus:outline-none">
+              <select className="bg-card gold-border px-4 py-3 text-foreground focus:outline-none">
                 <option>1 guest</option>
                 <option>2 guests</option>
               </select>
@@ -444,7 +720,7 @@ export default function MedDreamSparkArtDecoTemplatePage() {
             <textarea
               placeholder="A note to the couple…"
               rows={3}
-              className="w-full bg-transparent gold-border px-4 py-3 text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:bg-primary/5"
+              className="w-full bg-card/70 gold-border px-4 py-3 text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:bg-primary/8"
             />
             <button
               type="submit"
@@ -470,4 +746,3 @@ export default function MedDreamSparkArtDecoTemplatePage() {
     </div>
   )
 }
-

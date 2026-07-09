@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { gsap } from 'gsap'
 import decoHero from './assets/med-dream-spark/deco-hero.jpg'
+import illoDance from './assets/med-dream-spark/illo-dance.png'
 
 const templates = [
   {
@@ -33,19 +34,46 @@ const templates = [
     surfaceClass: 'from-[#05372f] via-[#081f1b] to-[#d9a84a]',
     image: decoHero,
   },
+  {
+    id: '03',
+    name: 'Sunny Storybook',
+    label: 'Illustrated invite',
+    couple: 'Sofia & Luca',
+    date: '12 June 2026',
+    price: '$119',
+    href: '/gilded-rome',
+    tone: 'Cream paper, tomato red, hand-drawn ink',
+    note: 'A playful illustrated wedding story with chapters, tram story, countdown, map, and RSVP.',
+    buttonClass: 'bg-[#28241d] text-white hover:bg-[#1c1915]',
+    accentClass: 'bg-[#d84b2a]',
+    surfaceClass: 'from-[#f7efd8] via-[#f0dfbe] to-[#d84b2a]',
+    image: illoDance,
+  },
 ]
 
 function PreviewArt({ template }) {
   const isArtDeco = template.href === '/artdeco'
+  const isIllustrated = template.href === '/gilded-rome'
 
   return (
-    <div className={`relative h-full w-full overflow-hidden ${isArtDeco ? 'bg-[#061c18]' : `bg-gradient-to-br ${template.surfaceClass}`}`}>
+    <div className={`relative h-full w-full overflow-hidden ${isArtDeco ? 'bg-[#061c18]' : isIllustrated ? 'bg-[#f6edd5]' : `bg-gradient-to-br ${template.surfaceClass}`}`}>
       {isArtDeco ? (
         <img
           src={template.image}
           alt={`${template.name} preview`}
           className="absolute inset-0 h-full w-full object-cover opacity-95"
         />
+      ) : isIllustrated ? (
+        <>
+          <div className="absolute inset-4 border-2 border-[#28241d]" />
+          <div className="absolute -right-7 top-10 h-28 w-28 rounded-full bg-[#d84b2a]/15" />
+          <div className="absolute -left-8 bottom-16 h-24 w-24 rounded-full bg-[#28241d]/10" />
+          <img
+            src={template.image}
+            alt={`${template.name} preview`}
+            className="absolute left-1/2 top-[42%] h-48 w-48 -translate-x-1/2 -translate-y-1/2 object-contain"
+          />
+        </>
       ) : (
         <>
           <div className="absolute left-8 top-12 h-1.5 w-1.5 rounded-full bg-white/90" />
@@ -57,15 +85,15 @@ function PreviewArt({ template }) {
         </>
       )}
 
-      <div className={`absolute inset-0 ${isArtDeco ? 'bg-gradient-to-b from-black/20 via-black/10 to-black/55' : 'bg-gradient-to-b from-black/10 via-transparent to-black/30'}`} />
+      <div className={`absolute inset-0 ${isArtDeco ? 'bg-gradient-to-b from-black/20 via-black/10 to-black/55' : isIllustrated ? 'bg-gradient-to-b from-[#f7efd8]/10 via-transparent to-[#f7efd8]/80' : 'bg-gradient-to-b from-black/10 via-transparent to-black/30'}`} />
 
       <div className="relative flex h-full flex-col px-5 pb-5 pt-6">
-        <div className={`flex items-center justify-between text-[10px] uppercase tracking-[0.26em] ${isArtDeco ? 'text-[#f5d680]' : 'text-white/75'}`}>
+        <div className={`flex items-center justify-between text-[10px] uppercase tracking-[0.26em] ${isArtDeco ? 'text-[#f5d680]' : isIllustrated ? 'text-[#d84b2a]' : 'text-white/75'}`}>
           <span>{template.id}</span>
           <span>RSVP</span>
         </div>
 
-        <div className={`mt-5 border ${isArtDeco ? 'border-[#d9a84a]/55 bg-[#041713]/70 text-[#fff8df]' : 'border-white/30 bg-white/12 text-white'} p-5 text-center backdrop-blur-sm`}>
+        <div className={`mt-5 border ${isArtDeco ? 'border-[#d9a84a]/55 bg-[#041713]/70 text-[#fff8df]' : isIllustrated ? 'border-[#28241d] bg-[#f7efd8]/80 text-[#28241d] shadow-[6px_6px_0_0_#d84b2a]' : 'border-white/30 bg-white/12 text-white'} p-5 text-center backdrop-blur-sm`}>
           <p className="text-[10px] uppercase tracking-[0.34em] opacity-75">
             {template.label}
           </p>
@@ -80,19 +108,19 @@ function PreviewArt({ template }) {
         </div>
 
         <div className="mt-auto space-y-3">
-          <div className={`grid grid-cols-2 gap-3 text-xs ${isArtDeco ? 'text-[#fff8df]' : 'text-white'}`}>
-            <div className={`${isArtDeco ? 'bg-[#041713]/78' : 'bg-white/16'} p-3 backdrop-blur-sm`}>
+          <div className={`grid grid-cols-2 gap-3 text-xs ${isArtDeco ? 'text-[#fff8df]' : isIllustrated ? 'text-[#28241d]' : 'text-white'}`}>
+            <div className={`${isArtDeco ? 'bg-[#041713]/78' : isIllustrated ? 'border border-[#28241d] bg-[#f7efd8]/85' : 'bg-white/16'} p-3 backdrop-blur-sm`}>
               <p className="uppercase tracking-[0.2em] opacity-60">Venue</p>
               <p className="mt-2 font-medium leading-5">
-                {isArtDeco ? 'Villa Aurelia' : 'Napa Valley'}
+                {isArtDeco ? 'Villa Aurelia' : isIllustrated ? 'Puglia' : 'Napa Valley'}
               </p>
             </div>
-            <div className={`${isArtDeco ? 'bg-[#041713]/78' : 'bg-white/16'} p-3 backdrop-blur-sm`}>
+            <div className={`${isArtDeco ? 'bg-[#041713]/78' : isIllustrated ? 'border border-[#28241d] bg-[#f7efd8]/85' : 'bg-white/16'} p-3 backdrop-blur-sm`}>
               <p className="uppercase tracking-[0.2em] opacity-60">Time</p>
-              <p className="mt-2 font-medium leading-5">7:00 PM</p>
+              <p className="mt-2 font-medium leading-5">{isIllustrated ? '5:00 PM' : '7:00 PM'}</p>
             </div>
           </div>
-          <div className={`flex items-center justify-between ${isArtDeco ? 'bg-[#d9a84a] text-[#041713]' : 'bg-white text-[#1f2a5f]'} px-4 py-3 text-sm font-semibold`}>
+          <div className={`flex items-center justify-between ${isArtDeco ? 'bg-[#d9a84a] text-[#041713]' : isIllustrated ? 'bg-[#d84b2a] text-white' : 'bg-white text-[#1f2a5f]'} px-4 py-3 text-sm font-semibold`}>
             <span>View invitation</span>
             <span>{template.price}</span>
           </div>
@@ -213,10 +241,10 @@ function App() {
               Digital wedding invitations
             </p>
             <h1 data-reveal className="mt-5 text-5xl font-semibold leading-[0.98] tracking-normal text-stone-950 sm:text-6xl lg:text-7xl">
-              Two refined templates. One clear choice.
+              Three refined templates. One clear choice.
             </h1>
             <p data-reveal className="mt-6 max-w-xl text-base leading-7 text-stone-600 sm:text-lg">
-              Browse the Celestial and Art Deco wedding pages, compare their mood,
+              Browse the Celestial, Art Deco, and Sunny Storybook wedding pages, compare their mood,
               and open the live invitation in one click.
             </p>
             <div data-reveal className="mt-8 flex flex-wrap gap-3">
@@ -226,11 +254,14 @@ function App() {
               <a href="/artdeco" className="border border-stone-300 px-5 py-3 text-sm font-medium text-stone-900 transition hover:border-stone-950">
                 Open Art Deco
               </a>
+              <a href="/gilded-rome" className="border border-stone-300 px-5 py-3 text-sm font-medium text-stone-900 transition hover:border-stone-950">
+                Open Sunny Storybook
+              </a>
             </div>
             <dl data-reveal className="mt-10 grid max-w-lg grid-cols-3 border-y border-stone-200 py-5">
               <div>
                 <dt className="text-xs uppercase tracking-[0.22em] text-stone-500">Live</dt>
-                <dd className="mt-2 text-2xl font-semibold">2</dd>
+                <dd className="mt-2 text-2xl font-semibold">3</dd>
               </div>
               <div>
                 <dt className="text-xs uppercase tracking-[0.22em] text-stone-500">Start</dt>
