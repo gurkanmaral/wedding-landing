@@ -83,12 +83,14 @@ export default function MedDreamSparkArtDecoTemplatePage() {
         ease: 'power4.out',
       })
 
+      const isMobile = window.innerWidth < 768
+
       gsap.utils.toArray('.parallax-leaf').forEach((el, i) => {
         gsap.to(el, {
-          yPercent: (i % 2 === 0 ? -1 : 1) * 30,
-          rotate: (i % 2 === 0 ? -1 : 1) * 15,
+          yPercent: (i % 2 === 0 ? -1 : 1) * (isMobile ? 10 : 20),
+          rotate: (i % 2 === 0 ? -1 : 1) * (isMobile ? 4 : 9),
           ease: 'none',
-          scrollTrigger: { trigger: el, start: 'top bottom', end: 'bottom top', scrub: 1 },
+          scrollTrigger: { trigger: el, start: 'top bottom', end: 'bottom top', scrub: 1.6 },
         })
       })
 
@@ -98,153 +100,155 @@ export default function MedDreamSparkArtDecoTemplatePage() {
           .map((w) => `<span class="inline-block overflow-hidden"><span class="inline-block word">${w}&nbsp;</span></span>`)
           .join('')
         gsap.from(el.querySelectorAll('.word'), {
-          yPercent: 110,
-          duration: 1.1,
-          stagger: 0.06,
-          ease: 'expo.out',
-          scrollTrigger: { trigger: el, start: 'top 85%' },
-        })
-      })
-
-      gsap.utils.toArray('.fade-up').forEach((el) => {
-        gsap.from(el, {
-          y: 60,
-          opacity: 0,
-          duration: 1,
+          yPercent: 105,
+          duration: 0.9,
+          stagger: isMobile ? 0.025 : 0.045,
           immediateRender: false,
-          ease: 'power3.out',
-          scrollTrigger: { trigger: el, start: 'top 88%', toggleActions: 'play none none reverse' },
-        })
-      })
-
-      gsap.utils.toArray('.deco-card:not(.ad-count-cell):not(.ad-detail-card):not(.ad-gallery-tile)').forEach((card, index) => {
-        gsap.from(card, {
-          y: 46,
-          rotateX: -8,
-          opacity: 0,
-          duration: 1.05,
-          delay: index * 0.04,
-          immediateRender: false,
-          ease: 'power3.out',
-          scrollTrigger: { trigger: card, start: 'top 86%', toggleActions: 'play none none reverse' },
-        })
-      })
-
-      gsap.utils.toArray('.deco-panel:not(.ad-story-photo):not(.ad-map-panel)').forEach((panel) => {
-        gsap.from(panel, {
-          clipPath: 'inset(0 50% 0 50%)',
-          opacity: 0.25,
-          duration: 1.2,
-          immediateRender: false,
-          ease: 'expo.out',
-          scrollTrigger: { trigger: panel, start: 'top 82%', toggleActions: 'play none none reverse' },
-        })
-      })
-
-      gsap.from('.ad-count-cell', {
-        y: 72,
-        rotateX: -38,
-        transformOrigin: '50% 100%',
-        opacity: 0,
-        duration: 1.05,
-        immediateRender: false,
-        stagger: 0.09,
-        ease: 'expo.out',
-        scrollTrigger: {
-          trigger: '.ad-count-section',
-          start: 'top 72%',
-          toggleActions: 'play none none reverse',
-        },
-      })
-
-      gsap.fromTo(
-        '.ad-story-photo img',
-        { scale: 1.18, filter: 'brightness(0.55) saturate(0.75)' },
-        {
-          scale: 1,
-          filter: 'brightness(0.9) saturate(1.05)',
-          duration: 1.5,
-          immediateRender: false,
-          ease: 'power3.out',
+          ease: 'power4.out',
           scrollTrigger: {
-            trigger: '.ad-story-section',
-            start: 'top 72%',
+            trigger: el,
+            start: 'top 86%',
             toggleActions: 'play none none reverse',
           },
-        },
-      )
+        })
+      })
 
-      gsap.from('.ad-story-copy > *', {
-        x: 42,
-        opacity: 0,
-        duration: 0.9,
-        immediateRender: false,
-        stagger: 0.08,
-        ease: 'power3.out',
+      const countTimeline = gsap.timeline({
         scrollTrigger: {
-          trigger: '.ad-story-copy',
+          trigger: '.ad-count-section',
+          start: 'top 80%',
+          toggleActions: 'play none none reverse',
+        },
+      })
+      countTimeline.from('.ad-count-cell', {
+        y: isMobile ? 22 : 36,
+        scale: 0.94,
+        opacity: 0,
+        duration: 0.72,
+        stagger: 0.075,
+        immediateRender: false,
+        ease: 'power3.out',
+      })
+
+      const storyTimeline = gsap.timeline({
+        scrollTrigger: {
+          trigger: '.ad-story-section',
           start: 'top 78%',
           toggleActions: 'play none none reverse',
         },
       })
+      storyTimeline
+        .from('.ad-story-photo', {
+          clipPath: 'inset(0 100% 0 0)',
+          duration: 1.05,
+          immediateRender: false,
+          ease: 'power4.inOut',
+        })
+        .from('.ad-story-photo img', {
+          scale: 1.12,
+          duration: 1.2,
+          immediateRender: false,
+          ease: 'power3.out',
+        }, '<0.12')
+        .from('.ad-story-copy > :not(.reveal-words)', {
+          x: isMobile ? 0 : 28,
+          y: isMobile ? 20 : 0,
+          opacity: 0,
+          duration: 0.7,
+          stagger: 0.075,
+          immediateRender: false,
+          ease: 'power3.out',
+        }, '-=0.58')
 
       gsap.from('.ad-detail-card', {
-        clipPath: 'polygon(0 0, 0 0, 0 100%, 0 100%)',
-        x: -36,
-        opacity: 0,
-        duration: 1.05,
-        immediateRender: false,
-        stagger: 0.12,
-        ease: 'expo.out',
-        scrollTrigger: {
-          trigger: '.ad-details-grid',
-          start: 'top 78%',
-          toggleActions: 'play none none reverse',
-        },
-      })
-
-      gsap.from('.ad-gallery-tile', {
-        y: (index) => (index % 2 === 0 ? 72 : -42),
-        rotate: (index) => (index % 2 === 0 ? -2.5 : 2.5),
-        opacity: 0,
-        duration: 1,
-        immediateRender: false,
-        stagger: 0.055,
-        ease: 'power3.out',
-        scrollTrigger: {
-          trigger: '.ad-gallery-grid',
-          start: 'top 78%',
-          toggleActions: 'play none none reverse',
-        },
-      })
-
-      gsap.from('.ad-map-panel, .ad-venue-copy > *', {
-        y: 54,
-        opacity: 0,
-        duration: 0.95,
-        immediateRender: false,
-        stagger: 0.09,
-        ease: 'power3.out',
-        scrollTrigger: {
-          trigger: '.ad-venue-section',
-          start: 'top 76%',
-          toggleActions: 'play none none reverse',
-        },
-      })
-
-      gsap.from('.ad-rsvp-shell', {
-        y: 64,
+        y: (index) => (isMobile ? 28 : index % 2 === 0 ? 46 : 24),
         scale: 0.96,
         opacity: 0,
-        duration: 1.15,
+        duration: 0.82,
         immediateRender: false,
-        ease: 'expo.out',
+        stagger: 0.11,
+        ease: 'power3.out',
         scrollTrigger: {
-          trigger: '.ad-rsvp-section',
-          start: 'top 76%',
+          trigger: '.ad-details-grid',
+          start: 'top 82%',
           toggleActions: 'play none none reverse',
         },
       })
+
+      const galleryTimeline = gsap.timeline({
+        scrollTrigger: {
+          trigger: '.ad-gallery-grid',
+          start: 'top 82%',
+          toggleActions: 'play none none reverse',
+        },
+      })
+      galleryTimeline
+        .from('.ad-gallery-tile', {
+          clipPath: 'inset(100% 0 0 0)',
+          y: 20,
+          opacity: 0.3,
+          duration: 0.86,
+          immediateRender: false,
+          stagger: { each: 0.055, from: 'center' },
+          ease: 'power3.inOut',
+        })
+        .from('.ad-gallery-tile img', {
+          scale: 1.14,
+          duration: 1.05,
+          immediateRender: false,
+          stagger: { each: 0.04, from: 'center' },
+          ease: 'power3.out',
+        }, '<0.08')
+
+      const venueTimeline = gsap.timeline({
+        scrollTrigger: {
+          trigger: '.ad-venue-section',
+          start: 'top 80%',
+          toggleActions: 'play none none reverse',
+        },
+      })
+      venueTimeline
+        .from('.ad-map-panel', {
+          clipPath: 'inset(12% 12% 12% 12%)',
+          scale: 0.96,
+          opacity: 0,
+          duration: 0.95,
+          immediateRender: false,
+          ease: 'power3.out',
+        })
+        .from('.ad-venue-copy > *', {
+          x: isMobile ? 0 : 28,
+          y: isMobile ? 18 : 0,
+          opacity: 0,
+          duration: 0.68,
+          stagger: 0.07,
+          immediateRender: false,
+          ease: 'power3.out',
+        }, '-=0.55')
+
+      const rsvpTimeline = gsap.timeline({
+        scrollTrigger: {
+          trigger: '.ad-rsvp-section',
+          start: 'top 80%',
+          toggleActions: 'play none none reverse',
+        },
+      })
+      rsvpTimeline
+        .from('.ad-rsvp-shell', {
+          clipPath: 'inset(0 48% 0 48%)',
+          opacity: 0,
+          duration: 1.05,
+          immediateRender: false,
+          ease: 'power4.inOut',
+        })
+        .from('.ad-rsvp-form > *', {
+          y: 18,
+          opacity: 0,
+          duration: 0.6,
+          stagger: 0.055,
+          immediateRender: false,
+          ease: 'power3.out',
+        }, '-=0.38')
 
       gsap.utils.toArray('.magnetic').forEach((btn) => {
         const onMove = (e) => {
@@ -263,14 +267,6 @@ export default function MedDreamSparkArtDecoTemplatePage() {
       })
 
       gsap.to('.marquee-track', { xPercent: -50, duration: 30, ease: 'none', repeat: -1 })
-
-      gsap.utils.toArray('.gallery-img').forEach((img) => {
-        gsap.from(img, {
-          scale: 1.3,
-          ease: 'none',
-          scrollTrigger: { trigger: img, start: 'top bottom', end: 'bottom top', scrub: 1.2 },
-        })
-      })
 
       gsap.to('.rotate-slow', { rotation: 360, duration: 40, ease: 'none', repeat: -1 })
       window.setTimeout(() => ScrollTrigger.refresh(), 250)

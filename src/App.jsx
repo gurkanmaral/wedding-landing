@@ -132,18 +132,21 @@ function PreviewArt({ template }) {
 
 function DevicePreview({ template }) {
   return (
-    <div className="mx-auto w-full max-w-[330px]" data-active-preview>
-      <div className="rounded-[2.5rem] border border-stone-300 bg-[#111111] p-3 shadow-[0_28px_80px_-34px_rgba(12,18,32,0.85)]">
-        <div className="mb-3 grid grid-cols-[1fr_auto_1fr] items-center px-5 text-[10px] font-semibold text-white/70">
+    <div className="home-device mx-auto w-full max-w-[304px]" data-active-preview>
+      <span className="absolute -left-[3px] top-28 h-14 w-[3px] rounded-l bg-[#343434]" />
+      <span className="absolute -left-[3px] top-48 h-20 w-[3px] rounded-l bg-[#343434]" />
+      <span className="absolute -right-[3px] top-36 h-20 w-[3px] rounded-r bg-[#343434]" />
+      <div className="relative rounded-[2.7rem] border border-white/15 bg-[#101010] p-2.5 shadow-[0_38px_90px_-28px_rgba(10,18,30,0.7)]">
+        <div className="mb-2.5 grid grid-cols-[1fr_auto_1fr] items-center px-4 text-[9px] font-semibold text-white/70">
           <span>9:41</span>
-          <div className="h-5 w-24 rounded-full bg-black" />
+          <div className="h-5 w-20 rounded-full bg-black shadow-inner" />
           <span className="text-right">100%</span>
         </div>
-        <div className="h-[560px] overflow-hidden rounded-[2rem] bg-stone-100">
+        <div className="h-[510px] overflow-hidden rounded-[2.15rem] bg-stone-100">
           <PreviewArt template={template} />
         </div>
-        <div className="mt-3 flex justify-center">
-          <div className="h-1 w-20 rounded-full bg-stone-800" />
+        <div className="mt-2.5 flex justify-center">
+          <div className="h-1 w-20 rounded-full bg-stone-700" />
         </div>
       </div>
     </div>
@@ -161,7 +164,7 @@ function App() {
     const ctx = gsap.context(() => {
       gsap.fromTo(
         '[data-reveal]',
-        { autoAlpha: 0, y: 22 },
+        { autoAlpha: 0, y: 20 },
         {
           autoAlpha: 1,
           y: 0,
@@ -173,14 +176,14 @@ function App() {
 
       gsap.fromTo(
         '[data-template-card]',
-        { autoAlpha: 0, y: 28 },
+        { autoAlpha: 0, x: 18 },
         {
           autoAlpha: 1,
-          y: 0,
-          duration: 0.75,
+          x: 0,
+          duration: 0.65,
           ease: 'power3.out',
-          stagger: 0.12,
-          delay: 0.2,
+          stagger: 0.08,
+          delay: 0.25,
         },
       )
     }, rootRef)
@@ -192,90 +195,84 @@ function App() {
     if (previewRef.current) {
       gsap.fromTo(
         previewRef.current,
-        { autoAlpha: 0, y: 18, scale: 0.98 },
-        { autoAlpha: 1, y: 0, scale: 1, duration: 0.55, ease: 'power2.out' },
+        { autoAlpha: 0.55, y: 12, rotateY: -3, scale: 0.985 },
+        { autoAlpha: 1, y: 0, rotateY: 0, scale: 1, duration: 0.65, ease: 'power3.out' },
       )
     }
 
     cardRefs.current.forEach((card, index) => {
       if (!card) return
       gsap.to(card, {
-        y: index === activeIndex ? -4 : 0,
-        borderColor: index === activeIndex ? '#1c1917' : '#e7e5e4',
-        duration: 0.35,
+        x: index === activeIndex ? 5 : 0,
+        borderColor: index === activeIndex ? '#171717' : '#deded9',
+        duration: 0.4,
         ease: 'power2.out',
       })
     })
   }, [activeIndex])
 
-  const animateCard = (index, y) => {
+  const animateCard = (index, x) => {
     if (index === activeIndex || !cardRefs.current[index]) return
 
     gsap.to(cardRefs.current[index], {
-      y,
+      x,
       duration: 0.25,
       ease: 'power2.out',
     })
   }
 
   return (
-    <div ref={rootRef} className="min-h-screen bg-[#f8f7f4] text-[#1c1917]">
-      <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-5 py-5 sm:px-8">
-        <a href="/" className="text-sm font-semibold uppercase tracking-[0.24em]">
+    <div ref={rootRef} className="home-shell min-h-screen text-[#171717]">
+      <header className="home-header mx-auto flex w-full max-w-7xl items-center justify-between px-5 py-5 sm:px-8">
+        <a href="/" className="flex items-center gap-3 text-sm font-semibold uppercase tracking-[0.22em]">
+          <span className="grid h-8 w-8 place-items-center bg-[#171717] text-[10px] text-white">W</span>
           Wedfolio
         </a>
         <nav className="flex items-center gap-2 text-sm text-stone-600">
-          <a href="#dashboard" className="px-3 py-2 transition hover:text-stone-950">
+          <a href="#dashboard" className="hidden px-3 py-2 transition hover:text-stone-950 sm:block">
             Templates
           </a>
-          <a href={activeTemplate.href} className={`px-4 py-2 text-sm font-medium transition ${activeTemplate.buttonClass}`}>
-            Open preview
+          <a href={activeTemplate.href} className="home-open-button px-4 py-2.5 text-sm font-medium text-white transition">
+            Open {activeTemplate.name.split(' ')[0]}
+            <span aria-hidden="true"> ↗</span>
           </a>
         </nav>
       </header>
 
       <main>
-        <section className="mx-auto grid min-h-[calc(100vh-88px)] w-full max-w-6xl items-center gap-10 px-5 pb-16 pt-8 sm:px-8 lg:grid-cols-[0.95fr_1.05fr]">
-          <div className="max-w-2xl">
-            <p data-reveal className="text-sm font-medium uppercase tracking-[0.28em] text-stone-500">
-              Digital wedding invitations
+        <section className="home-hero mx-auto grid w-full max-w-7xl items-center gap-10 px-5 pb-20 pt-8 sm:px-8 lg:min-h-[calc(100svh-80px)] lg:grid-cols-[0.9fr_1.1fr] lg:gap-16 lg:pb-14 lg:pt-4">
+          <div className="max-w-xl">
+            <p data-reveal className="flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.24em] text-stone-500">
+              <span className="h-px w-8 bg-[#e7583d]" />
+              Invitation design studio
             </p>
-            <h1 data-reveal className="mt-5 text-5xl font-semibold leading-[0.98] tracking-normal text-stone-950 sm:text-6xl lg:text-7xl">
-              Three refined templates. One clear choice.
+            <h1 data-reveal className="mt-6 text-5xl font-semibold leading-[0.96] tracking-normal text-stone-950 sm:text-6xl lg:text-[4.6rem]">
+              Your story,
+              <span className="block font-display font-normal italic text-[#e7583d]">beautifully invited.</span>
             </h1>
-            <p data-reveal className="mt-6 max-w-xl text-base leading-7 text-stone-600 sm:text-lg">
-              Browse the Celestial, Art Deco, and Sunny Storybook wedding pages, compare their mood,
-              and open the live invitation in one click.
+            <p data-reveal className="mt-6 max-w-lg text-base leading-7 text-stone-600 sm:text-lg">
+              Explore three distinct wedding experiences. Tap a style to preview it on the phone, then open the complete invitation.
             </p>
-            <div data-reveal className="mt-8 flex flex-wrap gap-3">
-              <a href="/celestial" className="bg-[#1f2a5f] px-5 py-3 text-sm font-medium text-white transition hover:bg-[#18214b]">
-                Open Celestial
+            <div data-reveal className="mt-8 flex items-center gap-5">
+              <a href={activeTemplate.href} className="home-primary-button px-5 py-3.5 text-sm font-semibold text-white transition">
+                View live invitation <span aria-hidden="true">↗</span>
               </a>
-              <a href="/artdeco" className="border border-stone-300 px-5 py-3 text-sm font-medium text-stone-900 transition hover:border-stone-950">
-                Open Art Deco
-              </a>
-              <a href="/gilded-rome" className="border border-stone-300 px-5 py-3 text-sm font-medium text-stone-900 transition hover:border-stone-950">
-                Open Sunny Storybook
+              <a href="#dashboard" className="text-sm font-medium text-stone-700 underline decoration-stone-300 underline-offset-4 hover:decoration-stone-900">
+                Compare all
               </a>
             </div>
-            <dl data-reveal className="mt-10 grid max-w-lg grid-cols-3 border-y border-stone-200 py-5">
-              <div>
-                <dt className="text-xs uppercase tracking-[0.22em] text-stone-500">Live</dt>
-                <dd className="mt-2 text-2xl font-semibold">3</dd>
-              </div>
-              <div>
-                <dt className="text-xs uppercase tracking-[0.22em] text-stone-500">Start</dt>
-                <dd className="mt-2 text-2xl font-semibold">$109</dd>
-              </div>
-              <div>
-                <dt className="text-xs uppercase tracking-[0.22em] text-stone-500">RSVP</dt>
-                <dd className="mt-2 text-2xl font-semibold">Yes</dd>
-              </div>
-            </dl>
+            <div data-reveal className="mt-12 flex items-center gap-4 border-t border-stone-300/70 pt-5 text-xs text-stone-500">
+              <span className="font-semibold text-stone-950">03 live designs</span>
+              <span className="h-1 w-1 rounded-full bg-[#e7583d]" />
+              <span>Mobile ready</span>
+              <span className="h-1 w-1 rounded-full bg-[#e7583d]" />
+              <span>RSVP included</span>
+            </div>
           </div>
 
-          <div data-reveal className="grid gap-5 lg:grid-cols-[1fr_330px]">
-            <div className="order-2 grid content-center gap-3 lg:order-1">
+          <div data-reveal className="home-preview-stage grid items-center gap-5 px-3 py-8 sm:px-8 lg:grid-cols-[minmax(190px,0.72fr)_304px] lg:px-8">
+            <div className="order-2 grid content-center gap-2 lg:order-1">
+              <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.24em] text-stone-500 sm:col-span-3 lg:col-span-1">Choose a design</p>
               {templates.map((template, index) => (
                 <button
                   key={template.id}
@@ -285,55 +282,51 @@ function App() {
                   type="button"
                   data-template-card
                   onClick={() => setActiveIndex(index)}
-                  onMouseEnter={() => animateCard(index, -3)}
+                  onMouseEnter={() => animateCard(index, 4)}
                   onMouseLeave={() => animateCard(index, 0)}
-                  className="border bg-white p-5 text-left shadow-sm transition focus:outline-none focus:ring-2 focus:ring-stone-900"
+                  className="home-template-selector group border bg-white/80 p-3 text-left transition focus:outline-none focus:ring-2 focus:ring-stone-900"
                   aria-pressed={activeIndex === index}
                 >
-                  <div className="flex items-center justify-between gap-4">
-                    <span className="text-xs font-semibold uppercase tracking-[0.24em] text-stone-500">
-                      {template.label}
-                    </span>
-                    <span className={`h-3 w-3 ${template.accentClass}`} />
+                  <div className="flex items-center gap-3">
+                    <span className={`h-9 w-1.5 shrink-0 ${template.accentClass}`} />
+                    <div className="min-w-0 flex-1">
+                      <span className="block truncate text-[10px] font-semibold uppercase tracking-[0.18em] text-stone-500">{template.label}</span>
+                      <h2 className="mt-1 truncate text-sm font-semibold text-stone-950">{template.name}</h2>
+                    </div>
+                    <span className="text-sm text-stone-400 transition group-hover:text-stone-950" aria-hidden="true">→</span>
                   </div>
-                  <h2 className="mt-5 text-2xl font-semibold tracking-normal text-stone-950">
-                    {template.name}
-                  </h2>
-                  <p className="mt-2 text-sm leading-6 text-stone-600">
-                    {template.note}
-                  </p>
-                  <div className="mt-5 grid gap-1 border-t border-stone-200 pt-4 text-sm">
-                    <span>{template.price}</span>
-                    <span className="text-stone-500">{template.date}</span>
+                  <div className="mt-2 flex items-center justify-between pl-[18px] text-[11px] text-stone-500">
+                    <span>{template.date}</span>
+                    <span className="font-semibold text-stone-800">{template.price}</span>
                   </div>
                 </button>
               ))}
             </div>
 
-            <div ref={previewRef} className="order-1 lg:order-2">
+            <div ref={previewRef} className="order-1 lg:order-2 [perspective:900px]">
               <DevicePreview template={activeTemplate} />
             </div>
           </div>
         </section>
 
-        <section id="dashboard" className="border-t border-stone-200 bg-white">
-          <div className="mx-auto grid w-full max-w-6xl gap-8 px-5 py-16 sm:px-8 lg:grid-cols-[0.75fr_1.25fr]">
+        <section id="dashboard" className="home-dashboard border-t border-stone-200">
+          <div className="mx-auto w-full max-w-7xl px-5 py-20 sm:px-8">
             <div data-reveal>
-              <p className="text-sm font-medium uppercase tracking-[0.28em] text-stone-500">
-                Template dashboard
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#e7583d]">
+                The collection
               </p>
-              <h2 className="mt-4 text-3xl font-semibold tracking-normal text-stone-950 sm:text-4xl">
-                Simple, focused, ready to open.
+              <h2 className="mt-3 max-w-2xl text-3xl font-semibold tracking-normal text-stone-950 sm:text-5xl">
+                Three moods. One celebration.
               </h2>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="mt-10 grid gap-px overflow-hidden border border-stone-200 bg-stone-200 md:grid-cols-3">
               {templates.map((template) => (
                 <a
                   key={`dashboard-${template.id}`}
                   href={template.href}
                   data-reveal
-                  className="group border border-stone-200 bg-[#f8f7f4] p-5 transition hover:-translate-y-1 hover:border-stone-950"
+                  className="group bg-white p-6 transition hover:bg-[#f7f7f3]"
                 >
                   <div className="flex items-center justify-between gap-4">
                     <span className="text-xs font-semibold uppercase tracking-[0.24em] text-stone-500">
@@ -341,14 +334,15 @@ function App() {
                     </span>
                     <span className="text-sm text-stone-500">{template.price}</span>
                   </div>
-                  <h3 className="mt-6 text-2xl font-semibold text-stone-950">
+                  <div className={`mt-8 h-1 w-12 ${template.accentClass} transition-all duration-300 group-hover:w-20`} />
+                  <h3 className="mt-5 text-2xl font-semibold text-stone-950">
                     {template.name}
                   </h3>
                   <p className="mt-2 text-sm leading-6 text-stone-600">
                     {template.tone}
                   </p>
-                  <span className="mt-6 inline-flex text-sm font-medium text-stone-950">
-                    Open template
+                  <span className="mt-8 inline-flex text-sm font-semibold text-stone-950">
+                    Open template <span className="ml-2 transition-transform group-hover:translate-x-1" aria-hidden="true">→</span>
                   </span>
                 </a>
               ))}
