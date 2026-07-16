@@ -285,64 +285,271 @@ export default function MedDreamSparkArtDecoTemplatePage() {
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true })
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+    renderer.outputColorSpace = THREE.SRGBColorSpace
+    renderer.toneMapping = THREE.ACESFilmicToneMapping
+    renderer.toneMappingExposure = 1.18
 
     const scene = new THREE.Scene()
     const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 100)
-    camera.position.set(0, 0.15, 8)
+    camera.position.set(0, 0.15, 9.2)
 
     const group = new THREE.Group()
     scene.add(group)
 
+    const portal = new THREE.Group()
+    const halo = new THREE.Group()
+    const ornaments = new THREE.Group()
+    group.add(halo, portal, ornaments)
+
     const gold = new THREE.MeshPhysicalMaterial({
       color: 0xd8a847,
-      metalness: 0.78,
-      roughness: 0.28,
-      clearcoat: 0.55,
-      clearcoatRoughness: 0.18,
+      metalness: 0.9,
+      roughness: 0.2,
+      clearcoat: 0.7,
+      clearcoatRoughness: 0.12,
     })
     const champagne = new THREE.MeshPhysicalMaterial({
       color: 0xf1d992,
-      metalness: 0.62,
-      roughness: 0.2,
+      metalness: 0.72,
+      roughness: 0.16,
       transparent: true,
-      opacity: 0.9,
+      opacity: 0.94,
     })
     const onyx = new THREE.MeshPhysicalMaterial({
-      color: 0x09201d,
-      metalness: 0.35,
-      roughness: 0.32,
-      clearcoat: 0.6,
+      color: 0x041b18,
+      metalness: 0.42,
+      roughness: 0.2,
+      clearcoat: 1,
+      clearcoatRoughness: 0.1,
+    })
+    const emeraldTable = new THREE.MeshPhysicalMaterial({
+      color: 0x159276,
+      emissive: 0x063b31,
+      emissiveIntensity: 0.5,
+      metalness: 0.04,
+      roughness: 0.07,
+      transmission: 0.34,
+      thickness: 1.5,
+      ior: 2.15,
+      attenuationColor: new THREE.Color(0x08705b),
+      attenuationDistance: 1.25,
+      clearcoat: 1,
+      clearcoatRoughness: 0.04,
+      side: THREE.DoubleSide,
+    })
+    const emeraldLight = new THREE.MeshPhysicalMaterial({
+      color: 0x36b698,
+      emissive: 0x0b493c,
+      emissiveIntensity: 0.38,
+      metalness: 0.04,
+      roughness: 0.1,
+      transmission: 0.22,
+      thickness: 1.2,
+      ior: 2.05,
+      clearcoat: 1,
+      side: THREE.DoubleSide,
+    })
+    const emeraldMid = emeraldLight.clone()
+    emeraldMid.color.setHex(0x08715d)
+    emeraldMid.emissive.setHex(0x032d26)
+    const emeraldDark = emeraldLight.clone()
+    emeraldDark.color.setHex(0x023d34)
+    emeraldDark.emissive.setHex(0x011b17)
+    emeraldDark.transmission = 0.12
+    const emeraldEdge = new THREE.MeshPhysicalMaterial({
+      color: 0x063b32,
+      emissive: 0x021c18,
+      emissiveIntensity: 0.3,
+      metalness: 0.16,
+      roughness: 0.14,
+      clearcoat: 1,
+      side: THREE.DoubleSide,
     })
 
-    const jewel = new THREE.Mesh(new THREE.OctahedronGeometry(1.25, 2), onyx)
-    jewel.rotation.set(0.45, 0.12, 0.78)
-    group.add(jewel)
-
-    const crown = new THREE.Mesh(new THREE.TorusGeometry(1.95, 0.035, 12, 96), gold)
-    crown.rotation.x = Math.PI / 2
-    group.add(crown)
-
-    const innerRing = new THREE.Mesh(new THREE.TorusGeometry(1.52, 0.025, 12, 96), champagne)
-    innerRing.rotation.x = Math.PI / 2
-    group.add(innerRing)
-
-    for (let i = 0; i < 28; i += 1) {
-      const angle = (i / 28) * Math.PI * 2
-      const length = i % 2 === 0 ? 1.05 : 0.62
-      const ray = new THREE.Mesh(new THREE.BoxGeometry(0.028, length, 0.028), i % 2 === 0 ? gold : champagne)
-      ray.position.set(Math.cos(angle) * (2.22 + length * 0.25), Math.sin(angle) * (2.22 + length * 0.25), -0.18)
-      ray.rotation.z = angle - Math.PI / 2
-      group.add(ray)
+    const makeDecoShape = (scale = 1) => {
+      const shape = new THREE.Shape()
+      shape.moveTo(0, 1.75 * scale)
+      shape.lineTo(0.78 * scale, 1.08 * scale)
+      shape.lineTo(0.96 * scale, 0.42 * scale)
+      shape.lineTo(0.96 * scale, -1.08 * scale)
+      shape.lineTo(0.58 * scale, -1.62 * scale)
+      shape.lineTo(0, -1.82 * scale)
+      shape.lineTo(-0.58 * scale, -1.62 * scale)
+      shape.lineTo(-0.96 * scale, -1.08 * scale)
+      shape.lineTo(-0.96 * scale, 0.42 * scale)
+      shape.lineTo(-0.78 * scale, 1.08 * scale)
+      shape.closePath()
+      return shape
     }
 
-    const ambient = new THREE.AmbientLight(0xf8e6b2, 1.1)
+    const outerFrame = new THREE.Mesh(
+      new THREE.ExtrudeGeometry(makeDecoShape(1), {
+        depth: 0.34,
+        bevelEnabled: true,
+        bevelSegments: 4,
+        bevelSize: 0.09,
+        bevelThickness: 0.08,
+      }),
+      gold,
+    )
+    outerFrame.geometry.center()
+    portal.add(outerFrame)
+
+    const innerStone = new THREE.Mesh(
+      new THREE.ExtrudeGeometry(makeDecoShape(0.82), {
+        depth: 0.42,
+        bevelEnabled: true,
+        bevelSegments: 5,
+        bevelSize: 0.12,
+        bevelThickness: 0.1,
+      }),
+      onyx,
+    )
+    innerStone.geometry.center()
+    innerStone.position.z = 0.18
+    portal.add(innerStone)
+
+    const crystal = new THREE.Group()
+    crystal.position.z = 0.52
+    portal.add(crystal)
+
+    const outerPoints = [
+      [-0.58, 1.38], [0.58, 1.38], [0.88, 1.08], [0.88, -1.08],
+      [0.58, -1.38], [-0.58, -1.38], [-0.88, -1.08], [-0.88, 1.08],
+    ].map(([x, y]) => new THREE.Vector3(x, y, 0))
+    const tablePoints = outerPoints.map((point) => new THREE.Vector3(point.x * 0.57, point.y * 0.62, 0.64))
+    const outerFront = outerPoints.map((point) => new THREE.Vector3(point.x, point.y, 0.22))
+    const outerBack = outerPoints.map((point) => new THREE.Vector3(point.x, point.y, 0.04))
+
+    const makeFacet = (vertices, material) => {
+      const geometry = new THREE.BufferGeometry()
+      geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices.flatMap((vertex) => [vertex.x, vertex.y, vertex.z]), 3))
+      geometry.computeVertexNormals()
+      const facet = new THREE.Mesh(geometry, material)
+      crystal.add(facet)
+      return facet
+    }
+
+    const tableCenter = new THREE.Vector3(0, 0, 0.665)
+    tablePoints.forEach((point, index) => {
+      const next = tablePoints[(index + 1) % tablePoints.length]
+      makeFacet([tableCenter, point, next], emeraldTable)
+    })
+
+    const crownMaterials = [emeraldLight, emeraldMid, emeraldDark, emeraldMid, emeraldLight, emeraldDark, emeraldMid, emeraldDark]
+    outerFront.forEach((point, index) => {
+      const nextIndex = (index + 1) % outerFront.length
+      makeFacet(
+        [point, outerFront[nextIndex], tablePoints[nextIndex], point, tablePoints[nextIndex], tablePoints[index]],
+        crownMaterials[index],
+      )
+    })
+
+    outerFront.forEach((point, index) => {
+      const nextIndex = (index + 1) % outerFront.length
+      makeFacet(
+        [point, outerBack[nextIndex], outerFront[nextIndex], point, outerBack[index], outerBack[nextIndex]],
+        index % 2 === 0 ? emeraldEdge : emeraldDark,
+      )
+    })
+
+    const pavilionTip = new THREE.Vector3(0, 0, -0.72)
+    outerBack.forEach((point, index) => {
+      const next = outerBack[(index + 1) % outerBack.length]
+      makeFacet([point, pavilionTip, next], index % 3 === 0 ? emeraldLight : index % 2 === 0 ? emeraldMid : emeraldDark)
+    })
+
+    const facetLines = []
+    const addLoopLines = (points) => {
+      points.forEach((point, index) => {
+        const next = points[(index + 1) % points.length]
+        facetLines.push(point.x, point.y, point.z + 0.012, next.x, next.y, next.z + 0.012)
+      })
+    }
+    addLoopLines(tablePoints)
+    addLoopLines(outerFront)
+    tablePoints.forEach((point, index) => {
+      const outer = outerFront[index]
+      facetLines.push(point.x, point.y, point.z + 0.012, outer.x, outer.y, outer.z + 0.012)
+    })
+    const facetLineGeometry = new THREE.BufferGeometry()
+    facetLineGeometry.setAttribute('position', new THREE.Float32BufferAttribute(facetLines, 3))
+    const facetLineMesh = new THREE.LineSegments(
+      facetLineGeometry,
+      new THREE.LineBasicMaterial({ color: 0x9ce7cf, transparent: true, opacity: 0.28 }),
+    )
+    crystal.add(facetLineMesh)
+
+    const lightSweep = new THREE.Mesh(
+      new THREE.PlaneGeometry(0.12, 2.15),
+      new THREE.MeshBasicMaterial({
+        color: 0xe8fff7,
+        transparent: true,
+        opacity: 0.28,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      }),
+    )
+    lightSweep.position.set(-0.18, 0.06, 0.69)
+    lightSweep.rotation.z = -0.32
+    crystal.add(lightSweep)
+
+    const archRings = [
+      { radius: 1.65, tube: 0.035, z: -0.08, arc: Math.PI * 1.38 },
+      { radius: 2.02, tube: 0.026, z: -0.15, arc: Math.PI * 1.24 },
+      { radius: 2.38, tube: 0.02, z: -0.22, arc: Math.PI * 1.1 },
+    ]
+    archRings.forEach((ring, index) => {
+      const arc = new THREE.Mesh(new THREE.TorusGeometry(ring.radius, ring.tube, 10, 100, ring.arc), index === 1 ? champagne : gold)
+      arc.rotation.z = Math.PI + (Math.PI * 2 - ring.arc) / 2
+      arc.position.z = ring.z
+      halo.add(arc)
+
+      const lowerArc = arc.clone()
+      lowerArc.rotation.z += Math.PI
+      lowerArc.scale.setScalar(index === 2 ? 0.92 : 1)
+      halo.add(lowerArc)
+    })
+
+    for (const side of [-1, 1]) {
+      for (let i = 0; i < 6; i += 1) {
+        const length = 0.72 + i * 0.13
+        const wing = new THREE.Mesh(new THREE.BoxGeometry(length, 0.035, 0.055), i % 2 === 0 ? gold : champagne)
+        wing.position.set(side * (1.12 + length / 2), 0.76 - i * 0.29, -0.04 - i * 0.015)
+        wing.rotation.z = side * (0.12 + i * 0.035)
+        portal.add(wing)
+      }
+    }
+
+    for (let i = 0; i < 12; i += 1) {
+      const angle = (i / 12) * Math.PI * 2 + Math.PI / 12
+      const radius = i % 2 === 0 ? 2.72 : 2.52
+      const diamond = new THREE.Mesh(new THREE.OctahedronGeometry(i % 3 === 0 ? 0.12 : 0.075, 0), i % 2 === 0 ? champagne : gold)
+      diamond.position.set(Math.cos(angle) * radius, Math.sin(angle) * radius, -0.1 + (i % 3) * 0.08)
+      diamond.rotation.z = angle
+      ornaments.add(diamond)
+    }
+
+    const finialTop = new THREE.Mesh(new THREE.ConeGeometry(0.34, 0.82, 4), gold)
+    finialTop.position.set(0, 2.48, 0.02)
+    finialTop.rotation.z = Math.PI / 4
+    portal.add(finialTop)
+    const finialBottom = finialTop.clone()
+    finialBottom.position.y = -2.48
+    finialBottom.rotation.z += Math.PI
+    portal.add(finialBottom)
+
+    const ambient = new THREE.AmbientLight(0xf8e6b2, 0.9)
     scene.add(ambient)
-    const key = new THREE.DirectionalLight(0xf7d77a, 2.4)
+    const key = new THREE.DirectionalLight(0xffdb84, 3.2)
     key.position.set(3, 4, 5)
     scene.add(key)
-    const rim = new THREE.PointLight(0x8ccac1, 1.2, 12)
+    const rim = new THREE.PointLight(0x6ce2cf, 2.1, 14)
     rim.position.set(-3, -1.5, 4)
     scene.add(rim)
+    const front = new THREE.PointLight(0xffecc0, 1.6, 10)
+    front.position.set(0, 0, 5)
+    scene.add(front)
 
     const pointer = { x: 0, y: 0 }
     const onPointerMove = (event) => {
@@ -367,11 +574,19 @@ export default function MedDreamSparkArtDecoTemplatePage() {
     const startTime = window.performance.now()
     const render = () => {
       const elapsed = (window.performance.now() - startTime) / 1000
-      group.rotation.y += ((pointer.x * 0.24) - group.rotation.y) * 0.045
-      group.rotation.x += ((pointer.y * 0.12) - group.rotation.x) * 0.045
-      jewel.rotation.y = elapsed * 0.28
-      crown.rotation.z = elapsed * 0.08
-      innerRing.rotation.z = -elapsed * 0.11
+      group.rotation.y += ((pointer.x * 0.18) - group.rotation.y) * 0.035
+      group.rotation.x += ((pointer.y * 0.09) - group.rotation.x) * 0.035
+      portal.position.y = Math.sin(elapsed * 0.65) * 0.055
+      crystal.rotation.y = Math.sin(elapsed * 0.38) * 0.42
+      crystal.rotation.x = Math.sin(elapsed * 0.24) * 0.035
+      lightSweep.position.x = Math.sin(elapsed * 0.72) * 0.34
+      lightSweep.material.opacity = 0.18 + (Math.sin(elapsed * 1.1) + 1) * 0.08
+      halo.rotation.z = Math.sin(elapsed * 0.22) * 0.035
+      ornaments.rotation.z = -elapsed * 0.035
+      ornaments.children.forEach((diamond, index) => {
+        diamond.rotation.x = elapsed * (0.25 + index * 0.012)
+        diamond.rotation.y = elapsed * (0.18 + index * 0.009)
+      })
       renderer.render(scene, camera)
       if (!reduceMotion) frameId = window.requestAnimationFrame(render)
     }
@@ -430,7 +645,7 @@ export default function MedDreamSparkArtDecoTemplatePage() {
         <div className="hero-arch absolute inset-x-5 top-24 bottom-16 md:inset-x-[12vw] border border-primary/35" />
         <div className="hero-frame-line absolute left-1/2 top-28 h-px w-[72vw] -translate-x-1/2 bg-gradient-to-r from-transparent via-primary/70 to-transparent" />
         <div className="hero-frame-line absolute left-1/2 bottom-20 h-px w-[64vw] -translate-x-1/2 bg-gradient-to-r from-transparent via-primary/70 to-transparent" />
-        <canvas ref={jewelCanvas} className="pointer-events-none absolute left-1/2 top-[47%] z-[1] h-[520px] w-[min(92vw,620px)] -translate-x-1/2 -translate-y-1/2 opacity-65 mix-blend-screen" aria-hidden="true" />
+        <canvas ref={jewelCanvas} className="pointer-events-none absolute left-1/2 top-[47%] z-[1] h-[560px] w-[min(94vw,680px)] -translate-x-1/2 -translate-y-1/2 opacity-80 mix-blend-screen" aria-hidden="true" />
 
         <img
           src={decoLeaf}
