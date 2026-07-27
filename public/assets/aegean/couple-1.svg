@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="840" viewBox="0 0 600 840">
+  <defs>
+    <linearGradient id="bg1" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f7f4ec"/>
+      <stop offset="1" stop-color="#d8e6f0"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="840" fill="url(#bg1)"/>
+  <g opacity=".8">
+    <g transform="translate(120,140) rotate(-24)">
+      <line x1="0" y1="0" x2="120" y2="0" stroke="#7a8b5f" stroke-width="3"/>
+      <ellipse cx="25" cy="-10" rx="16" ry="6" fill="#8fa06e" transform="rotate(-30 25 -10)"/>
+      <ellipse cx="55" cy="9" rx="16" ry="6" fill="#77894f" transform="rotate(28 55 9)"/>
+      <ellipse cx="85" cy="-9" rx="16" ry="6" fill="#8fa06e" transform="rotate(-26 85 -9)"/>
+      <circle cx="108" cy="7" r="7" fill="#5e6d3e"/>
+    </g>
+    <g transform="translate(360,690) rotate(156)">
+      <line x1="0" y1="0" x2="120" y2="0" stroke="#7a8b5f" stroke-width="3"/>
+      <ellipse cx="25" cy="-10" rx="16" ry="6" fill="#8fa06e" transform="rotate(-30 25 -10)"/>
+      <ellipse cx="55" cy="9" rx="16" ry="6" fill="#77894f" transform="rotate(28 55 9)"/>
+      <ellipse cx="85" cy="-9" rx="16" ry="6" fill="#8fa06e" transform="rotate(-26 85 -9)"/>
+      <circle cx="108" cy="7" r="7" fill="#5e6d3e"/>
+    </g>
+  </g>
+  <g fill="#d81b7f" opacity=".3">
+    <ellipse cx="470" cy="160" rx="9" ry="7" transform="rotate(24 470 160)"/>
+    <ellipse cx="500" cy="185" rx="8" ry="6" transform="rotate(-32 500 185)"/>
+    <ellipse cx="452" cy="196" rx="8" ry="6" transform="rotate(66 452 196)"/>
+    <ellipse cx="120" cy="620" rx="9" ry="7" transform="rotate(-18 120 620)"/>
+    <ellipse cx="146" cy="648" rx="8" ry="6" transform="rotate(40 146 648)"/>
+  </g>
+  <circle cx="300" cy="360" r="92" fill="none" stroke="#3a6ea5" stroke-width="2" opacity=".75"/>
+  <text x="300" y="384" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="62" fill="#2b4a68">E&amp;D</text>
+  <text x="300" y="520" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-size="32" fill="#3a6ea5">Elif &amp; Deniz</text>
+  <text x="300" y="562" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-size="17" fill="#7a92a8">fotoğrafınız burada</text>
+</svg>

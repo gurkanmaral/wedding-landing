@@ -3,6 +3,9 @@ import { gsap } from 'gsap'
 import decoHero from './assets/med-dream-spark/deco-hero.jpg'
 import illoDance from './assets/med-dream-spark/illo-dance.png'
 
+const sakuraTree = '/assets/sakura/sakura-tree.png'
+const autumnTree = '/assets/autumn/autumn-tree.png'
+
 const templates = [
   {
     id: '01',
@@ -17,6 +20,7 @@ const templates = [
     buttonClass: 'bg-[#1f2a5f] text-white hover:bg-[#18214b]',
     accentClass: 'bg-[#e7bd67]',
     surfaceClass: 'from-[#111936] via-[#27336a] to-[#f4dfae]',
+    variant: 'celestial',
     dark: true,
   },
   {
@@ -32,6 +36,7 @@ const templates = [
     buttonClass: 'bg-[#06483c] text-white hover:bg-[#053b32]',
     accentClass: 'bg-[#d9a84a]',
     surfaceClass: 'from-[#05372f] via-[#081f1b] to-[#d9a84a]',
+    variant: 'artdeco',
     image: decoHero,
   },
   {
@@ -47,23 +52,139 @@ const templates = [
     buttonClass: 'bg-[#28241d] text-white hover:bg-[#1c1915]',
     accentClass: 'bg-[#d84b2a]',
     surfaceClass: 'from-[#f7efd8] via-[#f0dfbe] to-[#d84b2a]',
+    variant: 'illustrated',
     image: illoDance,
+  },
+  {
+    id: '04',
+    name: 'Sakura Wedding',
+    label: 'Cherry blossom',
+    couple: 'Hiro & Aiko',
+    date: '12 April 2026',
+    price: '$99',
+    href: '/sakura',
+    tone: 'Blush pink, warm ivory, gold ink',
+    note: 'A Kyoto spring invitation with falling petals, countdown, gallery, and RSVP.',
+    buttonClass: 'bg-[#8a6a33] text-white hover:bg-[#73572a]',
+    accentClass: 'bg-[#e8a2b0]',
+    surfaceClass: 'from-[#f7dde2] via-[#f9efe3] to-[#f2e0cb]',
+    variant: 'sakura',
+    image: sakuraTree,
+  },
+  {
+    id: '05',
+    name: 'Autumn Falls',
+    label: 'Harvest romance',
+    couple: 'Nazlı & Bahadır',
+    date: '17 October 2026',
+    price: '$109',
+    href: '/autumn',
+    tone: 'Amber, burnt orange, warm cream',
+    note: 'A Hudson Valley autumn wedding with drifting maple leaves, timeline, countdown, and RSVP.',
+    buttonClass: 'bg-[#a3541e] text-white hover:bg-[#8a4517]',
+    accentClass: 'bg-[#e8763c]',
+    surfaceClass: 'from-[#f6ecdc] via-[#f2e2ca] to-[#ecd2ab]',
+    variant: 'autumn',
+    image: autumnTree,
+  },
+  {
+    id: '06',
+    name: 'Ege Zeytin',
+    label: 'Aegean seaside',
+    couple: 'Elif & Deniz',
+    date: '19 June 2027',
+    price: '$119',
+    href: '/aegean',
+    tone: 'Whitewash, Aegean blue, bougainvillea pink',
+    note: 'An Alaçatı seaside invitation with bougainvillea, waves, countdown, and a postcard RSVP.',
+    buttonClass: 'bg-[#1d4e89] text-white hover:bg-[#173e6d]',
+    accentClass: 'bg-[#d81b7f]',
+    surfaceClass: 'from-[#fbfaf6] via-[#f1f4f3] to-[#a9c8de]',
+    variant: 'aegean',
   },
 ]
 
-function PreviewArt({ template }) {
-  const isArtDeco = template.href === '/artdeco'
-  const isIllustrated = template.href === '/gilded-rome'
+const previewThemes = {
+  celestial: {
+    frame: 'bg-gradient-to-br from-[#111936] via-[#27336a] to-[#f4dfae]',
+    overlay: 'bg-gradient-to-b from-black/10 via-transparent to-black/30',
+    chip: 'text-white/75',
+    panel: 'border-white/30 bg-white/12 text-white',
+    box: 'bg-white/16',
+    boxText: 'text-white',
+    bar: 'bg-white text-[#1f2a5f]',
+    venue: 'Napa Valley',
+    time: '7:00 PM',
+  },
+  artdeco: {
+    frame: 'bg-[#061c18]',
+    overlay: 'bg-gradient-to-b from-black/20 via-black/10 to-black/55',
+    chip: 'text-[#f5d680]',
+    panel: 'border-[#d9a84a]/55 bg-[#041713]/70 text-[#fff8df]',
+    box: 'bg-[#041713]/78',
+    boxText: 'text-[#fff8df]',
+    bar: 'bg-[#d9a84a] text-[#041713]',
+    venue: 'Villa Aurelia',
+    time: '7:00 PM',
+  },
+  illustrated: {
+    frame: 'bg-[#f6edd5]',
+    overlay: 'bg-gradient-to-b from-[#f7efd8]/10 via-transparent to-[#f7efd8]/80',
+    chip: 'text-[#d84b2a]',
+    panel: 'border-[#28241d] bg-[#f7efd8]/80 text-[#28241d] shadow-[6px_6px_0_0_#d84b2a]',
+    box: 'border border-[#28241d] bg-[#f7efd8]/85',
+    boxText: 'text-[#28241d]',
+    bar: 'bg-[#d84b2a] text-white',
+    venue: 'Puglia',
+    time: '5:00 PM',
+  },
+  sakura: {
+    frame: 'bg-gradient-to-b from-[#f7dde2] via-[#f9efe3] to-[#f2e0cb]',
+    overlay: 'bg-gradient-to-b from-white/10 via-transparent to-[#f7e8d8]/70',
+    chip: 'text-[#a8763a]',
+    panel: 'border-[#c9a35c]/60 bg-[#fdf8ef]/85 text-[#3d2f28]',
+    box: 'border border-[#c9a35c]/40 bg-[#fdf8ef]/85',
+    boxText: 'text-[#3d2f28]',
+    bar: 'bg-[#a8763a] text-white',
+    venue: 'Kyoto',
+    time: '4:00 PM',
+  },
+  autumn: {
+    frame: 'bg-gradient-to-b from-[#f6ecdc] via-[#f2e2ca] to-[#ecd2ab]',
+    overlay: 'bg-gradient-to-b from-white/5 via-transparent to-[#e9c795]/60',
+    chip: 'text-[#a3541e]',
+    panel: 'border-[#b98a5a]/60 bg-[#faf3e6]/85 text-[#4a3420]',
+    box: 'border border-[#b98a5a]/40 bg-[#faf3e6]/85',
+    boxText: 'text-[#4a3420]',
+    bar: 'bg-[#a3541e] text-white',
+    venue: 'Hudson Valley',
+    time: '4:00 PM',
+  },
+  aegean: {
+    frame: 'bg-gradient-to-b from-[#fbfaf6] via-[#f1f4f3] to-[#a9c8de]',
+    overlay: 'bg-gradient-to-b from-white/10 via-transparent to-[#7fa8c7]/40',
+    chip: 'text-[#3a6ea5]',
+    panel: 'rounded-t-[7rem] border-[#b9c6d8] bg-white/75 pt-8 text-[#26364f]',
+    box: 'border border-[#b9c6d8] bg-white/80',
+    boxText: 'text-[#26364f]',
+    bar: 'bg-[#1d4e89] text-white',
+    venue: 'Alaçatı',
+    time: '17:00',
+  },
+}
 
-  return (
-    <div className={`relative h-full w-full overflow-hidden ${isArtDeco ? 'bg-[#061c18]' : isIllustrated ? 'bg-[#f6edd5]' : `bg-gradient-to-br ${template.surfaceClass}`}`}>
-      {isArtDeco ? (
+function PreviewBackdrop({ template }) {
+  switch (template.variant) {
+    case 'artdeco':
+      return (
         <img
           src={template.image}
           alt={`${template.name} preview`}
           className="absolute inset-0 h-full w-full object-cover opacity-95"
         />
-      ) : isIllustrated ? (
+      )
+    case 'illustrated':
+      return (
         <>
           <div className="absolute inset-4 border-2 border-[#28241d]" />
           <div className="absolute -right-7 top-10 h-28 w-28 rounded-full bg-[#d84b2a]/15" />
@@ -74,7 +195,48 @@ function PreviewArt({ template }) {
             className="absolute left-1/2 top-[42%] h-48 w-48 -translate-x-1/2 -translate-y-1/2 object-contain"
           />
         </>
-      ) : (
+      )
+    case 'sakura':
+      return (
+        <>
+          <img
+            src={template.image}
+            alt={`${template.name} preview`}
+            className="absolute inset-0 h-full w-full object-cover object-left-top opacity-80"
+          />
+          <div className="absolute left-8 top-14 h-2 w-2 rounded-full bg-[#eb9aae]/80" />
+          <div className="absolute right-9 top-24 h-1.5 w-1.5 rounded-full bg-[#e78299]/70" />
+          <div className="absolute bottom-32 left-14 h-1.5 w-1.5 rounded-full bg-[#eb9aae]/70" />
+          <div className="absolute bottom-40 right-10 h-2 w-2 rounded-full bg-[#f0b4c2]/80" />
+        </>
+      )
+    case 'autumn':
+      return (
+        <>
+          <img
+            src={template.image}
+            alt={`${template.name} preview`}
+            className="absolute -right-8 top-0 h-[58%] w-auto max-w-none object-contain opacity-90"
+          />
+          <div className="absolute left-8 top-16 h-2 w-2 rotate-45 bg-[#e8763c]/80" />
+          <div className="absolute left-16 top-32 h-1.5 w-1.5 rotate-12 bg-[#f6a623]/80" />
+          <div className="absolute bottom-36 left-10 h-2 w-2 -rotate-12 bg-[#d9531e]/70" />
+          <div className="absolute bottom-28 right-12 h-1.5 w-1.5 rotate-45 bg-[#ffb347]/80" />
+        </>
+      )
+    case 'aegean':
+      return (
+        <>
+          <div className="absolute right-6 top-10 h-2 w-2 rounded-full bg-[#e5399b]/70" />
+          <div className="absolute right-12 top-16 h-1.5 w-1.5 rounded-full bg-[#d81b7f]/60" />
+          <div className="absolute left-8 top-12 h-1.5 w-1.5 rounded-full bg-[#f06bb4]/70" />
+          <div className="absolute inset-x-[-20%] bottom-[-26px] h-16 rounded-[50%] bg-[#7fa8c7]/40" />
+          <div className="absolute inset-x-[-30%] bottom-[-32px] h-16 rounded-[50%] bg-[#4d7fae]/50" />
+          <div className="absolute inset-x-[-25%] bottom-[-38px] h-16 rounded-[50%] bg-[#2c5c8f]/70" />
+        </>
+      )
+    default:
+      return (
         <>
           <div className="absolute left-8 top-12 h-1.5 w-1.5 rounded-full bg-white/90" />
           <div className="absolute right-10 top-24 h-1 w-1 rounded-full bg-white/75" />
@@ -83,17 +245,26 @@ function PreviewArt({ template }) {
           <div className="absolute left-1/2 top-28 h-32 w-32 -translate-x-1/2 rounded-full border border-white/25" />
           <div className="absolute inset-x-10 top-44 h-px bg-white/30" />
         </>
-      )}
+      )
+  }
+}
 
-      <div className={`absolute inset-0 ${isArtDeco ? 'bg-gradient-to-b from-black/20 via-black/10 to-black/55' : isIllustrated ? 'bg-gradient-to-b from-[#f7efd8]/10 via-transparent to-[#f7efd8]/80' : 'bg-gradient-to-b from-black/10 via-transparent to-black/30'}`} />
+function PreviewArt({ template }) {
+  const theme = previewThemes[template.variant] ?? previewThemes.celestial
+
+  return (
+    <div className={`relative h-full w-full overflow-hidden ${theme.frame}`}>
+      <PreviewBackdrop template={template} />
+
+      <div className={`absolute inset-0 ${theme.overlay}`} />
 
       <div className="relative flex h-full flex-col px-5 pb-5 pt-6">
-        <div className={`flex items-center justify-between text-[10px] uppercase tracking-[0.26em] ${isArtDeco ? 'text-[#f5d680]' : isIllustrated ? 'text-[#d84b2a]' : 'text-white/75'}`}>
+        <div className={`flex items-center justify-between text-[10px] uppercase tracking-[0.26em] ${theme.chip}`}>
           <span>{template.id}</span>
           <span>RSVP</span>
         </div>
 
-        <div className={`mt-5 border ${isArtDeco ? 'border-[#d9a84a]/55 bg-[#041713]/70 text-[#fff8df]' : isIllustrated ? 'border-[#28241d] bg-[#f7efd8]/80 text-[#28241d] shadow-[6px_6px_0_0_#d84b2a]' : 'border-white/30 bg-white/12 text-white'} p-5 text-center backdrop-blur-sm`}>
+        <div className={`mt-5 border ${theme.panel} p-5 text-center backdrop-blur-sm`}>
           <p className="text-[10px] uppercase tracking-[0.34em] opacity-75">
             {template.label}
           </p>
@@ -108,19 +279,17 @@ function PreviewArt({ template }) {
         </div>
 
         <div className="mt-auto space-y-3">
-          <div className={`grid grid-cols-2 gap-3 text-xs ${isArtDeco ? 'text-[#fff8df]' : isIllustrated ? 'text-[#28241d]' : 'text-white'}`}>
-            <div className={`${isArtDeco ? 'bg-[#041713]/78' : isIllustrated ? 'border border-[#28241d] bg-[#f7efd8]/85' : 'bg-white/16'} p-3 backdrop-blur-sm`}>
+          <div className={`grid grid-cols-2 gap-3 text-xs ${theme.boxText}`}>
+            <div className={`${theme.box} p-3 backdrop-blur-sm`}>
               <p className="uppercase tracking-[0.2em] opacity-60">Venue</p>
-              <p className="mt-2 font-medium leading-5">
-                {isArtDeco ? 'Villa Aurelia' : isIllustrated ? 'Puglia' : 'Napa Valley'}
-              </p>
+              <p className="mt-2 font-medium leading-5">{theme.venue}</p>
             </div>
-            <div className={`${isArtDeco ? 'bg-[#041713]/78' : isIllustrated ? 'border border-[#28241d] bg-[#f7efd8]/85' : 'bg-white/16'} p-3 backdrop-blur-sm`}>
+            <div className={`${theme.box} p-3 backdrop-blur-sm`}>
               <p className="uppercase tracking-[0.2em] opacity-60">Time</p>
-              <p className="mt-2 font-medium leading-5">{isIllustrated ? '5:00 PM' : '7:00 PM'}</p>
+              <p className="mt-2 font-medium leading-5">{theme.time}</p>
             </div>
           </div>
-          <div className={`flex items-center justify-between ${isArtDeco ? 'bg-[#d9a84a] text-[#041713]' : isIllustrated ? 'bg-[#d84b2a] text-white' : 'bg-white text-[#1f2a5f]'} px-4 py-3 text-sm font-semibold`}>
+          <div className={`flex items-center justify-between ${theme.bar} px-4 py-3 text-sm font-semibold`}>
             <span>View invitation</span>
             <span>{template.price}</span>
           </div>
@@ -251,7 +420,7 @@ function App() {
               <span className="block font-display font-normal italic text-[#e7583d]">beautifully invited.</span>
             </h1>
             <p data-reveal className="mt-6 max-w-lg text-base leading-7 text-stone-600 sm:text-lg">
-              Explore three distinct wedding experiences. Tap a style to preview it on the phone, then open the complete invitation.
+              Explore six distinct wedding experiences. Tap a style to preview it on the phone, then open the complete invitation.
             </p>
             <div data-reveal className="mt-8 flex items-center gap-5">
               <a href={activeTemplate.href} className="home-primary-button px-5 py-3.5 text-sm font-semibold text-white transition">
@@ -262,7 +431,7 @@ function App() {
               </a>
             </div>
             <div data-reveal className="mt-12 flex items-center gap-4 border-t border-stone-300/70 pt-5 text-xs text-stone-500">
-              <span className="font-semibold text-stone-950">03 live designs</span>
+              <span className="font-semibold text-stone-950">06 live designs</span>
               <span className="h-1 w-1 rounded-full bg-[#e7583d]" />
               <span>Mobile ready</span>
               <span className="h-1 w-1 rounded-full bg-[#e7583d]" />
@@ -316,7 +485,7 @@ function App() {
                 The collection
               </p>
               <h2 className="mt-3 max-w-2xl text-3xl font-semibold tracking-normal text-stone-950 sm:text-5xl">
-                Three moods. One celebration.
+                Six moods. One celebration.
               </h2>
             </div>
 

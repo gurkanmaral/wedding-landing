@@ -8,6 +8,9 @@ import MedDreamSparkTemplatePage from './MedDreamSparkTemplatePage.jsx'
 import CelestialWeddingPage from './CelestialWeddingPage.jsx'
 import MedDreamSparkArtDecoTemplatePage from './MedDreamSparkArtDecoTemplatePage.jsx'
 import GildedRomeTemplatePage from './GildedRomeTemplatePage.jsx'
+import SakuraWeddingPage from './SakuraWeddingPage.jsx'
+import AutumnFallsPage from './AutumnFallsPage.jsx'
+import AegeanWeddingPage from './AegeanWeddingPage.jsx'
 
 const currentPath = window.location.pathname
 const Page =
@@ -23,6 +26,12 @@ const Page =
       ? RoyalWeddingPage
     : currentPath === '/celestial'
       ? CelestialWeddingPage
+    : currentPath === '/sakura'
+      ? SakuraWeddingPage
+    : currentPath === '/autumn'
+      ? AutumnFallsPage
+    : currentPath === '/aegean'
+      ? AegeanWeddingPage
       : App
 
 createRoot(document.getElementById('root')).render(

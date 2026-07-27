@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="840" viewBox="0 0 600 840">
+  <defs>
+    <linearGradient id="bg2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f8e7d2"/>
+      <stop offset="1" stop-color="#e5b98c"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="840" fill="url(#bg2)"/>
+  <g fill="#c25a1c" opacity=".15">
+    <path d="M470 120 q18 -34 36 0 q34 -8 12 22 q22 30 -12 22 q-18 34 -36 0 q-34 8 -12 -22 q-22 -30 12 -22z"/>
+    <path d="M120 250 q14 -26 28 0 q26 -6 9 17 q17 23 -9 17 q-14 26 -28 0 q-26 6 -9 -17 q-17 -23 9 -17z" opacity=".8"/>
+    <path d="M460 610 q14 -26 28 0 q26 -6 9 17 q17 23 -9 17 q-14 26 -28 0 q-26 6 -9 -17 q-17 -23 9 -17z"/>
+    <path d="M140 690 q18 -34 36 0 q34 -8 12 22 q22 30 -12 22 q-18 34 -36 0 q-34 8 -12 -22 q-22 -30 12 -22z" opacity=".7"/>
+    <path d="M300 760 q11 -20 22 0 q20 -5 7 13 q13 18 -7 13 q-11 20 -22 0 q-20 5 -7 -13 q-13 -18 7 -13z" opacity=".6"/>
+  </g>
+  <circle cx="300" cy="360" r="92" fill="none" stroke="#a3591e" stroke-width="2" opacity=".75"/>
+  <text x="300" y="384" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="62" fill="#5c3a1e">N&amp;B</text>
+  <text x="300" y="520" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-size="32" fill="#8a5a2e">Nazlı &amp; Bahadır</text>
+  <text x="300" y="562" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-size="17" fill="#a3814f">fotoğrafınız burada</text>
+</svg>
