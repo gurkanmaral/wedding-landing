@@ -1,45 +1,26 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { adminWeddingCardApi, ApiError, authApi } from './api/weddingCardApi'
 import { uniqueWeddingSlug } from './api/weddingCardSlug'
+import {
+  changeDetailsTemplate,
+  createTemplateDetails,
+  DETAIL_LABELS,
+  getTemplateSchema,
+  storedDetails,
+  TEMPLATE_OPTIONS,
+} from './templateDetails'
 
-const ADMIN_TEMPLATES = [
-  { value: 'artdeco', label: 'Art Deco', path: '/artdeco' },
-  { value: 'celestial', label: 'Celestial', path: '/celestial' },
-  { value: 'gilded-rome', label: 'Sunny Storybook', path: '/gilded-rome' },
-  { value: 'sakura', label: 'Sakura', path: '/sakura' },
-  { value: 'autumn', label: 'Autumn Falls', path: '/autumn' },
-  { value: 'aegean', label: 'Ege Zeytin', path: '/aegean' },
-]
+const ADMIN_DETAIL_KEYS = new Set(['template', 'slug', 'published'])
 
-const EMPTY_DETAILS = {
-  template: 'artdeco',
-  slug: '',
-  published: 'false',
-  partner1: 'Elena',
-  partner2: 'Marcus',
-  eventDate: '2026-09-14T16:00:00+02:00',
-  dateLabel: '14 September 2026',
-  venue: 'Villa Aurelia',
-  city: 'Rome',
-  address: 'Largo di Porta San Pancrazio, 1',
-  rsvpDeadline: '1 August 2026',
-  description: 'Join us for an unforgettable celebration.',
+function createAdminDetails(template = 'artdeco') {
+  return { slug: '', published: 'false', ...createTemplateDetails(template) }
 }
-const CORE_DETAIL_KEYS = new Set(Object.keys(EMPTY_DETAILS))
 
 const LABELS = {
   template: 'Template',
   slug: 'Share link',
   published: 'Published',
-  partner1: 'First partner',
-  partner2: 'Second partner',
-  eventDate: 'Event date and time',
-  dateLabel: 'Displayed date',
-  venue: 'Venue',
-  city: 'City',
-  address: 'Address',
-  rsvpDeadline: 'RSVP deadline',
-  description: 'Homepage description',
+  ...DETAIL_LABELS,
 }
 
 const errorText = (error) => error instanceof ApiError ? error.message : error?.message || 'Something went wrong.'
@@ -59,7 +40,7 @@ export default function AdminPage() {
   const [selected, setSelected] = useState(null)
   const [name, setName] = useState('')
   const [userId, setUserId] = useState('')
-  const [details, setDetails] = useState(EMPTY_DETAILS)
+  const [details, setDetails] = useState(() => createAdminDetails())
   const [newDetail, setNewDetail] = useState({ key: '', value: '' })
   const [busy, setBusy] = useState(true)
   const [notice, setNotice] = useState(null)
@@ -68,7 +49,7 @@ export default function AdminPage() {
   const isAuthenticated = authApi.isAuthenticated()
   const previewHref = useMemo(() => {
     if (!selected) return null
-    const template = ADMIN_TEMPLATES.find((item) => item.value === details.template) || ADMIN_TEMPLATES[0]
+    const template = TEMPLATE_OPTIONS.find((item) => item.value === details.template) || TEMPLATE_OPTIONS[0]
     return details.slug
       ? `${template.path}/${encodeURIComponent(details.slug)}`
       : `${template.path}?cardId=${encodeURIComponent(selected.id)}`
@@ -83,7 +64,7 @@ export default function AdminPage() {
     setSelected(card)
     setName(card.name || '')
     setUserId(card.userId || '')
-    setDetails({ ...EMPTY_DETAILS, ...(card.details || {}) })
+    setDetails({ slug: '', published: 'false', ...storedDetails(card.details) })
     setNotice(null)
   }, [])
 
@@ -127,7 +108,7 @@ export default function AdminPage() {
     setSelected(null)
     setName('New wedding invitation')
     setUserId('')
-    setDetails({ ...EMPTY_DETAILS })
+    setDetails(createAdminDetails())
     setNewDetail({ key: '', value: '' })
     setNotice(null)
   }
@@ -200,7 +181,7 @@ export default function AdminPage() {
       await adminWeddingCardApi.remove(selected.id)
       setSelected(null)
       setName('')
-      setDetails(EMPTY_DETAILS)
+      setDetails(createAdminDetails())
       await loadCards()
       setNotice({ type: 'success', text: 'Invitation deleted.' })
     } catch (error) {
@@ -218,6 +199,16 @@ export default function AdminPage() {
       setNotice({ type: 'error', text: 'The client link could not be copied.' })
     }
   }
+
+  const supportedKeys = getTemplateSchema(details.template).fields
+  const visibleKeys = new Set([...ADMIN_DETAIL_KEYS, ...supportedKeys])
+  const detailFields = [
+    ...['template', 'slug', 'published'].map((key) => ({ key, value: details[key] || '', removable: false })),
+    ...supportedKeys.map((key) => ({ key, value: details[key] || '', removable: false })),
+    ...Object.entries(details)
+      .filter(([key]) => !visibleKeys.has(key))
+      .map(([key, value]) => ({ key, value, removable: true })),
+  ]
 
   if (!isAuthenticated) {
     return (
@@ -267,11 +258,11 @@ export default function AdminPage() {
               <div className="manager-field-grid">
                 <label className="manager-field-wide">Record name<input required maxLength={200} value={name} onChange={(event) => setName(event.target.value)} /></label>
                 <label className="manager-field-wide">Owner account ID <span className="admin-label-note">Use an existing registered user ID, or leave empty for an admin-owned card</span><input value={userId} onChange={(event) => setUserId(event.target.value)} placeholder="Optional Identity user ID" /></label>
-                {Object.entries(details).map(([key, value]) => (
+                {detailFields.map(({ key, value, removable }) => (
                   <label key={key} className={key === 'description' ? 'manager-field-wide' : ''}>
                     <span>{LABELS[key] || key}</span>
                     {key === 'template' ? (
-                      <select value={value} onChange={(event) => setDetails((current) => ({ ...current, [key]: event.target.value }))}>{ADMIN_TEMPLATES.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select>
+                      <select value={value} onChange={(event) => setDetails((current) => changeDetailsTemplate(current, event.target.value))}>{TEMPLATE_OPTIONS.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select>
                     ) : key === 'published' ? (
                       <select value={value} onChange={(event) => setDetails((current) => ({ ...current, published: event.target.value }))}><option value="false">Draft</option><option value="true">Published</option></select>
                     ) : key === 'slug' ? (
@@ -282,7 +273,7 @@ export default function AdminPage() {
                     ) : (
                       <div className="admin-detail-field">
                         <input value={value} onChange={(event) => setDetails((current) => ({ ...current, [key]: event.target.value }))} />
-                        {!CORE_DETAIL_KEYS.has(key) && <button type="button" title={`Remove ${key}`} onClick={() => removeDetail(key)}>×</button>}
+                        {removable && <button type="button" title={`Remove ${key}`} onClick={() => removeDetail(key)}>×</button>}
                       </div>
                     )}
                   </label>

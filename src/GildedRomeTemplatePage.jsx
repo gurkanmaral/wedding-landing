@@ -29,7 +29,7 @@ export default function GildedRomeTemplatePage() {
   const [active, setActive] = useState(0);
   const [d, setD] = useState({ dd: 0, hh: 0, mm: 0, ss: 0 });
   const {
-    partner1, partner2, eventDate, dateLabel, venue, city, address, rsvpDeadline, description,
+    partner1, partner2, eventDate, dateLabel, venue, city, address, rsvpDeadline,
   } = useWeddingCardFields({
     partner1: "Sofia",
     partner2: "Luca",
@@ -38,7 +38,6 @@ export default function GildedRomeTemplatePage() {
     city: "Puglia, IT",
     address: "Ostuni, Puglia, Italy",
     rsvpDeadline: "15 April 2026",
-    description: "Seven years ago we shared an umbrella that broke halfway home. Since then: three cities, one very small apartment, and countless Sunday dinners.",
   });
   const numericDate = new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "2-digit", year: "numeric" }).format(eventDate).replaceAll("/", " · ");
   const shortDate = new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "2-digit", year: "2-digit" }).format(eventDate).replaceAll("/", "·");
@@ -291,8 +290,11 @@ export default function GildedRomeTemplatePage() {
               height={1024}
             />
             <p className="text-base md:text-lg leading-relaxed">
-              <span className="float-left font-display text-6xl leading-[0.8] mr-2 mt-1 text-tomato">{description.charAt(0)}</span>
-              {description.slice(1)}
+              <span className="float-left font-display text-6xl leading-[0.8] mr-2 mt-1 text-tomato">S</span>
+              even years ago we shared an umbrella that broke halfway home. We
+              argued about who spilled the espresso, then laughed until the tram
+              doors opened. Since then: three cities, one very small apartment,
+              and a mutual agreement that pineapple does not belong on pizza.
             </p>
           </div>
 

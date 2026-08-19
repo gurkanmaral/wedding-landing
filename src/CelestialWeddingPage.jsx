@@ -295,7 +295,6 @@ export default function CelestialWeddingPage() {
     city,
     address,
     rsvpDeadline,
-    description,
   } = useWeddingCardFields({
     partner1: 'Aurora',
     partner2: 'Elias',
@@ -304,7 +303,6 @@ export default function CelestialWeddingPage() {
     city: 'Napa Valley, California',
     address: '1700 Stargrove Lane, Napa Valley, California',
     rsvpDeadline: '1 August 2026',
-    description: 'We met on a rooftop in late autumn, both of us pretending to know the constellations.',
   })
   const [countdown, setCountdown] = useState(() => getCountdownParts(eventDate))
   const [attending, setAttending] = useState('yes')
@@ -2254,7 +2252,8 @@ export default function CelestialWeddingPage() {
               <div className="cw-eyebrow">Our Story</div>
               <h2>Written in the stars</h2>
               <p>
-                {description} <span className="hl">{partner2}</span> pointed at a
+                We met on a rooftop in late autumn, both of us pretending to know
+                the constellations. <span className="hl">{partner2}</span> pointed at a
                 planet and called it a star; <span className="hl">{partner1}</span> let
                 them believe it for exactly three minutes.
               </p>

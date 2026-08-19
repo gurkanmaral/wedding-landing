@@ -296,7 +296,7 @@ const css = String.raw`
 export default function AutumnFallsPage() {
   const rootRef = useRef(null)
   const {
-    partner1, partner2, eventDate, dateLabel, venue, city, address, rsvpDeadline, description,
+    partner1, partner2, eventDate, dateLabel, venue, city, address, rsvpDeadline,
   } = useWeddingCardFields({
     partner1: 'Nazlı',
     partner2: 'Bahadır',
@@ -305,7 +305,6 @@ export default function AutumnFallsPage() {
     city: 'Hudson Valley, New York',
     address: 'Maplewood Estate, Hudson Valley, New York',
     rsvpDeadline: '15 September 2026',
-    description: 'Come gather where the maples burn gold, and watch two lives grow into one.',
   })
   const mapQuery = encodeURIComponent(`${venue}, ${address}, ${city}`)
   const calendarStart = eventDate.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')
@@ -494,7 +493,7 @@ export default function AutumnFallsPage() {
           `DTSTART:${calendarStart}`, `DTEND:${calendarEnd}`,
           `SUMMARY:${partner1} & ${partner2} — An Autumn Wedding`,
           `LOCATION:${address.replaceAll(',', '\\,')}`,
-          `DESCRIPTION:${description.replaceAll(',', '\\,')}`,
+          'DESCRIPTION:Ceremony beneath the maples\\, followed by a harvest dinner and bonfire.',
           'END:VEVENT', 'END:VCALENDAR'].join('\r\n')
         const url = URL.createObjectURL(new Blob([ics], { type: 'text/calendar' }))
         const a = document.createElement('a'); a.href = url; a.download = `${partner1}-${partner2}-wedding.ics`.toLowerCase().replaceAll(' ', '-')
@@ -567,12 +566,12 @@ export default function AutumnFallsPage() {
       timers.forEach(clearInterval)
       clearTimeout(tm)
     }
-  }, [address, calendarEnd, calendarStart, description, eventDate, partner1, partner2])
+  }, [address, calendarEnd, calendarStart, eventDate, partner1, partner2])
 
   return (
     <div ref={rootRef} className="autumn-page">
       <title>{partner1} &amp; {partner2} — An Autumn Wedding</title>
-      <meta name="description" content={description} />
+      <meta name="description" content={`An invitation to the autumn wedding of ${partner1} and ${partner2} at ${venue}.`} />
       <link rel="preconnect" href="https://fonts.googleapis.com" />
       <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
       <link
@@ -618,7 +617,7 @@ export default function AutumnFallsPage() {
           <div className="shell">
             <div className="eyrow reveal"><span className="label">The Invitation</span><hr className="rule" /></div>
             <div className="invite">
-              <p className="lead reveal">{description}</p>
+              <p className="lead reveal">Come gather where the maples burn gold, and watch two lives grow into one.</p>
               <div className="reveal">
                 <p className="body">With the blessing of our families, we invite you to the marriage of <strong>{partner1}</strong> and <strong>{partner2}</strong> — an afternoon among the turning leaves, followed by an evening of warmth, harvest, and firelight.</p>
                 <p className="body">Bring your softest knit and your fondest stories. Stay for the cider, the long table, and the dancing.</p>

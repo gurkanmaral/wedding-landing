@@ -1,37 +1,19 @@
 import { useMemo, useState } from 'react'
 import { ApiError, authApi, recentCards, weddingCardApi } from './api/weddingCardApi'
+import {
+  changeDetailsTemplate,
+  createTemplateDetails,
+  DETAIL_LABELS,
+  getTemplateSchema,
+  storedDetails,
+  TEMPLATE_OPTIONS,
+} from './templateDetails'
 
-const TEMPLATE_OPTIONS = [
-  { value: 'artdeco', label: 'Art Deco', path: '/artdeco' },
-  { value: 'celestial', label: 'Celestial', path: '/celestial' },
-  { value: 'gilded-rome', label: 'Sunny Storybook', path: '/gilded-rome' },
-  { value: 'sakura', label: 'Sakura', path: '/sakura' },
-  { value: 'autumn', label: 'Autumn Falls', path: '/autumn' },
-  { value: 'aegean', label: 'Ege Zeytin', path: '/aegean' },
-]
-
-const DEFAULT_DETAILS = {
-  template: 'artdeco',
-  partner1: 'Elena',
-  partner2: 'Marcus',
-  eventDate: '2026-09-14T16:00:00+02:00',
-  dateLabel: '14 September 2026',
-  venue: 'Villa Aurelia',
-  city: 'Rome',
-  address: 'Largo di Porta San Pancrazio, 1',
-  rsvpDeadline: '1 August 2026',
-}
+const DEFAULT_DETAILS = createTemplateDetails()
 
 const FIELD_LABELS = {
   template: 'Template',
-  partner1: 'First partner',
-  partner2: 'Second partner',
-  eventDate: 'Event date and time',
-  dateLabel: 'Displayed date',
-  venue: 'Venue',
-  city: 'City',
-  address: 'Address',
-  rsvpDeadline: 'RSVP deadline',
+  ...DETAIL_LABELS,
 }
 
 function formatError(error) {
@@ -70,7 +52,7 @@ export default function WeddingCardManagerPage() {
   const syncCard = (nextCard) => {
     setCard(nextCard)
     setDraftName(nextCard.name || '')
-    setDetails({ ...DEFAULT_DETAILS, ...(nextCard.details || {}) })
+    setDetails(storedDetails(nextCard.details))
     setOpenId(nextCard.id)
     setRecent(recentCards.remember(nextCard))
   }
@@ -205,6 +187,16 @@ export default function WeddingCardManagerPage() {
     setNotice(null)
   }
 
+  const supportedKeys = getTemplateSchema(details.template).fields
+  const visibleKeys = new Set(['template', ...supportedKeys])
+  const detailFields = [
+    { key: 'template', value: details.template || 'artdeco', removable: false },
+    ...supportedKeys.map((key) => ({ key, value: details[key] || '', removable: false })),
+    ...Object.entries(details)
+      .filter(([key]) => !visibleKeys.has(key))
+      .map(([key, value]) => ({ key, value, removable: true })),
+  ]
+
   return (
     <div className="manager-page min-h-screen">
       <header className="manager-header">
@@ -281,18 +273,18 @@ export default function WeddingCardManagerPage() {
 
                   <div className="manager-field-grid">
                     <label className="manager-field-wide">Card name<input value={draftName} maxLength={200} required onChange={(event) => setDraftName(event.target.value)} /></label>
-                    {Object.entries(details).map(([key, value]) => (
+                    {detailFields.map(({ key, value, removable }) => (
                       <label key={key}>
                         <span>{FIELD_LABELS[key] || key}</span>
                         <div className="manager-field-row">
                           {key === 'template' ? (
-                            <select value={value} onChange={(event) => setDetails((current) => ({ ...current, [key]: event.target.value }))}>
+                            <select value={value} onChange={(event) => setDetails((current) => changeDetailsTemplate(current, event.target.value))}>
                               {TEMPLATE_OPTIONS.map((template) => <option key={template.value} value={template.value}>{template.label}</option>)}
                             </select>
                           ) : (
                             <input value={value} onChange={(event) => setDetails((current) => ({ ...current, [key]: event.target.value }))} />
                           )}
-                          {!Object.hasOwn(DEFAULT_DETAILS, key) && <button type="button" title={`Remove ${key}`} onClick={() => deleteDetail(key)}>×</button>}
+                          {removable && <button type="button" title={`Remove ${key}`} onClick={() => deleteDetail(key)}>×</button>}
                         </div>
                       </label>
                     ))}

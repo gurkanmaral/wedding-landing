@@ -382,7 +382,7 @@ function NazarSvg({ size = 26 }) {
 export default function AegeanWeddingPage() {
   const rootRef = useRef(null)
   const {
-    partner1, partner2, eventDate, dateLabel, venue, city, address, rsvpDeadline, description,
+    partner1, partner2, eventDate, dateLabel, venue, city, address, rsvpDeadline,
   } = useWeddingCardFields({
     partner1: 'Elif',
     partner2: 'Deniz',
@@ -391,7 +391,6 @@ export default function AegeanWeddingPage() {
     city: 'Alaçatı, Çeşme',
     address: 'Zeytinlik Koyu, Alaçatı, Çeşme, İzmir',
     rsvpDeadline: '15 Mayıs 2027',
-    description: 'Begonvillerin gölgesinde, denize karşı — iki hayat tek yaza karışıyor.',
   }, 'tr-TR')
   const mapQuery = encodeURIComponent(`${venue}, ${address}, ${city}`)
   const calendarStart = eventDate.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')
@@ -618,7 +617,7 @@ export default function AegeanWeddingPage() {
           `DTSTART:${calendarStart}`, `DTEND:${calendarEnd}`,
           `SUMMARY:${partner1} & ${partner2} — Bir Ege Düğünü`,
           `LOCATION:${address.replaceAll(',', '\\,')}`,
-          `DESCRIPTION:${description.replaceAll(',', '\\,')}`,
+          'DESCRIPTION:Zeytinlerin altında nikâh\\; ardından gün batımı kokteyli ve uzun masa.',
           'END:VEVENT', 'END:VCALENDAR'].join('\r\n')
         const url = URL.createObjectURL(new Blob([ics], { type: 'text/calendar' }))
         const a = document.createElement('a'); a.href = url; a.download = `${partner1}-${partner2}-dugun.ics`.toLowerCase().replaceAll(' ', '-')
@@ -652,12 +651,12 @@ export default function AegeanWeddingPage() {
       timers.forEach(t => (typeof t === 'number' ? clearInterval(t) : t.clear()))
       clearTimeout(tm)
     }
-  }, [address, calendarEnd, calendarStart, description, eventDate, partner1, partner2])
+  }, [address, calendarEnd, calendarStart, eventDate, partner1, partner2])
 
   return (
     <div ref={rootRef} className="aegean-page">
       <title>{partner1} &amp; {partner2} — Bir Ege Düğünü</title>
-      <meta name="description" content={description} />
+      <meta name="description" content={`${partner1} ve ${partner2}'in ${city} düğününe davetlisiniz.`} />
       <link rel="preconnect" href="https://fonts.googleapis.com" />
       <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
       <link
@@ -706,7 +705,7 @@ export default function AegeanWeddingPage() {
           <div className="shell">
             <div className="eyrow reveal"><span className="label">Davet</span></div>
             <div className="invite reveal">
-              <p className="lead">{description}</p>
+              <p className="lead">Begonvillerin gölgesinde, denize karşı —<br />iki hayat tek yaza karışıyor.</p>
               <p className="body">Ailelerimizin sevinci ve duasıyla, <strong>{partner1}</strong> ile <strong>{partner2}</strong>'in nikâhına davetlisiniz — zeytin ağaçlarının altında bir ikindi, ardından deniz kenarında uzun bir yaz gecesi.</p>
               <p className="body">En beyaz keteninizi giyin, en güzel anılarınızı getirin. Limonata, uzun masa ve gün doğana dek dans bizden.</p>
             </div>
