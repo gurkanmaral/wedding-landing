@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { useWeddingCardFields } from './api/weddingCardContext'
 
 const autumnTree = '/assets/autumn/autumn-tree.png'
 const couple1 = '/assets/autumn/couple-1.svg'
@@ -294,6 +295,21 @@ const css = String.raw`
 
 export default function AutumnFallsPage() {
   const rootRef = useRef(null)
+  const {
+    partner1, partner2, eventDate, dateLabel, venue, city, address, rsvpDeadline, description,
+  } = useWeddingCardFields({
+    partner1: 'Nazlı',
+    partner2: 'Bahadır',
+    eventDate: '2026-10-17T16:00:00-04:00',
+    venue: 'Maplewood Estate',
+    city: 'Hudson Valley, New York',
+    address: 'Maplewood Estate, Hudson Valley, New York',
+    rsvpDeadline: '15 September 2026',
+    description: 'Come gather where the maples burn gold, and watch two lives grow into one.',
+  })
+  const mapQuery = encodeURIComponent(`${venue}, ${address}, ${city}`)
+  const calendarStart = eventDate.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')
+  const calendarEnd = new Date(eventDate.getTime() + 7 * 60 * 60 * 1000).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')
 
   useEffect(() => {
     const ac = new AbortController()
@@ -473,15 +489,15 @@ export default function AutumnFallsPage() {
       const btn = document.getElementById('icsBtn'); if (!btn) return
       btn.addEventListener('click', e => {
         e.preventDefault()
-        const ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Nazli & Bahadir//Wedding//EN',
-          'BEGIN:VEVENT', 'UID:nazli-bahadir-20261017@wedding', 'DTSTAMP:20260101T000000Z',
-          'DTSTART:20261017T200000Z', 'DTEND:20261018T030000Z',
-          'SUMMARY:Nazlı & Bahadır — An Autumn Wedding',
-          'LOCATION:Maplewood Estate\\, Hudson Valley\\, New York',
-          'DESCRIPTION:Ceremony at 4:00 PM beneath the maples\\, followed by a harvest dinner and bonfire.',
+        const ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', `PRODID:-//${partner1} & ${partner2}//Wedding//EN`,
+          'BEGIN:VEVENT', `UID:${eventDate.getTime()}@weddingcard`, `DTSTAMP:${calendarStart}`,
+          `DTSTART:${calendarStart}`, `DTEND:${calendarEnd}`,
+          `SUMMARY:${partner1} & ${partner2} — An Autumn Wedding`,
+          `LOCATION:${address.replaceAll(',', '\\,')}`,
+          `DESCRIPTION:${description.replaceAll(',', '\\,')}`,
           'END:VEVENT', 'END:VCALENDAR'].join('\r\n')
         const url = URL.createObjectURL(new Blob([ics], { type: 'text/calendar' }))
-        const a = document.createElement('a'); a.href = url; a.download = 'nazli-bahadir-wedding.ics'
+        const a = document.createElement('a'); a.href = url; a.download = `${partner1}-${partner2}-wedding.ics`.toLowerCase().replaceAll(' ', '-')
         document.body.appendChild(a); a.click(); a.remove()
         setTimeout(() => URL.revokeObjectURL(url), 1000)
       }, { signal })
@@ -507,7 +523,7 @@ export default function AutumnFallsPage() {
 
     /* ===== Countdown (digits roll on change) ===== */
     ;(function () {
-      const TARGET = new Date('2026-10-17T16:00:00-04:00').getTime()
+      const TARGET = eventDate.getTime()
       const d = cd('cd-d'), h = cd('cd-h'), m = cd('cd-m'), s = cd('cd-s')
       function cd(id) { return document.getElementById(id) }
       function pad(n) { return String(Math.max(0, n)).padStart(2, '0') }
@@ -551,12 +567,12 @@ export default function AutumnFallsPage() {
       timers.forEach(clearInterval)
       clearTimeout(tm)
     }
-  }, [])
+  }, [address, calendarEnd, calendarStart, description, eventDate, partner1, partner2])
 
   return (
     <div ref={rootRef} className="autumn-page">
-      <title>Nazlı &amp; Bahadır — An Autumn Wedding</title>
-      <meta name="description" content="An invitation to the autumn wedding of Nazlı & Bahadır at Maplewood Estate." />
+      <title>{partner1} &amp; {partner2} — An Autumn Wedding</title>
+      <meta name="description" content={description} />
       <link rel="preconnect" href="https://fonts.googleapis.com" />
       <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
       <link
@@ -579,18 +595,18 @@ export default function AutumnFallsPage() {
           <div className="shell">
             <div className="hero-block">
               <span className="label">An Autumn Wedding</span>
-              <h1 className="names">Nazlı<span className="amp">and</span>Bahadır</h1>
+              <h1 className="names">{partner1}<span className="amp">and</span>{partner2}</h1>
               <div className="hero-meta">
                 <div className="vrule"></div>
                 <div>
-                  <p className="when">Saturday · the 17th of October · 2026</p>
-                  <p className="where">Maplewood Estate — Hudson Valley, New York</p>
+                  <p className="when">{dateLabel}</p>
+                  <p className="where">{venue} — {city}</p>
                 </div>
               </div>
               <div className="hero-actions">
                 <a className="ghost" href="#" id="icsBtn">Add to Calendar</a>
                 <span className="dot">·</span>
-                <a className="ghost" href="https://maps.google.com/?q=Maplewood+Estate,+Hudson+Valley,+New+York" target="_blank" rel="noopener noreferrer">Getting There</a>
+                <a className="ghost" href={`https://maps.google.com/?q=${mapQuery}`} target="_blank" rel="noopener noreferrer">Getting There</a>
               </div>
             </div>
           </div>
@@ -602,9 +618,9 @@ export default function AutumnFallsPage() {
           <div className="shell">
             <div className="eyrow reveal"><span className="label">The Invitation</span><hr className="rule" /></div>
             <div className="invite">
-              <p className="lead reveal">Come gather where the maples burn gold, and watch two lives grow into one.</p>
+              <p className="lead reveal">{description}</p>
               <div className="reveal">
-                <p className="body">With the blessing of our families, we invite you to the marriage of <strong>Nazlı</strong> and <strong>Bahadır</strong> — an afternoon among the turning leaves, followed by an evening of warmth, harvest, and firelight.</p>
+                <p className="body">With the blessing of our families, we invite you to the marriage of <strong>{partner1}</strong> and <strong>{partner2}</strong> — an afternoon among the turning leaves, followed by an evening of warmth, harvest, and firelight.</p>
                 <p className="body">Bring your softest knit and your fondest stories. Stay for the cider, the long table, and the dancing.</p>
               </div>
             </div>
@@ -662,7 +678,7 @@ export default function AutumnFallsPage() {
             <div className="rsvp-wrap">
               <div className="rsvp-aside reveal">
                 <p className="lead">Will you join us by the fire?</p>
-                <p>Kindly send word before the 15th of September, 2026, so we may set your place at the table.</p>
+                <p>Kindly send word before {rsvpDeadline}, so we may set your place at the table.</p>
               </div>
               <form className="rsvp reveal" id="rsvpForm">
                 <div>
@@ -700,7 +716,7 @@ export default function AutumnFallsPage() {
         </section>
 
         <footer>
-          <p className="mono">N &middot; B</p>
+          <p className="mono">{partner1.charAt(0)} &middot; {partner2.charAt(0)}</p>
           <p className="q">“The falling leaves remind us — every ending is the seed of a new beginning.”</p>
         </footer>
       </main>

@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { useWeddingCardFields } from './api/weddingCardContext'
 
 const couple1 = '/assets/aegean/couple-1.svg'
 const couple2 = '/assets/aegean/couple-2.svg'
@@ -380,6 +381,23 @@ function NazarSvg({ size = 26 }) {
 
 export default function AegeanWeddingPage() {
   const rootRef = useRef(null)
+  const {
+    partner1, partner2, eventDate, dateLabel, venue, city, address, rsvpDeadline, description,
+  } = useWeddingCardFields({
+    partner1: 'Elif',
+    partner2: 'Deniz',
+    eventDate: '2027-06-19T17:00:00+03:00',
+    venue: 'Zeytinlik Koyu',
+    city: 'Alaçatı, Çeşme',
+    address: 'Zeytinlik Koyu, Alaçatı, Çeşme, İzmir',
+    rsvpDeadline: '15 Mayıs 2027',
+    description: 'Begonvillerin gölgesinde, denize karşı — iki hayat tek yaza karışıyor.',
+  }, 'tr-TR')
+  const mapQuery = encodeURIComponent(`${venue}, ${address}, ${city}`)
+  const calendarStart = eventDate.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')
+  const calendarEnd = new Date(eventDate.getTime() + 7 * 60 * 60 * 1000).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')
+  const numericDate = new Intl.DateTimeFormat('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(eventDate).replaceAll('.', ' · ')
+  const year = new Intl.DateTimeFormat('tr-TR', { year: 'numeric' }).format(eventDate)
 
   useEffect(() => {
     const ac = new AbortController()
@@ -553,7 +571,7 @@ export default function AegeanWeddingPage() {
 
     /* ===== Geri sayım (rakamlar kayarak değişir) ===== */
     ;(function () {
-      const TARGET = new Date('2027-06-19T17:00:00+03:00').getTime()
+      const TARGET = eventDate.getTime()
       const d = cd('cd-d'), h = cd('cd-h'), m = cd('cd-m'), s = cd('cd-s')
       function cd(id) { return document.getElementById(id) }
       function pad(n) { return String(Math.max(0, n)).padStart(2, '0') }
@@ -595,15 +613,15 @@ export default function AegeanWeddingPage() {
       const btn = document.getElementById('icsBtn'); if (!btn) return
       btn.addEventListener('click', e => {
         e.preventDefault()
-        const ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Elif & Deniz//Dugun//TR',
-          'BEGIN:VEVENT', 'UID:elif-deniz-20270619@dugun', 'DTSTAMP:20260101T000000Z',
-          'DTSTART:20270619T140000Z', 'DTEND:20270619T210000Z',
-          'SUMMARY:Elif & Deniz — Bir Ege Düğünü',
-          'LOCATION:Zeytinlik Koyu\\, Alaçatı\\, Çeşme\\, İzmir',
-          'DESCRIPTION:Nikâh saat 17.00 zeytinlerin altında\\; ardından gün batımı kokteyli ve uzun masa.',
+        const ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', `PRODID:-//${partner1} & ${partner2}//Dugun//TR`,
+          'BEGIN:VEVENT', `UID:${eventDate.getTime()}@weddingcard`, `DTSTAMP:${calendarStart}`,
+          `DTSTART:${calendarStart}`, `DTEND:${calendarEnd}`,
+          `SUMMARY:${partner1} & ${partner2} — Bir Ege Düğünü`,
+          `LOCATION:${address.replaceAll(',', '\\,')}`,
+          `DESCRIPTION:${description.replaceAll(',', '\\,')}`,
           'END:VEVENT', 'END:VCALENDAR'].join('\r\n')
         const url = URL.createObjectURL(new Blob([ics], { type: 'text/calendar' }))
-        const a = document.createElement('a'); a.href = url; a.download = 'elif-deniz-dugun.ics'
+        const a = document.createElement('a'); a.href = url; a.download = `${partner1}-${partner2}-dugun.ics`.toLowerCase().replaceAll(' ', '-')
         document.body.appendChild(a); a.click(); a.remove()
         setTimeout(() => URL.revokeObjectURL(url), 1000)
       }, { signal })
@@ -634,12 +652,12 @@ export default function AegeanWeddingPage() {
       timers.forEach(t => (typeof t === 'number' ? clearInterval(t) : t.clear()))
       clearTimeout(tm)
     }
-  }, [])
+  }, [address, calendarEnd, calendarStart, description, eventDate, partner1, partner2])
 
   return (
     <div ref={rootRef} className="aegean-page">
-      <title>Elif &amp; Deniz — Bir Ege Düğünü</title>
-      <meta name="description" content="Elif & Deniz'in Alaçatı'daki Ege düğününe davetlisiniz." />
+      <title>{partner1} &amp; {partner2} — Bir Ege Düğünü</title>
+      <meta name="description" content={description} />
       <link rel="preconnect" href="https://fonts.googleapis.com" />
       <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
       <link
@@ -667,16 +685,16 @@ export default function AegeanWeddingPage() {
           <div className="shell">
             <div className="arch-frame">
               <span className="label">Bir Ege Düğünü</span>
-              <h1 className="names">Elif<span className="amp">ve</span>Deniz</h1>
+              <h1 className="names">{partner1}<span className="amp">ve</span>{partner2}</h1>
               <div className="hero-meta">
-                <p className="when">Cumartesi · 19 Haziran 2027</p>
-                <p className="where">Zeytinlik Koyu — Alaçatı, Çeşme</p>
+                <p className="when">{dateLabel}</p>
+                <p className="where">{venue} — {city}</p>
               </div>
             </div>
             <div className="hero-actions">
               <a className="ghost" href="#" id="icsBtn">Takvime Ekle</a>
               <span className="dot">·</span>
-              <a className="ghost" href="https://maps.google.com/?q=Ala%C3%A7at%C4%B1,+%C3%87e%C5%9Fme,+%C4%B0zmir" target="_blank" rel="noopener noreferrer">Yol Tarifi</a>
+              <a className="ghost" href={`https://maps.google.com/?q=${mapQuery}`} target="_blank" rel="noopener noreferrer">Yol Tarifi</a>
             </div>
           </div>
           <a className="scroll-cue" href="#davet">Kaydır</a>
@@ -688,8 +706,8 @@ export default function AegeanWeddingPage() {
           <div className="shell">
             <div className="eyrow reveal"><span className="label">Davet</span></div>
             <div className="invite reveal">
-              <p className="lead">Begonvillerin gölgesinde, denize karşı —<br />iki hayat tek yaza karışıyor.</p>
-              <p className="body">Ailelerimizin sevinci ve duasıyla, <strong>Elif</strong> ile <strong>Deniz</strong>'in nikâhına davetlisiniz — zeytin ağaçlarının altında bir ikindi, ardından deniz kenarında uzun bir yaz gecesi.</p>
+              <p className="lead">{description}</p>
+              <p className="body">Ailelerimizin sevinci ve duasıyla, <strong>{partner1}</strong> ile <strong>{partner2}</strong>'in nikâhına davetlisiniz — zeytin ağaçlarının altında bir ikindi, ardından deniz kenarında uzun bir yaz gecesi.</p>
               <p className="body">En beyaz keteninizi giyin, en güzel anılarınızı getirin. Limonata, uzun masa ve gün doğana dek dans bizden.</p>
             </div>
           </div>
@@ -752,7 +770,7 @@ export default function AegeanWeddingPage() {
             <div className="eyrow reveal"><span className="label">LCV</span></div>
             <div className="rsvp-lead reveal">
               <p className="lead">Bizimle denize karşı kadeh kaldırır mısınız?</p>
-              <p>Sofranızı ayırabilmemiz için lütfen 15 Mayıs 2027'ye kadar haber verin.</p>
+              <p>Sofranızı ayırabilmemiz için lütfen {rsvpDeadline} tarihine kadar haber verin.</p>
             </div>
             <div className="postcard reveal">
               <div className="pc-left">
@@ -791,12 +809,12 @@ export default function AegeanWeddingPage() {
               <div className="pc-right">
                 <div className="stamp" aria-hidden="true">
                   <NazarSvg size={34} />
-                  <span className="val">EGE · 2027</span>
+                  <span className="val">EGE · {year}</span>
                 </div>
-                <div className="postmark" aria-hidden="true"><span>Alaçatı<br />19 · 06 · 2027<br />Çeşme</span></div>
+                <div className="postmark" aria-hidden="true"><span>{city}<br />{numericDate}</span></div>
                 <div className="addr">
                   <p className="to">Kime:</p>
-                  <div className="ln name">Elif &amp; Deniz</div>
+                  <div className="ln name">{partner1} &amp; {partner2}</div>
                   <div className="ln"></div>
                   <div className="ln"></div>
                 </div>
@@ -806,7 +824,7 @@ export default function AegeanWeddingPage() {
         </section>
 
         <footer>
-          <p className="mono">E &middot; D</p>
+          <p className="mono">{partner1.charAt(0)} &middot; {partner2.charAt(0)}</p>
           <p className="q">“İki kıyı, tek deniz — iki kalp, tek ömür.”</p>
           <div className="nazar" aria-hidden="true">
             <NazarSvg />

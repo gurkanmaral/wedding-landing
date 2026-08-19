@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { useWeddingCardFields } from './api/weddingCardContext'
 
 const sakuraTree = '/assets/sakura/sakura-tree.png'
 const couple1 = '/assets/sakura/couple-1.png'
@@ -101,6 +102,7 @@ const css = String.raw`
     font-size: clamp(3.75rem, 12vw, 8rem);
     line-height:.95; color: var(--ink);
   }
+  .sakura-page .hero h1 .hero-name{ display:inline-block; white-space:nowrap; }
   .sakura-page .hero h1 .amp{
     display:inline-block; vertical-align:middle;
     margin:0 1.5rem; font-size: clamp(1.875rem, 4vw, 2.5rem);
@@ -306,17 +308,43 @@ const css = String.raw`
   @media(max-width:520px){
     .sakura-page .wrap{ padding:5.5rem 1.25rem; }
     .sakura-page .panel{ padding:2.4rem 1.4rem; }
-    .sakura-page .hero h1{ font-size:clamp(2.8rem,15vw,3.75rem); }
-    .sakura-page .hero h1 .amp{ margin:0 .8rem; }
+    .sakura-page .hero h1{ display:flex; flex-direction:column; align-items:center; gap:.08em; font-size:clamp(2.8rem,15vw,3.75rem); }
+    .sakura-page .hero h1 .amp{ margin:0; line-height:.55; }
     .sakura-page .eyebrow{ letter-spacing:.42em; }
     .sakura-page .hero .when{ letter-spacing:.28em; }
     .sakura-page .photo{ height:min(78vw,380px); }
     .sakura-page .lede{ font-size:1.05rem; line-height:1.7; }
   }
+  .sakura-data-status{ position:fixed; top:1rem; left:50%; z-index:80; translate:-50% 0; border:1px solid var(--gold); background:oklch(.97 .02 85 / .94); padding:.7rem 1rem; color:var(--ink); font-size:.8rem; box-shadow:0 12px 32px oklch(.2 .03 40 / .14); }
 `
 
 export default function SakuraWeddingPage() {
   const rootRef = useRef(null)
+  const {
+    loading: cardLoading,
+    error: cardError,
+    partner1,
+    partner2,
+    eventDate: targetDate,
+    dateLabel,
+    venue,
+    city,
+    address,
+    description,
+    rsvpDeadline,
+    receptionVenue,
+  } = useWeddingCardFields({
+    partner1: 'Hiro',
+    partner2: 'Aiko',
+    eventDate: '2027-04-12T16:00:00+09:00',
+    venue: 'Heian Shrine',
+    city: 'Kyoto',
+    address: 'Sakyo-ku, Kyoto',
+    description: 'With the warmth of the season and the blessing of our families, we invite you to witness the joining of our lives.',
+    rsvpDeadline: 'March 1st, 2027',
+  })
+  const targetTimestamp = targetDate.getTime()
+  const eventTime = new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit' }).format(targetDate)
 
   useEffect(() => {
     const ac = new AbortController()
@@ -492,9 +520,7 @@ export default function SakuraWeddingPage() {
     /* =====================================================================
        Countdown — ported from Countdown.tsx (digits roll on change)
        ===================================================================== */
-    // Original target was 2026-04-12; kept the date, advanced the year so the
-    // countdown stays live. Change freely.
-    const TARGET = new Date('2027-04-12T16:00:00+09:00').getTime()
+    const TARGET = targetTimestamp
     const d = document.getElementById('cd-d'), h = document.getElementById('cd-h'),
       m = document.getElementById('cd-m'), s = document.getElementById('cd-s')
     function pad(n) { return String(Math.max(0, n)).padStart(2, '0') }
@@ -568,12 +594,12 @@ export default function SakuraWeddingPage() {
       timers.forEach(clearInterval)
       clearTimeout(toastTimer)
     }
-  }, [])
+  }, [targetTimestamp])
 
   return (
     <div ref={rootRef} className="sakura-page">
-      <title>Hiro &amp; Aiko — A Sakura Wedding</title>
-      <meta name="description" content="Join us beneath the cherry blossoms — an invitation to the wedding of Hiro & Aiko." />
+      <title>{partner1} &amp; {partner2} — A Sakura Wedding</title>
+      <meta name="description" content={`An invitation to the wedding of ${partner1} & ${partner2}.`} />
       <link rel="preconnect" href="https://fonts.googleapis.com" />
       <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
       <link
@@ -582,6 +608,9 @@ export default function SakuraWeddingPage() {
         precedence="default"
       />
       <style>{css}</style>
+
+      {cardLoading && <div className="sakura-data-status">Loading your invitation…</div>}
+      {cardError && <div className="sakura-data-status">This invitation could not be loaded.</div>}
 
       <div id="bgGradient"></div>
       <div id="vignette"></div>
@@ -592,18 +621,22 @@ export default function SakuraWeddingPage() {
         <section className="hero" data-screen-label="01 Hero">
           <div className="hero-inner">
             <p className="eyebrow">· 結 婚 式 ·</p>
-            <h1 className="font-display" aria-label="Hiro & Aiko">
-              {'Hiro'.split('').map((c, i) => (
-                <span key={`h${i}`} className="hl" aria-hidden="true" style={{ '--i': i }}>{c}</span>
-              ))}
-              <span className="amp hl" aria-hidden="true" style={{ '--i': 4 }}>&amp;</span>
-              {'Aiko'.split('').map((c, i) => (
-                <span key={`a${i}`} className="hl" aria-hidden="true" style={{ '--i': i + 5 }}>{c}</span>
-              ))}
+            <h1 className="font-display" aria-label={`${partner1} & ${partner2}`}>
+              <span className="hero-name">
+                {partner1.split('').map((c, i) => (
+                  <span key={`h${i}`} className="hl" aria-hidden="true" style={{ '--i': i }}>{c}</span>
+                ))}
+              </span>
+              <span className="amp hl" aria-hidden="true" style={{ '--i': partner1.length }}>&amp;</span>
+              <span className="hero-name">
+                {partner2.split('').map((c, i) => (
+                  <span key={`a${i}`} className="hl" aria-hidden="true" style={{ '--i': i + partner1.length + 1 }}>{c}</span>
+                ))}
+              </span>
             </h1>
             <div className="ink-divider" style={{ maxWidth: '18rem', margin: '0 auto' }}></div>
             <p className="poem">Beneath a thousand falling blossoms,<br />two paths become one.</p>
-            <p className="when">12 · APRIL · 2026 &nbsp;·&nbsp; KYOTO</p>
+            <p className="when">{dateLabel.toUpperCase()} &nbsp;·&nbsp; {city.toUpperCase()}</p>
           </div>
           <div className="scroll-cue font-display">scroll · 下へ</div>
         </section>
@@ -615,9 +648,7 @@ export default function SakuraWeddingPage() {
             <h2 className="section">An Invitation</h2>
             <div className="ink-divider divider-sm"></div>
             <p className="lede">
-              With the warmth of the season and the blessing of our families, we invite you
-              to witness the joining of our lives. Come walk with us beneath the cherry trees,
-              share in our vows, and stay for the sake, the laughter, and the long evening.
+              {description}
             </p>
           </div>
         </section>
@@ -658,13 +689,13 @@ export default function SakuraWeddingPage() {
             <div className="details stag">
               <div className="detail">
                 <span className="kicker">式 · CEREMONY</span>
-                <h3>Heian Shrine</h3>
-                <p>平安神宮 · Sakyō-ku, Kyoto<br />Four o'clock in the afternoon<br /><span className="sub">arrive in soft colors</span></p>
+                <h3>{venue}</h3>
+                <p>{address} · {city}<br />{eventTime}<br /><span className="sub">arrive in soft colors</span></p>
               </div>
               <div className="detail">
                 <span className="kicker">宴 · RECEPTION</span>
-                <h3>Murin-an Garden</h3>
-                <p>無鄰菴 · a lantern-lit kaiseki dinner<br />Following the ceremony<br /><span className="sub">dancing under the moon to follow</span></p>
+                <h3>{receptionVenue}</h3>
+                <p>{city} · dinner and celebration<br />Following the ceremony<br /><span className="sub">dancing under the moon to follow</span></p>
               </div>
             </div>
           </div>
@@ -675,7 +706,7 @@ export default function SakuraWeddingPage() {
           <div className="panel">
             <p className="kicker">お 返 事</p>
             <h2 className="section">Reply by the First Bloom</h2>
-            <p className="lede" style={{ marginTop: '1rem', fontStyle: 'italic', color: 'var(--muted-foreground)' }}>kindly respond before March 1st, 2026</p>
+            <p className="lede" style={{ marginTop: '1rem', fontStyle: 'italic', color: 'var(--muted-foreground)' }}>kindly respond before {rsvpDeadline}</p>
             <div className="ink-divider divider-sm"></div>
 
             <form className="rsvp stag" id="rsvpForm">
@@ -717,7 +748,7 @@ export default function SakuraWeddingPage() {
         {/* FOOTER */}
         <footer>
           <div className="ink-divider" style={{ maxWidth: '4rem', margin: '0 auto' }}></div>
-          <p className="kicker" style={{ marginTop: '2rem' }}>H · &amp; · A</p>
+          <p className="kicker" style={{ marginTop: '2rem' }}>{partner1.charAt(0)} · &amp; · {partner2.charAt(0)}</p>
           <p className="lede" style={{ marginTop: '1rem', fontStyle: 'italic', color: 'var(--muted-foreground)', fontSize: '.95rem' }}>“The cherry blossoms remind us — beauty lives in the brief.”</p>
         </footer>
       </main>

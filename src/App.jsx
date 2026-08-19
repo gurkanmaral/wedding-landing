@@ -258,7 +258,7 @@ function PreviewArt({ template }) {
 
       <div className={`absolute inset-0 ${theme.overlay}`} />
 
-      <div className="relative flex h-full flex-col px-5 pb-5 pt-6">
+      <div className="relative flex h-full flex-col px-5 pb-5 pt-14">
         <div className={`flex items-center justify-between text-[10px] uppercase tracking-[0.26em] ${theme.chip}`}>
           <span>{template.id}</span>
           <span>RSVP</span>
@@ -301,21 +301,19 @@ function PreviewArt({ template }) {
 
 function DevicePreview({ template }) {
   return (
-    <div className="home-device mx-auto w-full max-w-[304px]" data-active-preview>
+    <div className="home-device mx-auto w-full max-w-[290px]" data-active-preview>
       <span className="absolute -left-[3px] top-28 h-14 w-[3px] rounded-l bg-[#343434]" />
       <span className="absolute -left-[3px] top-48 h-20 w-[3px] rounded-l bg-[#343434]" />
       <span className="absolute -right-[3px] top-36 h-20 w-[3px] rounded-r bg-[#343434]" />
-      <div className="relative rounded-[2.7rem] border border-white/15 bg-[#101010] p-2.5 shadow-[0_38px_90px_-28px_rgba(10,18,30,0.7)]">
-        <div className="mb-2.5 grid grid-cols-[1fr_auto_1fr] items-center px-4 text-[9px] font-semibold text-white/70">
-          <span>9:41</span>
-          <div className="h-5 w-20 rounded-full bg-black shadow-inner" />
-          <span className="text-right">100%</span>
-        </div>
-        <div className="h-[510px] overflow-hidden rounded-[2.15rem] bg-stone-100">
+      <div className="relative rounded-[2.7rem] border border-white/15 bg-[#101010] p-[7px] shadow-[0_38px_90px_-28px_rgba(10,18,30,0.7)]">
+        <div className="relative h-[548px] overflow-hidden rounded-[2.28rem] bg-stone-100">
           <PreviewArt template={template} />
-        </div>
-        <div className="mt-2.5 flex justify-center">
-          <div className="h-1 w-20 rounded-full bg-stone-700" />
+          <div className="pointer-events-none absolute inset-x-0 top-0 z-20 flex h-12 items-start justify-between px-5 pt-3 text-[9px] font-semibold text-white/80">
+            <span>9:41</span>
+            <span>100%</span>
+          </div>
+          <div className="pointer-events-none absolute left-1/2 top-2.5 z-30 h-6 w-[5.25rem] -translate-x-1/2 rounded-full bg-black shadow-inner" />
+          <div className="pointer-events-none absolute bottom-1.5 left-1/2 z-30 h-1 w-20 -translate-x-1/2 rounded-full bg-white/65 mix-blend-difference" />
         </div>
       </div>
     </div>
@@ -393,17 +391,12 @@ function App() {
   return (
     <div ref={rootRef} className="home-shell min-h-screen text-[#171717]">
       <header className="home-header mx-auto flex w-full max-w-7xl items-center justify-between px-5 py-5 sm:px-8">
-        <a href="/" className="flex items-center gap-3 text-sm font-semibold uppercase tracking-[0.22em]">
-          <span className="grid h-8 w-8 place-items-center bg-[#171717] text-[10px] text-white">W</span>
-          Wedfolio
+        <a href="/" className="text-sm font-semibold uppercase tracking-[0.22em]">
+          Wedding Invitations
         </a>
-        <nav className="flex items-center gap-2 text-sm text-stone-600">
-          <a href="#dashboard" className="hidden px-3 py-2 transition hover:text-stone-950 sm:block">
+        <nav className="text-sm text-stone-600">
+          <a href="#dashboard" className="px-3 py-2 transition hover:text-stone-950">
             Templates
-          </a>
-          <a href={activeTemplate.href} className="home-open-button px-4 py-2.5 text-sm font-medium text-white transition">
-            Open {activeTemplate.name.split(' ')[0]}
-            <span aria-hidden="true"> ↗</span>
           </a>
         </nav>
       </header>
@@ -439,40 +432,42 @@ function App() {
             </div>
           </div>
 
-          <div data-reveal className="home-preview-stage grid items-center gap-5 px-3 py-8 sm:px-8 lg:grid-cols-[minmax(190px,0.72fr)_304px] lg:px-8">
-            <div className="order-2 grid content-center gap-2 lg:order-1">
-              <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.24em] text-stone-500 sm:col-span-3 lg:col-span-1">Choose a design</p>
-              {templates.map((template, index) => (
-                <button
-                  key={template.id}
-                  ref={(element) => {
-                    cardRefs.current[index] = element
-                  }}
-                  type="button"
-                  data-template-card
-                  onClick={() => setActiveIndex(index)}
-                  onMouseEnter={() => animateCard(index, 4)}
-                  onMouseLeave={() => animateCard(index, 0)}
-                  className="home-template-selector group border bg-white/80 p-3 text-left transition focus:outline-none focus:ring-2 focus:ring-stone-900"
-                  aria-pressed={activeIndex === index}
-                >
-                  <div className="flex items-center gap-3">
-                    <span className={`h-9 w-1.5 shrink-0 ${template.accentClass}`} />
-                    <div className="min-w-0 flex-1">
-                      <span className="block truncate text-[10px] font-semibold uppercase tracking-[0.18em] text-stone-500">{template.label}</span>
-                      <h2 className="mt-1 truncate text-sm font-semibold text-stone-950">{template.name}</h2>
+          <div data-reveal className="home-preview-stage grid items-center gap-5 px-3 py-7 sm:px-6 lg:grid-cols-[minmax(180px,0.76fr)_290px] lg:px-6">
+            <div className="order-1 grid content-center gap-2">
+              <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.24em] text-stone-500">Choose a design</p>
+              <div className="home-template-list grid gap-2">
+                {templates.map((template, index) => (
+                  <button
+                    key={template.id}
+                    ref={(element) => {
+                      cardRefs.current[index] = element
+                    }}
+                    type="button"
+                    data-template-card
+                    onClick={() => setActiveIndex(index)}
+                    onMouseEnter={() => animateCard(index, 4)}
+                    onMouseLeave={() => animateCard(index, 0)}
+                    className="home-template-selector group border bg-white/80 p-3 text-left transition focus:outline-none focus:ring-2 focus:ring-stone-900"
+                    aria-pressed={activeIndex === index}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className={`h-9 w-1.5 shrink-0 ${template.accentClass}`} />
+                      <div className="min-w-0 flex-1">
+                        <span className="block truncate text-[10px] font-semibold uppercase tracking-[0.18em] text-stone-500">{template.label}</span>
+                        <h2 className="mt-1 truncate text-sm font-semibold text-stone-950">{template.name}</h2>
+                      </div>
+                      <span className="text-sm text-stone-400 transition group-hover:text-stone-950" aria-hidden="true">→</span>
                     </div>
-                    <span className="text-sm text-stone-400 transition group-hover:text-stone-950" aria-hidden="true">→</span>
-                  </div>
-                  <div className="mt-2 flex items-center justify-between pl-[18px] text-[11px] text-stone-500">
-                    <span>{template.date}</span>
-                    <span className="font-semibold text-stone-800">{template.price}</span>
-                  </div>
-                </button>
-              ))}
+                    <div className="home-selector-meta mt-2 flex items-center justify-between pl-[18px] text-[11px] text-stone-500">
+                      <span>{template.date}</span>
+                      <span className="font-semibold text-stone-800">{template.price}</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
             </div>
 
-            <div ref={previewRef} className="order-1 lg:order-2 [perspective:900px]">
+            <div ref={previewRef} className="order-2 [perspective:900px]">
               <DevicePreview template={activeTemplate} />
             </div>
           </div>

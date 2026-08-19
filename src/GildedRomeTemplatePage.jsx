@@ -11,6 +11,7 @@ import illoWine from "./assets/med-dream-spark/illo-wine.png";
 import illoEnvelope from "./assets/med-dream-spark/illo-envelope.png";
 import illoMoon from "./assets/med-dream-spark/illo-moon.png";
 import branch from "./assets/med-dream-spark/story-branch.png";
+import { useWeddingCardFields } from "./api/weddingCardContext";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -27,9 +28,28 @@ export default function GildedRomeTemplatePage() {
   const root = useRef(null);
   const [active, setActive] = useState(0);
   const [d, setD] = useState({ dd: 0, hh: 0, mm: 0, ss: 0 });
+  const {
+    partner1, partner2, eventDate, dateLabel, venue, city, address, rsvpDeadline, description,
+  } = useWeddingCardFields({
+    partner1: "Sofia",
+    partner2: "Luca",
+    eventDate: "2026-06-12T17:00:00+02:00",
+    venue: "Masseria del Sole",
+    city: "Puglia, IT",
+    address: "Ostuni, Puglia, Italy",
+    rsvpDeadline: "15 April 2026",
+    description: "Seven years ago we shared an umbrella that broke halfway home. Since then: three cities, one very small apartment, and countless Sunday dinners.",
+  });
+  const numericDate = new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "2-digit", year: "numeric" }).format(eventDate).replaceAll("/", " · ");
+  const shortDate = new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "2-digit", year: "2-digit" }).format(eventDate).replaceAll("/", "·");
+  const day = new Intl.DateTimeFormat("en-GB", { day: "2-digit" }).format(eventDate);
+  const weekday = new Intl.DateTimeFormat("en-GB", { weekday: "short" }).format(eventDate);
+  const month = new Intl.DateTimeFormat("en-GB", { month: "long" }).format(eventDate);
+  const year = new Intl.DateTimeFormat("en-GB", { year: "numeric" }).format(eventDate);
+  const mapQuery = encodeURIComponent(`${venue}, ${address}, ${city}`);
 
   useEffect(() => {
-    const target = new Date("2026-06-12T17:00:00+02:00").getTime();
+    const target = eventDate.getTime();
     const tick = () => {
       const diff = Math.max(0, target - Date.now());
       setD({
@@ -42,7 +62,7 @@ export default function GildedRomeTemplatePage() {
     tick();
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
-  }, []);
+  }, [eventDate]);
 
   useEffect(() => {
     if (!root.current) return;
@@ -127,7 +147,7 @@ export default function GildedRomeTemplatePage() {
         <div className="container-x flex items-center justify-between py-3">
           <a href="#c01" className="font-display italic text-lg tracking-tight flex items-center gap-2">
             <img src={illoSun} alt="" className="w-6 h-6 spin-sun" />
-            S<span className="text-tomato">&</span>L
+            {partner1.charAt(0)}<span className="text-tomato">&</span>{partner2.charAt(0)}
           </a>
           <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
             {String(active + 1).padStart(2, "0")} / {String(CHAPTERS.length).padStart(2, "0")} — {CHAPTERS[active].label}
@@ -189,12 +209,12 @@ export default function GildedRomeTemplatePage() {
           </div>
           <h1 className="font-display text-[22vw] md:text-[9rem] leading-[0.85] tracking-tight">
             <div className="overflow-hidden">
-              {"Sofia".split("").map((c, i) => (
+              {partner1.split("").map((c, i) => (
                 <span key={`s${i}`} className="hero-letter inline-block">{c}</span>
               ))}
             </div>
             <div className="overflow-hidden italic text-tomato font-light">
-              {"& Luca".split("").map((c, i) => (
+              {`& ${partner2}`.split("").map((c, i) => (
                 <span key={`l${i}`} className="hero-letter inline-block">{c === " " ? "\u00A0" : c}</span>
               ))}
             </div>
@@ -202,7 +222,7 @@ export default function GildedRomeTemplatePage() {
 
           <img
             src={illoDance}
-            alt="Sofia and Luca dancing under olive branches"
+            alt={`${partner1} and ${partner2} dancing under olive branches`}
             className="hero-illo mt-6 w-[70%] max-w-sm mx-auto md:mx-0"
             width={1024}
             height={1024}
@@ -211,11 +231,11 @@ export default function GildedRomeTemplatePage() {
           <div className="hero-meta mt-8 grid grid-cols-3 gap-2 font-mono text-[10px] uppercase tracking-[0.2em]">
             <div>
               <div className="text-muted-foreground">Date</div>
-              <div className="mt-1">12.06.2026</div>
+              <div className="mt-1">{numericDate.replaceAll(" · ", ".")}</div>
             </div>
             <div>
               <div className="text-muted-foreground">Place</div>
-              <div className="mt-1">Puglia, IT</div>
+              <div className="mt-1">{city}</div>
             </div>
             <div>
               <div className="text-muted-foreground">Dress</div>
@@ -237,11 +257,11 @@ export default function GildedRomeTemplatePage() {
             <div key={i} className="flex items-center gap-6 shrink-0">
               <span>Save the date</span>
               <img src={illoSun} alt="" className="w-8 h-8 shrink-0" />
-              <span>12 · 06 · 2026</span>
+              <span>{numericDate}</span>
               <img src={illoWine} alt="" className="w-8 h-8 shrink-0 invert" />
-              <span>Masseria del Sole</span>
+              <span>{venue}</span>
               <img src={illoMoon} alt="" className="w-8 h-8 shrink-0 invert" />
-              <span>Puglia</span>
+              <span>{city}</span>
               <span className="text-tomato">✦</span>
             </div>
           ))}
@@ -271,11 +291,8 @@ export default function GildedRomeTemplatePage() {
               height={1024}
             />
             <p className="text-base md:text-lg leading-relaxed">
-              <span className="float-left font-display text-6xl leading-[0.8] mr-2 mt-1 text-tomato">S</span>
-              even years ago we shared an umbrella that broke halfway home. We
-              argued about who spilled the espresso, then laughed until the tram
-              doors opened. Since then: three cities, one very small apartment,
-              and a mutual agreement that pineapple does not belong on pizza.
+              <span className="float-left font-display text-6xl leading-[0.8] mr-2 mt-1 text-tomato">{description.charAt(0)}</span>
+              {description.slice(1)}
             </p>
           </div>
 
@@ -319,11 +336,11 @@ export default function GildedRomeTemplatePage() {
           </div>
 
           <div className="rise flex items-baseline gap-4 mb-2">
-            <span className="font-display text-[28vw] md:text-[14rem] leading-[0.8] italic">12</span>
+            <span className="font-display text-[28vw] md:text-[14rem] leading-[0.8] italic">{day}</span>
             <div className="font-mono text-xs uppercase tracking-[0.3em] pb-4">
-              <div>Fri</div>
-              <div className="text-tomato">June</div>
-              <div>2026</div>
+              <div>{weekday}</div>
+              <div className="text-tomato">{month}</div>
+              <div>{year}</div>
             </div>
           </div>
 
@@ -413,13 +430,13 @@ export default function GildedRomeTemplatePage() {
             Ch. 05 · The place
           </div>
           <h2 className="rise font-display text-4xl md:text-5xl mb-2">
-            Masseria del Sole
+            {venue}
           </h2>
           <div className="rise font-hand text-2xl text-tomato -rotate-1 mb-6">between olive trees and the sea</div>
 
           <img
             src={illoMasseria}
-            alt="Stone farmhouse in Puglia"
+            alt={`Wedding venue in ${city}`}
             className="pop-illo w-full max-w-lg mx-auto my-6"
             loading="lazy"
             width={1024}
@@ -434,8 +451,8 @@ export default function GildedRomeTemplatePage() {
 
           <div className="rise ink-border overflow-hidden aspect-square md:aspect-[16/9] shadow-[6px_6px_0_0_var(--tomato)]">
             <iframe
-              title="Masseria del Sole map"
-              src="https://www.google.com/maps?q=Ostuni+Puglia+Italy&output=embed"
+              title={`${venue} map`}
+              src={`https://www.google.com/maps?q=${mapQuery}&output=embed`}
               className="w-full h-full grayscale contrast-110"
               loading="lazy"
             />
@@ -443,7 +460,7 @@ export default function GildedRomeTemplatePage() {
 
           <div className="rise mt-4 grid grid-cols-2 gap-3">
             <a
-              href="https://maps.google.com/?q=Ostuni+Puglia"
+              href={`https://maps.google.com/?q=${mapQuery}`}
               target="_blank"
               rel="noreferrer"
               className="ink-border bg-ink text-cream text-center py-3 font-mono text-[11px] uppercase tracking-[0.25em] shadow-[4px_4px_0_0_var(--tomato)]"
@@ -483,7 +500,7 @@ export default function GildedRomeTemplatePage() {
             Will you write the next page <span className="italic text-tomato">with us?</span>
           </h2>
           <p className="rise font-mono text-[11px] uppercase tracking-[0.25em] text-muted-foreground mb-8">
-            Please reply by · 15 April 2026
+            Please reply by · {rsvpDeadline}
           </p>
 
           <form
@@ -548,8 +565,8 @@ export default function GildedRomeTemplatePage() {
         <img src={illoDance} alt="" className="sway absolute -right-10 -bottom-10 w-52 opacity-30 pointer-events-none" width={1024} height={1024} />
         <div className="container-x grid grid-cols-2 gap-6 font-mono text-[10px] uppercase tracking-[0.25em] text-muted-foreground relative">
           <div>
-            <div className="text-ink">Sofia & Luca</div>
-            <div className="mt-1">12.06.2026 · Puglia</div>
+            <div className="text-ink">{partner1} & {partner2}</div>
+            <div className="mt-1">{dateLabel} · {city}</div>
           </div>
           <div className="text-right">
             <div className="text-ink">Colophon</div>
@@ -565,7 +582,7 @@ export default function GildedRomeTemplatePage() {
       <div className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-cream/95 backdrop-blur border-t border-ink/20 px-4 py-3 flex items-center justify-between">
         <div className="font-mono text-[10px] uppercase tracking-[0.25em] flex items-center gap-2">
           <img src={illoSun} alt="" className="w-5 h-5" />
-          12·06·26 <span className="text-muted-foreground">· Puglia</span>
+          {shortDate} <span className="text-muted-foreground">· {city}</span>
         </div>
         <a
           href="#c06"
