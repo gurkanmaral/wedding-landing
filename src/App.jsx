@@ -289,7 +289,7 @@ function PreviewArt({ template }) {
               <p className="mt-2 font-medium leading-5">{theme.time}</p>
             </div>
           </div>
-          <div className={`flex items-center justify-between ${theme.bar} px-4 py-3 text-sm font-semibold`}>
+          <div className={`hidden items-center justify-between ${theme.bar} px-4 py-3 text-sm font-semibold sm:flex`}>
             <span>View invitation</span>
             <span>{template.price}</span>
           </div>
