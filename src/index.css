@@ -242,6 +242,50 @@ select {
     #f8f8f5;
 }
 
+.home-contact-field {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.home-contact-field > span {
+  color: #a8a29e;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.home-contact-field input,
+.home-contact-field select,
+.home-contact-field textarea {
+  width: 100%;
+  min-height: 3.25rem;
+  border: 1px solid rgb(255 255 255 / 0.2);
+  border-radius: 0;
+  background: rgb(255 255 255 / 0.05);
+  padding: 0.8rem 0.9rem;
+  color: white;
+  outline: none;
+  transition: border-color 160ms ease, background-color 160ms ease;
+}
+
+.home-contact-field textarea {
+  min-height: 7.5rem;
+  resize: vertical;
+}
+
+.home-contact-field select option {
+  background: #171717;
+  color: white;
+}
+
+.home-contact-field input:focus,
+.home-contact-field select:focus,
+.home-contact-field textarea:focus {
+  border-color: #f08068;
+  background: rgb(255 255 255 / 0.08);
+}
+
 .manager-page {
   background: #f5f6f2;
   color: #171817;
@@ -280,6 +324,11 @@ select {
   padding: 0.55rem 0.7rem;
   color: #5f625d;
   font-size: 0.8rem;
+}
+
+.manager-link[aria-pressed="true"] {
+  background: #171817;
+  color: white;
 }
 
 .manager-auth-wrap {
@@ -663,6 +712,23 @@ select {
 .admin-detail-field > button { border: 1px solid #d5d8d1; border-left: 0; background: white; color: #a54031; font-size: 1.2rem; }
 .admin-slug-field { display: grid; grid-template-columns: minmax(0, 1fr) auto; }
 .admin-slug-field > button { border: 1px solid #171817; border-left: 0; background: #171817; padding-inline: 1rem; color: white; font-size: 0.72rem; font-weight: 700; }
+.admin-request-count { display: grid; width: 2.75rem; height: 2.75rem; place-items: center; background: #171817; color: white; font-size: 0.75rem; font-weight: 700; }
+.admin-list-meta select { min-width: 8rem; border: 0; background: transparent; color: #5f625d; font-size: 0.7rem; font-weight: 700; outline: 0; }
+.admin-request-status { width: 0.6rem; height: 0.6rem; border-radius: 50%; background: #a7aaa4; }
+.admin-request-status.new { background: #db6b4d; box-shadow: 0 0 0 3px rgb(219 107 77 / 0.14); }
+.admin-request-status.contacted { background: #337c91; }
+.admin-request-status.closed { background: #7e817b; }
+.admin-request-detail { max-width: 64rem; margin-inline: auto; }
+.admin-request-actions { display: flex; gap: 0.75rem; margin-top: 1.5rem; }
+.admin-request-data { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; margin-top: 2rem; border: 1px solid #dfe1da; background: #dfe1da; }
+.admin-request-data > div { min-width: 0; background: white; padding: 1.25rem; }
+.admin-request-data > div.wide { grid-column: 1 / -1; }
+.admin-request-data dt { color: #858881; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; }
+.admin-request-data dd { margin-top: 0.55rem; overflow-wrap: anywhere; line-height: 1.6; }
+.admin-request-status-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 1.5rem; border: 1px solid #cfd2cb; }
+.admin-request-status-actions button { min-height: 3rem; border-right: 1px solid #cfd2cb; background: white; color: #62655f; font-size: 0.75rem; font-weight: 700; }
+.admin-request-status-actions button:last-child { border-right: 0; }
+.admin-request-status-actions button[aria-pressed="true"] { background: #171817; color: white; }
 
 .manager-editor-head {
   padding-bottom: 1.5rem;
@@ -768,6 +834,12 @@ select {
   .admin-editor-head { align-items: flex-start; flex-direction: column; }
   .admin-editor-head > div:last-child { width: 100%; }
   .admin-editor-head > div:last-child > * { flex: 1; }
+  .manager-header { flex-wrap: wrap; gap: 0.75rem; padding-block: 0.75rem; }
+  .manager-header nav { width: 100%; overflow-x: auto; }
+  .manager-header .admin-nav { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.25rem; overflow: visible; }
+  .admin-nav .manager-link { display: grid; min-height: 2.5rem; place-items: center; padding-inline: 0.35rem; text-align: center; white-space: nowrap; }
+  .admin-request-data { grid-template-columns: 1fr; }
+  .admin-request-data > div.wide { grid-column: auto; }
 }
 
 @media (max-width: 1023px) {

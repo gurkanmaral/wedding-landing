@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { gsap } from 'gsap'
 import decoHero from './assets/med-dream-spark/deco-hero.jpg'
 import illoDance from './assets/med-dream-spark/illo-dance.png'
+import ContactSection from './ContactSection'
 
 const sakuraTree = '/assets/sakura/sakura-tree.png'
 const autumnTree = '/assets/autumn/autumn-tree.png'
@@ -398,6 +399,9 @@ function App() {
           <a href="#dashboard" className="px-3 py-2 transition hover:text-stone-950">
             Templates
           </a>
+          <a href="#contact" className="px-3 py-2 transition hover:text-stone-950">
+            Bize ulaşın
+          </a>
         </nav>
       </header>
 
@@ -513,6 +517,7 @@ function App() {
             </div>
           </div>
         </section>
+        <ContactSection key={activeTemplate.id} activeTemplate={activeTemplate} templates={templates} />
       </main>
     </div>
   )

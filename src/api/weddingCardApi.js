@@ -208,6 +208,25 @@ export const weddingCardApi = {
   ),
 }
 
+export const invitationRequestApi = {
+  create: (payload) => rawRequest('/api/client/invitation-requests', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  }),
+}
+
+export const adminInvitationRequestApi = {
+  list: (status = '') => authorizedRequest(`/api/admin/invitation-requests${status ? `?status=${encode(status)}` : ''}`),
+  get: (id) => authorizedRequest(`/api/admin/invitation-requests/${encode(id)}`),
+  updateStatus: (id, status) => authorizedRequest(`/api/admin/invitation-requests/${encode(id)}/status`, {
+    method: 'PUT',
+    body: JSON.stringify({ status }),
+  }),
+  remove: (id) => authorizedRequest(`/api/admin/invitation-requests/${encode(id)}`, {
+    method: 'DELETE',
+  }),
+}
+
 export const adminWeddingCardApi = {
   list: () => authorizedRequest('/api/admin/wedding-cards'),
   get: (id) => authorizedRequest(`/api/admin/wedding-cards/${encode(id)}`),

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { adminWeddingCardApi, ApiError, authApi } from './api/weddingCardApi'
 import { uniqueWeddingSlug } from './api/weddingCardSlug'
+import InvitationRequestInbox from './InvitationRequestInbox'
 import {
   changeDetailsTemplate,
   createTemplateDetails,
@@ -36,6 +37,7 @@ const adminErrorText = (error) => {
 }
 
 export default function AdminPage() {
+  const [adminView, setAdminView] = useState('invitations')
   const [cards, setCards] = useState([])
   const [selected, setSelected] = useState(null)
   const [name, setName] = useState('')
@@ -223,9 +225,15 @@ export default function AdminPage() {
     <div className="admin-page min-h-screen">
       <header className="manager-header">
         <a href="/" className="manager-brand">Wedding Invitations <small>Admin</small></a>
-        <nav className="flex items-center gap-2"><a className="manager-link" href="/">Public site</a><a className="manager-link" href="/account">Security</a><button className="manager-link" onClick={() => { authApi.logout(); window.location.href = '/login?returnTo=/admin' }}>Sign out</button></nav>
+        <nav className="admin-nav flex items-center gap-2">
+          <button className="manager-link" aria-pressed={adminView === 'invitations'} onClick={() => setAdminView('invitations')}>Invitations</button>
+          <button className="manager-link" aria-pressed={adminView === 'requests'} onClick={() => setAdminView('requests')}>Requests</button>
+          <a className="manager-link" href="/">Public site</a>
+          <a className="manager-link" href="/account">Security</a>
+          <button className="manager-link" onClick={() => { authApi.logout(); window.location.href = '/login?returnTo=/admin' }}>Sign out</button>
+        </nav>
       </header>
-      <main className="admin-layout">
+      {adminView === 'requests' ? <InvitationRequestInbox /> : <main className="admin-layout">
         <aside className="admin-list-panel">
           <div className="admin-list-head"><div><p className="manager-kicker">Content</p><h1>Invitations</h1></div><button type="button" onClick={newDraft} title="Create invitation">+</button></div>
           <div className="admin-list-meta"><span>{cards.length} records</span><button type="button" onClick={() => loadCards()} disabled={busy}>Refresh</button></div>
@@ -288,7 +296,7 @@ export default function AdminPage() {
             </form>
           )}
         </section>
-      </main>
+      </main>}
     </div>
   )
 }
