@@ -748,6 +748,18 @@
   margin-top: 2rem;
 }
 
+.theme-karakoy .inv-rsvp-error {
+  margin: 2rem 0 0;
+  max-width: 40ch;
+  font: 400 0.8rem/1.5 var(--kk-mono);
+  letter-spacing: 0.04em;
+  color: #b8321c;
+}
+
+.theme-karakoy .inv-rsvp-error + .inv-button {
+  margin-top: 0.9rem;
+}
+
 .theme-karakoy .inv-rsvp-thanks {
   max-width: 18ch;
   text-align: left;

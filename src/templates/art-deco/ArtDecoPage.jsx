@@ -9,6 +9,7 @@ import decoFeather from './assets/deco-feather.jpg'
 import decoCouple from './assets/deco-couple.jpg'
 import decoFrame from './assets/deco-frame.jpg'
 import { useWeddingCardFields } from '../../api/weddingCardContext'
+import { useRsvp } from '../../api/useRsvp'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -189,6 +190,27 @@ export default function MedDreamSparkArtDecoTemplatePage() {
   const [now, setNow] = useState(() => Date.now())
   const time = getCountdown(targetDate, now)
   const [sent, setSent] = useState(false)
+  const rsvp = useRsvp('en')
+  const sending = rsvp.status === 'sending'
+  const onRsvpSubmit = async (e) => {
+    e.preventDefault()
+    if (sending) return
+    const data = new FormData(e.currentTarget)
+    const attending = data.get('attending') === 'yes'
+    const email = String(data.get('email') || '').trim()
+    // the reply has no email field of its own, so it travels in the note
+    const note = [String(data.get('note') || '').trim(), email ? `Email: ${email}` : '']
+      .filter(Boolean)
+      .join('\n')
+      .slice(0, 1000)
+    const ok = await rsvp.submit({
+      name: String(data.get('name') || ''),
+      attending,
+      guests: attending ? Number(data.get('guests')) || 1 : 0,
+      note,
+    })
+    if (ok) setSent(true)
+  }
 
   useEffect(() => {
     const id = window.setInterval(() => setNow(Date.now()), 1000)
@@ -1033,14 +1055,12 @@ export default function MedDreamSparkArtDecoTemplatePage() {
             ) : (
               <form
                 className="ad-rsvp-form space-y-4 text-left"
-                onSubmit={(e) => {
-                  e.preventDefault()
-                  setSent(true)
-                }}
+                onSubmit={onRsvpSubmit}
+                aria-busy={sending}
               >
                 <div>
                   <label htmlFor="ad-name" className="sr-only">Your full name</label>
-                  <input id="ad-name" name="name" type="text" autoComplete="name" placeholder="Your full name" required className="ad-field gold-border" />
+                  <input id="ad-name" name="name" type="text" autoComplete="name" placeholder="Your full name" required maxLength={120} className="ad-field gold-border" />
                 </div>
                 <div>
                   <label htmlFor="ad-email" className="sr-only">Email address</label>
@@ -1050,27 +1070,33 @@ export default function MedDreamSparkArtDecoTemplatePage() {
                   <div className="min-w-0">
                     <label htmlFor="ad-attending" className="sr-only">Attendance</label>
                     <select id="ad-attending" name="attending" className="ad-field gold-border">
-                      <option>Joyfully accepts</option>
-                      <option>Regretfully declines</option>
+                      <option value="yes">Joyfully accepts</option>
+                      <option value="no">Regretfully declines</option>
                     </select>
                   </div>
                   <div className="min-w-0">
                     <label htmlFor="ad-guests" className="sr-only">Number of guests</label>
                     <select id="ad-guests" name="guests" className="ad-field gold-border">
-                      <option>1 guest</option>
-                      <option>2 guests</option>
+                      <option value="1">1 guest</option>
+                      <option value="2">2 guests</option>
                     </select>
                   </div>
                 </div>
                 <div>
                   <label htmlFor="ad-note" className="sr-only">A note to the couple</label>
-                  <textarea id="ad-note" name="note" placeholder="A note to the couple…" rows={3} className="ad-field gold-border" />
+                  <textarea id="ad-note" name="note" placeholder="A note to the couple…" rows={3} maxLength={1000} className="ad-field gold-border" />
                 </div>
+                {rsvp.error ? (
+                  <p role="alert" className="border border-[oklch(0.68_0.14_30/0.55)] bg-[oklch(0.2_0.06_30/0.35)] px-4 py-3 text-center text-xs uppercase leading-relaxed tracking-[0.18em] text-[oklch(0.84_0.09_45)]">
+                    {rsvp.error}
+                  </p>
+                ) : null}
                 <button
                   type="submit"
-                  className="magnetic w-full min-h-11 bg-primary text-primary-foreground py-4 text-xs uppercase tracking-[0.4em] hover:bg-accent hover:text-accent-foreground transition-colors"
+                  disabled={sending}
+                  className="magnetic w-full min-h-11 bg-primary text-primary-foreground py-4 text-xs uppercase tracking-[0.4em] hover:bg-accent hover:text-accent-foreground transition-colors disabled:cursor-progress disabled:opacity-60"
                 >
-                  Send reply
+                  {sending ? 'Sending…' : 'Send reply'}
                 </button>
               </form>
             )}

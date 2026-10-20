@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, useState } from 'react'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { useWeddingCardFields } from '../../api/weddingCardContext'
+import { useRsvp } from '../../api/useRsvp'
 
 import hero from './assets/door.jpg'
 import aperitivo from './assets/table.jpg'
@@ -95,6 +96,8 @@ function RsvpForm({ dayMonth }) {
   const [status, setStatus] = useState('idle')
   const [attending, setAttending] = useState('yes')
   const ids = useId()
+  const rsvp = useRsvp('en')
+  const sending = rsvp.status === 'sending'
 
   if (status === 'sent') {
     return (
@@ -122,16 +125,33 @@ function RsvpForm({ dayMonth }) {
   return (
     <form
       className="space-y-5"
-      onSubmit={(e) => {
+      onSubmit={async (e) => {
         e.preventDefault()
-        setStatus('sent')
+        if (sending) return
+        const data = new FormData(e.currentTarget)
+        const yes = attending === 'yes'
+        const email = String(data.get('email') || '').trim()
+        const dietary = yes ? String(data.get('dietary') || '').trim() : ''
+        // the reply has no email or dietary field of its own, so they travel in the note
+        const note = [dietary ? `Dietary: ${dietary}` : '', email ? `Email: ${email}` : '']
+          .filter(Boolean)
+          .join('\n')
+          .slice(0, 1000)
+        const ok = await rsvp.submit({
+          name: String(data.get('name') || ''),
+          attending: yes,
+          guests: yes ? Number(data.get('guests')) || 1 : 0,
+          note,
+        })
+        if (ok) setStatus('sent')
       }}
+      aria-busy={sending}
     >
       <div>
         <label htmlFor={`${ids}-name`} className="text-xs uppercase tracking-[0.3em] text-white/75">
           Full name
         </label>
-        <input id={`${ids}-name`} name="name" type="text" required autoComplete="name" className={field} />
+        <input id={`${ids}-name`} name="name" type="text" required maxLength={120} autoComplete="name" className={field} />
       </div>
       <div>
         <label htmlFor={`${ids}-email`} className="text-xs uppercase tracking-[0.3em] text-white/75">
@@ -182,17 +202,24 @@ function RsvpForm({ dayMonth }) {
               id={`${ids}-diet`}
               name="dietary"
               type="text"
+              maxLength={300}
               placeholder="Optional"
               className={field}
             />
           </div>
         </div>
       )}
+      {rsvp.error ? (
+        <p role="alert" className="rounded-xl bg-[#d6517f]/15 px-4 py-3 text-sm text-[#f6d3df] ring-1 ring-[#d6517f]/60">
+          {rsvp.error}
+        </p>
+      ) : null}
       <button
         type="submit"
-        className="inline-flex min-h-12 items-center gap-3 rounded-full bg-[#f6efe4] px-7 text-sm uppercase tracking-widest text-[#0b0f18] transition-colors hover:bg-[#f2a9c1]"
+        disabled={sending}
+        className="inline-flex min-h-12 items-center gap-3 rounded-full bg-[#f6efe4] px-7 text-sm uppercase tracking-widest text-[#0b0f18] transition-colors hover:bg-[#f2a9c1] disabled:cursor-progress disabled:opacity-60"
       >
-        Send reply <span aria-hidden="true">→</span>
+        {sending ? 'Sending…' : <>Send reply <span aria-hidden="true">→</span></>}
       </button>
     </form>
   )

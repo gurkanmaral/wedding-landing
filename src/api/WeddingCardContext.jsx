@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import { weddingCardApi } from './weddingCardApi'
 import { WeddingCardContext } from './weddingCardContext'
+import { templates } from '../templates/registry.js'
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
-const SHAREABLE_TEMPLATE_PATHS = new Set(['/artdeco', '/celestial', '/gilded-rome', '/sakura', '/autumn', '/aegean', '/spark', '/royal'])
+// every template route can carry a couple's slug: /<template>/<slug>
+const SHAREABLE_TEMPLATE_PATHS = new Set(templates.map((t) => t.path))
 
 export function WeddingCardProvider({ children }) {
   const cardId = useMemo(() => {

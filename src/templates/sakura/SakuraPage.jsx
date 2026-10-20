@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { cardDetail, useWeddingCardFields } from '../../api/weddingCardContext'
+import { useRsvp } from '../../api/useRsvp'
 
 const sakuraTree = '/assets/sakura/sakura-tree.png'
 const couple1 = '/assets/sakura/couple-1.png'
@@ -208,6 +209,7 @@ const css = String.raw`
   .sakura-page .send-btn:hover, .sakura-page .send-btn:focus-visible{ background: var(--gold-text); color: var(--primary-foreground); }
   .sakura-page .send-btn .jp{ font-family: var(--font-brush); font-size:1rem; text-transform:none; letter-spacing:0; }
   .sakura-page .send-btn:disabled{ opacity:.6; cursor:progress; }
+  .sakura-page .rsvp-error{ margin:0 0 1.25rem; padding-left:.9rem; border-left:2px solid oklch(0.55 0.17 15); font-family: var(--font-serif); font-style:italic; font-size:1.02rem; line-height:1.5; color: oklch(0.45 0.15 15); }
 
   .sakura-page footer{ position:relative; z-index:20; padding:5rem 1.5rem; text-align:center; }
 
@@ -411,6 +413,9 @@ export default function SakuraWeddingPage() {
   const bgRef = useRef(null)
   const formRef = useRef(null)
   const toastRef = useRef(null)
+  const toastTimerRef = useRef(0)
+  const rsvp = useRsvp('en')
+  const sending = rsvp.status === 'sending'
   const dRef = useRef(null), hRef = useRef(null), mRef = useRef(null), sRef = useRef(null)
   const cdSrRef = useRef(null)
 
@@ -696,30 +701,6 @@ export default function SakuraWeddingPage() {
     // Safety net for an observer that fires late (e.g. during layout shifts).
     timers.push(setTimeout(sweep, 1200))
 
-    /* =====================================================================
-       RSVP form (demo — no backend)
-       ===================================================================== */
-    const form = formRef.current
-    const toast = toastRef.current
-    const btn = form.querySelector('.send-btn')
-    const btnLabel = form.querySelector('.btn-label')
-    let toastTimer = 0
-    form.addEventListener('submit', (e) => {
-      e.preventDefault()
-      const name = new FormData(form).get('name') || 'friend'
-      btn.disabled = true; btnLabel.textContent = 'Sending…'
-      timers.push(setTimeout(() => {
-        if (!alive) return
-        btn.disabled = false; btnLabel.textContent = 'Send Reply'
-        toast.querySelector('.t-title').textContent = 'ありがとう — your reply has been received'
-        toast.querySelector('.t-desc').textContent = `We can't wait to celebrate with you, ${name}.`
-        toast.classList.add('show')
-        clearTimeout(toastTimer)
-        toastTimer = setTimeout(() => toast.classList.remove('show'), 5000)
-        form.reset()
-      }, 900))
-    }, { signal })
-
     return () => {
       alive = false
       stopLoop()
@@ -727,11 +708,39 @@ export default function SakuraWeddingPage() {
       ac.abort()
       io?.disconnect()
       timers.forEach((t) => { clearInterval(t); clearTimeout(t) })
-      clearTimeout(toastTimer)
       treeImg.onload = null
       ctx.clearRect(0, 0, canvas.width, canvas.height)
     }
   }, [])
+
+  /* =====================================================================
+     RSVP form — the reply goes to the server; the thank-you toast shows
+     only once it has been received.
+     ===================================================================== */
+  useEffect(() => () => clearTimeout(toastTimerRef.current), [])
+  const onRsvpSubmit = async (e) => {
+    e.preventDefault()
+    if (sending) return
+    const form = e.currentTarget
+    const data = new FormData(form)
+    const name = String(data.get('name') || '').trim()
+    const attending = data.get('attendance') === 'joyfully'
+    const meal = attending ? String(data.get('meal') || '').trim() : ''
+    // the reply has no meal field of its own, so it travels in the note
+    const note = [String(data.get('message') || '').trim(), meal ? `Meal: ${meal}` : '']
+      .filter(Boolean)
+      .join('\n')
+      .slice(0, 1000)
+    const ok = await rsvp.submit({ name, attending, guests: 1, note })
+    const toast = toastRef.current
+    if (!ok || !toast) return
+    toast.querySelector('.t-title').textContent = 'ありがとう — your reply has been received'
+    toast.querySelector('.t-desc').textContent = `We can't wait to celebrate with you, ${name || 'friend'}.`
+    toast.classList.add('show')
+    clearTimeout(toastTimerRef.current)
+    toastTimerRef.current = setTimeout(() => toast.classList.remove('show'), 5000)
+    form.reset()
+  }
 
   /* =====================================================================
      Countdown (digits roll on change). Its own effect so a date arriving
@@ -881,10 +890,10 @@ export default function SakuraWeddingPage() {
             <p className="lede" style={{ marginTop: '1rem', fontStyle: 'italic', color: 'var(--muted-foreground)' }}>kindly respond by {rsvpDeadline}</p>
             <div className="ink-divider divider-sm"></div>
 
-            <form className="rsvp stag" ref={formRef}>
+            <form className="rsvp stag" ref={formRef} onSubmit={onRsvpSubmit} aria-busy={sending}>
               <div>
                 <label htmlFor="sk-name">Your Name · 御名前</label>
-                <input id="sk-name" className="field" name="name" required placeholder="As you wish to be greeted" autoComplete="name" />
+                <input id="sk-name" className="field" name="name" required maxLength={120} placeholder="As you wish to be greeted" autoComplete="name" />
               </div>
               <div className="two">
                 <div>
@@ -908,10 +917,11 @@ export default function SakuraWeddingPage() {
               </div>
               <div>
                 <label htmlFor="sk-message">A message for the couple</label>
-                <textarea id="sk-message" className="field" name="message" rows={4} placeholder="A wish, a memory, a verse…"></textarea>
+                <textarea id="sk-message" className="field" name="message" rows={4} maxLength={1000} placeholder="A wish, a memory, a verse…"></textarea>
               </div>
               <div style={{ paddingTop: '.5rem' }}>
-                <button type="submit" className="send-btn"><span className="btn-label">Send Reply</span><span className="jp" aria-hidden="true">送る</span></button>
+                {rsvp.error ? <p className="rsvp-error" role="alert">{rsvp.error}</p> : null}
+                <button type="submit" className="send-btn" disabled={sending}><span className="btn-label">{sending ? 'Sending…' : 'Send Reply'}</span><span className="jp" aria-hidden="true">送る</span></button>
               </div>
             </form>
           </div>

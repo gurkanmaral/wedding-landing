@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { cardDetail, useWeddingCardFields } from '../../api/weddingCardContext'
+import { useRsvp } from '../../api/useRsvp'
 
 const autumnTree = '/assets/autumn/autumn-tree.png'
 const couple1 = '/assets/autumn/couple-1.svg'
@@ -281,6 +282,7 @@ const css = String.raw`
   .autumn-page .send:hover{ background:var(--accent); color:var(--bg); }
   .autumn-page .send:hover::after{ transform:translateX(5px); }
   .autumn-page .send:disabled{ opacity:.5; cursor:progress; }
+  .autumn-page .send-error{ margin:.2rem 0 0; padding-left:.9rem; border-left:2px solid oklch(0.5 0.17 32); font-family:var(--serif); font-style:italic; font-size:1rem; line-height:1.5; color:oklch(0.43 0.15 32); }
   @media(max-width:420px){ .autumn-page .send{ align-self:stretch; justify-content:center; padding:.95rem 1.2rem; } }
   .autumn-page .rsvp-aside .lead{ font-family:var(--script); font-style:italic; font-size:clamp(1.5rem,2.4vw,1.95rem);
     line-height:1.4; color:var(--ink); }
@@ -485,7 +487,8 @@ function downloadIcs(w) {
 export default function AutumnFallsPage() {
   const rootRef = useRef(null)
   const timersRef = useRef([])
-  const [sending, setSending] = useState(false)
+  const rsvp = useRsvp('en')
+  const sending = rsvp.status === 'sending'
   const [toast, setToast] = useState({ show: false, title: '', text: '' })
 
   /* ===== The day itself — every name, date and place on the page derives from here ===== */
@@ -775,18 +778,25 @@ export default function AutumnFallsPage() {
     return () => { timers.forEach(clearTimeout); timers.length = 0 }
   }, [])
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault()
+    if (sending) return
     const form = e.currentTarget
-    const name = String(new FormData(form).get('name') || '').trim() || 'friend'
-    setSending(true)
-    timersRef.current.push(setTimeout(() => {
-      setSending(false)
-      setToast({ show: true, title: 'Thank you — your reply is received', text: `We can't wait to celebrate with you, ${name}.` })
-      form.reset()
-      timersRef.current.push(setTimeout(() => setToast(t => ({ ...t, show: false })), 5000))
-    }, 800))
+    const data = new FormData(form)
+    const name = String(data.get('name') || '').trim()
+    const attending = data.get('attendance') === 'joyfully'
+    const meal = attending ? String(data.get('meal') || '').trim() : ''
+    // the reply has no meal field of its own, so it travels in the note
+    const note = [String(data.get('message') || '').trim(), meal ? `Meal: ${meal}` : '']
+      .filter(Boolean)
+      .join('\n')
+      .slice(0, 1000)
+    if (!(await rsvp.submit({ name, attending, guests: 1, note }))) return
+    setToast({ show: true, title: 'Thank you — your reply is received', text: `We can't wait to celebrate with you, ${name || 'friend'}.` })
+    form.reset()
+    timersRef.current.push(setTimeout(() => setToast(t => ({ ...t, show: false })), 5000))
   }
+
 
   return (
     <div ref={rootRef} className="autumn-page">
@@ -906,7 +916,7 @@ export default function AutumnFallsPage() {
               <form className="rsvp reveal" onSubmit={handleSubmit} aria-busy={sending}>
                 <div>
                   <label htmlFor="au-name">Your Name</label>
-                  <input className="field" id="au-name" name="name" required placeholder="As you wish to be greeted" autoComplete="name" />
+                  <input className="field" id="au-name" name="name" required maxLength={120} placeholder="As you wish to be greeted" autoComplete="name" />
                 </div>
                 <div className="two">
                   <div>
@@ -930,8 +940,9 @@ export default function AutumnFallsPage() {
                 </div>
                 <div>
                   <label htmlFor="au-message">A note for the couple</label>
-                  <textarea className="field" id="au-message" name="message" rows={3} placeholder="A wish, a memory, a song request…"></textarea>
+                  <textarea className="field" id="au-message" name="message" rows={3} maxLength={1000} placeholder="A wish, a memory, a song request…"></textarea>
                 </div>
+                {rsvp.error ? <p className="send-error" role="alert">{rsvp.error}</p> : null}
                 <button type="submit" className="send" disabled={sending}><span className="btn-label">{sending ? 'Sending…' : 'Send Reply'}</span></button>
               </form>
             </div>

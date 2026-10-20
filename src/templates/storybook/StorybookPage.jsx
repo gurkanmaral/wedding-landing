@@ -12,6 +12,7 @@ import illoEnvelope from "./assets/illo-envelope.png";
 import illoMoon from "./assets/illo-moon.png";
 import branch from "./assets/story-branch.png";
 import { useWeddingCardFields } from "../../api/weddingCardContext";
+import { useRsvp } from "../../api/useRsvp";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -130,6 +131,26 @@ export default function GildedRomeTemplatePage() {
   const [now, setNow] = useState(() => Date.now());
   const d = getCountdown(eventDate, now);
   const [sent, setSent] = useState(false);
+  const rsvp = useRsvp("en");
+  const sending = rsvp.status === "sending";
+  const onRsvpSubmit = async (e) => {
+    e.preventDefault();
+    if (sending) return;
+    const data = new FormData(e.currentTarget);
+    const email = String(data.get("email") || "").trim();
+    // the reply has no email field of its own, so it travels in the note
+    const note = [String(data.get("note") || "").trim(), email ? `Email: ${email}` : ""]
+      .filter(Boolean)
+      .join("\n")
+      .slice(0, 1000);
+    const ok = await rsvp.submit({
+      name: String(data.get("name") || ""),
+      attending: data.get("rsvp") === "yes",
+      guests: 1,
+      note,
+    });
+    if (ok) setSent(true);
+  };
 
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 1000);
@@ -650,10 +671,8 @@ export default function GildedRomeTemplatePage() {
             ) : (
               <form
                 className="rise space-y-4 bg-cream-2 border-2 border-ink p-5 md:p-8 shadow-[6px_6px_0_0_var(--tomato)]"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  setSent(true);
-                }}
+                onSubmit={onRsvpSubmit}
+                aria-busy={sending}
               >
                 <label className="block">
                   <span className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted-foreground">Your name</span>
@@ -661,6 +680,7 @@ export default function GildedRomeTemplatePage() {
                     name="name"
                     autoComplete="name"
                     required
+                    maxLength={120}
                     className="w-full min-h-11 bg-transparent border-b border-ink py-2 focus:outline-none focus:border-tomato"
                   />
                 </label>
@@ -696,15 +716,22 @@ export default function GildedRomeTemplatePage() {
                   <textarea
                     name="note"
                     rows={3}
+                    maxLength={1000}
                     className="w-full bg-transparent border-b border-ink py-2 focus:outline-none focus:border-tomato resize-none"
                   />
                 </label>
 
+                {rsvp.error ? (
+                  <p role="alert" className="border-2 border-tomato bg-cream px-4 py-3 font-mono text-[11px] uppercase leading-relaxed tracking-[0.15em] text-ink">
+                    {rsvp.error}
+                  </p>
+                ) : null}
                 <button
                   type="submit"
-                  className="w-full min-h-11 bg-tomato text-cream py-4 font-mono text-[11px] uppercase tracking-[0.35em] hover:bg-ink transition-colors"
+                  disabled={sending}
+                  className="w-full min-h-11 bg-tomato text-cream py-4 font-mono text-[11px] uppercase tracking-[0.35em] hover:bg-ink transition-colors disabled:cursor-progress disabled:opacity-70"
                 >
-                  Send reply <span aria-hidden="true">→</span>
+                  {sending ? "Sending…" : <>Send reply <span aria-hidden="true">→</span></>}
                 </button>
               </form>
             )}

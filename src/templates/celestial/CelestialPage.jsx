@@ -4,6 +4,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import * as THREE from 'three'
 import { Body, Equator, GeoMoon, HelioDistance, Horizon, Illumination, KM_PER_AU, MoonPhase, Observer, SearchRiseSet } from 'astronomy-engine'
 import { cardDetail, useWeddingCardFields } from '../../api/weddingCardContext'
+import { useRsvp } from '../../api/useRsvp'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -417,6 +418,7 @@ export default function CelestialWeddingPage() {
   const [formState, setFormState] = useState({ name: '', email: '' })
   const [errors, setErrors] = useState({})
   const [submitted, setSubmitted] = useState(false)
+  const { status: rsvpStatus, error: rsvpError, submit: submitRsvp } = useRsvp('en')
 
   const firstName = useMemo(
     () => formState.name.trim().split(' ')[0] || 'friend',
@@ -1389,8 +1391,10 @@ export default function CelestialWeddingPage() {
     setMoonPhaseRef.current?.(moonPhaseAngle)
   }, [moonPhaseAngle])
 
-  const onSubmit = (event) => {
+  const onSubmit = async (event) => {
     event.preventDefault()
+    if (rsvpStatus === 'sending') return
+    const form = event.currentTarget
     const nextErrors = {}
 
     if (!formState.name.trim()) nextErrors.name = true
@@ -1407,7 +1411,26 @@ export default function CelestialWeddingPage() {
       rootRef.current?.querySelector(`#${firstInvalid}`)?.focus()
       return
     }
-    setSubmitted(true)
+    const data = new FormData(form)
+    const yes = attending === 'yes'
+    const meal = yes ? String(data.get('meal') || '').trim() : ''
+    const email = formState.email.trim()
+    // the reply has no email or menu field of its own, so they travel in the note
+    const note = [
+      String(data.get('note') || '').trim(),
+      meal ? `Menu: ${meal}` : '',
+      email ? `Email: ${email}` : '',
+    ]
+      .filter(Boolean)
+      .join('\n')
+      .slice(0, 1000)
+    const ok = await submitRsvp({
+      name: formState.name.trim(),
+      attending: yes,
+      guests: yes ? Number(data.get('guests')) || 1 : 0,
+      note,
+    })
+    if (ok) setSubmitted(true)
   }
 
   return (
@@ -2226,6 +2249,15 @@ export default function CelestialWeddingPage() {
           color: var(--gold);
         }
         .cw-submit { width: 100%; margin-top: 8px; }
+        .cw-submit:disabled { opacity: .6; cursor: progress; }
+        .cw-send-error {
+          margin: 4px 0 0;
+          color: oklch(0.76 0.13 28);
+          font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+          font-size: .78rem;
+          letter-spacing: .06em;
+          line-height: 1.5;
+        }
         .cw-thanks { padding: 30px 10px; animation: cw-fadein .8s both; }
         .cw-thanks-moon {
           width: 72px;
@@ -2616,6 +2648,7 @@ export default function CelestialWeddingPage() {
                     id="in-name"
                     name="name"
                     autoComplete="name"
+                    maxLength={120}
                     aria-invalid={errors.name ? 'true' : undefined}
                     aria-describedby={errors.name ? 'in-name-msg' : undefined}
                     onChange={(event) =>
@@ -2677,11 +2710,17 @@ export default function CelestialWeddingPage() {
                   <textarea
                     id="in-note"
                     name="note"
+                    maxLength={1000}
                     placeholder="Leave a wish, a song request, or a memory"
                   />
                 </div>
-                <button className="cw-btn cw-submit" type="submit">
-                  Send our reply
+                {rsvpError ? (
+                  <p className="cw-send-error" role="alert">
+                    {rsvpError}
+                  </p>
+                ) : null}
+                <button className="cw-btn cw-submit" type="submit" disabled={rsvpStatus === 'sending'}>
+                  {rsvpStatus === 'sending' ? 'Sending across the stars…' : 'Send our reply'}
                 </button>
               </form>
             )}

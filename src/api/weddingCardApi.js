@@ -222,6 +222,10 @@ export const adminInvitationRequestApi = {
     method: 'PUT',
     body: JSON.stringify({ status }),
   }),
+  updateNote: (id, adminNote) => authorizedRequest(`/api/admin/invitation-requests/${encode(id)}/note`, {
+    method: 'PUT',
+    body: JSON.stringify({ adminNote }),
+  }),
   remove: (id) => authorizedRequest(`/api/admin/invitation-requests/${encode(id)}`, {
     method: 'DELETE',
   }),
@@ -249,6 +253,52 @@ export const adminWeddingCardApi = {
     `/api/admin/wedding-cards/${encode(id)}/details/${encode(key)}`,
     { method: 'DELETE' },
   ),
+}
+
+// Downloads a protected file (e.g. the RSVP CSV) with the signed-in user's token.
+async function authorizedDownload(path, fileName) {
+  const auth = readAuth()
+  if (!auth?.accessToken) throw new ApiError('Please sign in to continue.', 401)
+  if (auth.expiresAt && auth.expiresAt <= Date.now() + 15000) await refreshAccessToken()
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    headers: { Authorization: `Bearer ${readAuth()?.accessToken}` },
+  })
+  if (!response.ok) {
+    const payload = await parseResponse(response)
+    throw new ApiError(getErrorMessage(payload, response), response.status, payload)
+  }
+  const url = URL.createObjectURL(await response.blob())
+  const link = Object.assign(document.createElement('a'), { href: url, download: fileName })
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  setTimeout(() => URL.revokeObjectURL(url), 1000)
+}
+
+// Guest replies (LCV). Public create; owners and admins read them.
+export const rsvpApi = {
+  create: (cardId, payload) => rawRequest(`/api/client/wedding-cards/${encode(cardId)}/rsvps`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  }),
+  createBySlug: (slug, payload) => rawRequest(`/api/client/wedding-cards/by-slug/${encode(slug)}/rsvps`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  }),
+  listOwn: (cardId) => authorizedRequest(`/api/client/wedding-cards/${encode(cardId)}/rsvps`),
+  downloadOwnCsv: (cardId, fileName = 'lcv.csv') => authorizedDownload(`/api/client/wedding-cards/${encode(cardId)}/rsvps.csv`, fileName),
+}
+
+export const adminRsvpApi = {
+  list: (cardId) => authorizedRequest(`/api/admin/wedding-cards/${encode(cardId)}/rsvps`),
+  remove: (cardId, rsvpId) => authorizedRequest(`/api/admin/wedding-cards/${encode(cardId)}/rsvps/${encode(rsvpId)}`, {
+    method: 'DELETE',
+  }),
+  downloadCsv: (cardId, fileName = 'lcv.csv') => authorizedDownload(`/api/admin/wedding-cards/${encode(cardId)}/rsvps.csv`, fileName),
+}
+
+export const adminStatsApi = {
+  get: () => authorizedRequest('/api/admin/stats'),
 }
 
 export const recentCards = {

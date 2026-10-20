@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { cardDetail, useWeddingCardFields } from '../../api/weddingCardContext'
+import { useRsvp } from '../../api/useRsvp'
 
 const couple1 = '/assets/aegean/couple-1.svg'
 const couple2 = '/assets/aegean/couple-2.svg'
@@ -377,6 +378,7 @@ const css = String.raw`
   .aegean-page .send:hover{ background:var(--accent); color:var(--bg); }
   .aegean-page .send:hover::after{ transform:translateX(5px); }
   .aegean-page .send:disabled{ opacity:.5; cursor:progress; }
+  .aegean-page .send-error{ margin:.2rem 0 0; padding-left:.9rem; border-left:2px solid oklch(0.52 0.17 25); font-family:var(--serif); font-style:italic; font-size:1rem; line-height:1.5; color:oklch(0.45 0.15 25); }
   @media(max-width:420px){ .aegean-page .send{ align-self:stretch; justify-content:center; padding:.9rem 1.2rem; } }
 
   .aegean-page footer{ position:relative; z-index:5; text-align:center; padding:5rem 1.5rem 4rem;
@@ -521,7 +523,8 @@ function NazarSvg({ size = 26 }) {
 export default function AegeanWeddingPage() {
   const rootRef = useRef(null)
   const timersRef = useRef([])
-  const [sending, setSending] = useState(false)
+  const rsvp = useRsvp('tr')
+  const sending = rsvp.status === 'sending'
   const [toast, setToast] = useState({ show: false, title: '', text: '' })
 
   /* ===== Düğün günü — sayfadaki tüm isim, tarih ve yerler buradan ===== */
@@ -757,22 +760,29 @@ export default function AegeanWeddingPage() {
     return () => { timers.forEach(clearTimeout); timers.length = 0 }
   }, [])
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault()
+    if (sending) return
     const form = e.currentTarget
-    const name = String(new FormData(form).get('name') || '').trim()
-    setSending(true)
-    timersRef.current.push(setTimeout(() => {
-      setSending(false)
-      setToast({
-        show: true,
-        title: 'Teşekkürler — kartpostalınız yola çıktı',
-        text: name ? `Sizinle kutlamak için sabırsızlanıyoruz, ${name}.` : 'Sizinle kutlamak için sabırsızlanıyoruz.',
-      })
-      form.reset()
-      timersRef.current.push(setTimeout(() => setToast(t => ({ ...t, show: false })), 5000))
-    }, 800))
+    const data = new FormData(form)
+    const name = String(data.get('name') || '').trim()
+    const attending = data.get('attendance') === 'geliyorum'
+    const meal = attending ? String(data.get('meal') || '').trim() : ''
+    // yanıtın ayrı bir yemek alanı yok; seçim nota eklenir
+    const note = [String(data.get('message') || '').trim(), meal ? `Yemek: ${meal}` : '']
+      .filter(Boolean)
+      .join('\n')
+      .slice(0, 1000)
+    if (!(await rsvp.submit({ name, attending, guests: 1, note }))) return
+    setToast({
+      show: true,
+      title: 'Teşekkürler — kartpostalınız yola çıktı',
+      text: name ? `Sizinle kutlamak için sabırsızlanıyoruz, ${name}.` : 'Sizinle kutlamak için sabırsızlanıyoruz.',
+    })
+    form.reset()
+    timersRef.current.push(setTimeout(() => setToast(t => ({ ...t, show: false })), 5000))
   }
+
 
   return (
     <div ref={rootRef} className="aegean-page" lang="tr">
@@ -914,7 +924,7 @@ export default function AegeanWeddingPage() {
                 <form className="rsvp" onSubmit={handleSubmit} aria-busy={sending}>
                   <div>
                     <label htmlFor="ag-name">Adınız</label>
-                    <input className="field" id="ag-name" name="name" required placeholder="Size nasıl seslenelim?" autoComplete="name" />
+                    <input className="field" id="ag-name" name="name" required maxLength={120} placeholder="Size nasıl seslenelim?" autoComplete="name" />
                   </div>
                   <div className="two">
                     <div>
@@ -938,8 +948,9 @@ export default function AegeanWeddingPage() {
                   </div>
                   <div>
                     <label htmlFor="ag-message">Çifte notunuz</label>
-                    <textarea className="field" id="ag-message" name="message" rows={3} placeholder="Bir dilek, bir anı, bir şarkı isteği…"></textarea>
+                    <textarea className="field" id="ag-message" name="message" rows={3} maxLength={1000} placeholder="Bir dilek, bir anı, bir şarkı isteği…"></textarea>
                   </div>
+                  {rsvp.error ? <p className="send-error" role="alert">{rsvp.error}</p> : null}
                   <button type="submit" className="send" disabled={sending}><span className="btn-label">{sending ? 'Gönderiliyor…' : 'Gönder'}</span></button>
                 </form>
               </div>

@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, useState } from 'react'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { useWeddingCardFields } from '../../api/weddingCardContext'
+import { useRsvp } from '../../api/useRsvp'
 
 import hero from './assets/hero-generic.jpg'
 import feature1 from './assets/feature-1.jpg'
@@ -87,6 +88,8 @@ function RsvpForm() {
   const [sent, setSent] = useState(false)
   const [attending, setAttending] = useState('evet')
   const ids = useId()
+  const rsvp = useRsvp('tr')
+  const sending = rsvp.status === 'sending'
 
   if (sent) {
     return (
@@ -115,16 +118,28 @@ function RsvpForm() {
   return (
     <form
       className="space-y-4"
-      onSubmit={(e) => {
+      onSubmit={async (e) => {
         e.preventDefault()
-        setSent(true)
+        if (sending) return
+        const data = new FormData(e.currentTarget)
+        const yes = attending === 'evet'
+        const email = String(data.get('eposta') || '').trim()
+        // yanıtın ayrı bir e-posta alanı yok; adres nota eklenir
+        const ok = await rsvp.submit({
+          name: String(data.get('ad') || ''),
+          attending: yes,
+          guests: yes ? Number(data.get('kisi')) || 1 : 0,
+          note: email ? `E-posta: ${email}` : '',
+        })
+        if (ok) setSent(true)
       }}
+      aria-busy={sending}
     >
       <div>
         <label htmlFor={`${ids}-ad`} className={label}>
           Adınız Soyadınız
         </label>
-        <input id={`${ids}-ad`} name="ad" type="text" required autoComplete="name" className={field} />
+        <input id={`${ids}-ad`} name="ad" type="text" required maxLength={120} autoComplete="name" className={field} />
       </div>
       <div>
         <label htmlFor={`${ids}-eposta`} className={label}>
@@ -170,11 +185,17 @@ function RsvpForm() {
           </select>
         </div>
       )}
+      {rsvp.error ? (
+        <p role="alert" className="rounded-md border border-[oklch(0.72_0.15_35)] bg-[oklch(0.58_0.16_35/0.18)] px-3 py-2.5 text-sm text-background">
+          {rsvp.error}
+        </p>
+      ) : null}
       <button
         type="submit"
-        className="inline-flex min-h-12 items-center gap-2 rounded-full bg-background px-6 text-sm uppercase tracking-widest text-foreground transition-colors hover:bg-primary hover:text-primary-foreground"
+        disabled={sending}
+        className="inline-flex min-h-12 items-center gap-2 rounded-full bg-background px-6 text-sm uppercase tracking-widest text-foreground transition-colors hover:bg-primary hover:text-primary-foreground disabled:cursor-progress disabled:opacity-60"
       >
-        Gönder <span aria-hidden="true">→</span>
+        {sending ? 'Gönderiliyor…' : <>Gönder <span aria-hidden="true">→</span></>}
       </button>
     </form>
   )

@@ -446,6 +446,12 @@
   margin-top: 0.5rem;
 }
 
+.inv-rsvp-error {
+  margin: 0;
+  color: #b3261e;
+  font-size: 0.92rem;
+}
+
 .inv-rsvp-thanks {
   margin: 0;
   font-family: var(--inv-display);

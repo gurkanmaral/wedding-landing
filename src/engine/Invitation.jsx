@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useWeddingCardFields } from '../api/weddingCardContext'
+import { useRsvp } from '../api/useRsvp'
 import { fill, strings } from './i18n.js'
 import './engine.css'
 
@@ -116,26 +117,34 @@ function Countdown({ target, t }) {
   )
 }
 
-function Rsvp({ t, deadline }) {
-  const [state, setState] = useState({ sent: false, name: '', attending: 'yes' })
-  const submit = (event) => {
+function Rsvp({ t, deadline, lang }) {
+  const [sent, setSent] = useState(null)
+  const { status, error, submit } = useRsvp(lang)
+  const onSubmit = async (event) => {
     event.preventDefault()
     const data = new FormData(event.currentTarget)
-    setState({ sent: true, name: String(data.get('name') || '').split(' ')[0], attending: data.get('attending') })
+    const reply = {
+      name: String(data.get('name') || ''),
+      attending: data.get('attending') === 'yes',
+      guests: data.get('guests'),
+      note: String(data.get('note') || ''),
+      song: data.get('song') ? String(data.get('song')) : undefined,
+    }
+    if (await submit(reply)) setSent({ name: reply.name.trim().split(' ')[0], attending: reply.attending })
   }
-  if (state.sent) {
+  if (sent) {
     return (
       <p className="inv-rsvp-thanks" role="status">
-        {fill(state.attending === 'yes' ? t.thanks : t.thanksSorry, { name: state.name })}
+        {fill(sent.attending ? t.thanks : t.thanksSorry, { name: sent.name })}
       </p>
     )
   }
   return (
-    <form className="inv-rsvp" onSubmit={submit}>
+    <form className="inv-rsvp" onSubmit={onSubmit}>
       {deadline ? <p className="inv-rsvp-deadline">{fill(t.rsvpBy, { date: deadline })}</p> : null}
       <label className="inv-field">
         <span>{t.name}</span>
-        <input name="name" required autoComplete="name" />
+        <input name="name" required maxLength={120} autoComplete="name" />
       </label>
       <fieldset className="inv-choice">
         <legend>{t.attending}</legend>
@@ -149,7 +158,7 @@ function Rsvp({ t, deadline }) {
       <label className="inv-field">
         <span>{t.guests}</span>
         <select name="guests" defaultValue="1">
-          {[1, 2, 3, 4, 5].map((n) => (
+          {[1, 2, 3, 4, 5, 6].map((n) => (
             <option key={n} value={n}>
               {n}
             </option>
@@ -158,10 +167,15 @@ function Rsvp({ t, deadline }) {
       </label>
       <label className="inv-field">
         <span>{t.note}</span>
-        <textarea name="note" rows={3} />
+        <textarea name="note" rows={3} maxLength={1000} />
       </label>
-      <button type="submit" className="inv-button">
-        {t.send}
+      {error ? (
+        <p className="inv-rsvp-error" role="alert">
+          {error}
+        </p>
+      ) : null}
+      <button type="submit" className="inv-button" disabled={status === 'sending'}>
+        {status === 'sending' ? t.sending : t.send}
       </button>
     </form>
   )
@@ -335,7 +349,7 @@ export default function Invitation({ theme, defaults, content, lang: initialLang
       <section key="rsvp" id="rsvp" className="inv-section inv-rsvp-section">
         <SectionHeading title={t.rsvp} ornament={ornament} />
         <div className="inv-narrow" data-reveal>
-          <Rsvp t={t} deadline={rsvpDeadline} />
+          <Rsvp t={t} deadline={rsvpDeadline} lang={lang} />
         </div>
       </section>
     ),

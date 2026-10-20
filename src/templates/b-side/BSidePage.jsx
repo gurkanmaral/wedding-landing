@@ -51,7 +51,7 @@ function SongRequest({ lang }) {
       {createPortal(
         <label className="inv-field bs-song">
           <span>{copy.label}</span>
-          <input name="song" placeholder={copy.placeholder} autoComplete="off" maxLength={120} />
+          <input name="song" placeholder={copy.placeholder} autoComplete="off" maxLength={200} />
           <small>{copy.hint}</small>
         </label>,
         fieldSlot,
