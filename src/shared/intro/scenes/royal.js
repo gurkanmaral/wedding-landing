@@ -1,8 +1,10 @@
-// Royal Garden — "The rose opens". An illustrated deep-rose bud on draped
-// black velvet, lit by two candles. Opening: layered SVG petals unfurl from
-// the outside in, revealing a gold-foil monogram in the heart; a few petals
-// fall; the couple's names appear in gilded Cormorant Garamond italic and the
-// view rises over the bloom. Built from DOM, SVG and canvas only (no WebGL).
+// Royal Garden — "The rose opens". An illustrated garden rose (cupped, many
+// petals in a tight spiral) as a bud on draped black velvet, lit by two
+// candles. Opening: the petals unfurl from the outside in, revealing a
+// gold-foil monogram in the heart; a few small curled petals drift down beside
+// the bloom; the couple's names appear in gilded Cormorant Garamond italic
+// below it (the date sits at the top) and the view rises over the bloom.
+// Built from DOM, SVG and canvas only (no WebGL).
 import { gsap } from 'gsap'
 import { foilTile, el, svgEl, sceneRoot, loop, seeded, textWidth } from '../foil.js'
 
@@ -38,6 +40,7 @@ ${s} svg.rose{position:absolute;overflow:visible;will-change:transform}
 ${s} .name{position:absolute;left:50%;transform:translate(-50%,-50%);white-space:nowrap;text-align:center;opacity:0;
   font-family:'Cormorant Garamond','Cormorant',Garamond,Georgia,serif;font-style:italic;font-weight:500;line-height:1.1;
   filter:drop-shadow(0 1px 0 #6b4a16) drop-shadow(0 1.5px 0 #4a320c) drop-shadow(0 10px 20px rgba(0,0,0,.6));--sheen:130%}
+${s} .name .amp{font-size:.7em;margin:0 .2em;font-weight:400}
 ${s} .gold{background-image:linear-gradient(100deg,rgba(255,255,255,0) 44%,rgba(255,251,232,.9) 50%,rgba(255,255,255,0) 56%),
   var(--${id}-foil),linear-gradient(180deg,#fff1c4 0%,#ecc778 30%,#b98838 55%,#f1d690 76%,#a9792e 100%);
   background-size:320% 100%,160px 160px,100% 100%;background-position:var(--sheen) 0,0 0,0 0;background-repeat:no-repeat,repeat,no-repeat;
@@ -83,21 +86,11 @@ function paintVelvet(canvas, W, H, dpr) {
 
 /* ---------------------------------------------------------------- rose */
 
-// Unit petal: base at the origin, tip toward -y, half-width 1, length 1.
-const PETAL = 'M0 0C.55 -.08 1.06 -.45 .93 -.78C.83 -1.02 .3 -1.05 0 -.95C-.3 -1.05 -.83 -1.02 -.93 -.78C-1.06 -.45 -.55 -.08 0 0Z'
-const LIP = 'M.86 -.8C.74 -.98 .32 -1 0 -.92C-.32 -1 -.74 -.98 -.86 -.8'
-const VEIN = 'M0 -.04C.02 -.35 -.02 -.62 0 -.88'
-
-// Rings from outermost (drawn first) to innermost.
-const RINGS = [
-  { n: 5, L: 0.6, W: 0.4, r: 0.12, off: 0 },
-  { n: 5, L: 0.52, W: 0.35, r: 0.1, off: 36 },
-  { n: 5, L: 0.43, W: 0.3, r: 0.09, off: 14 },
-  { n: 4, L: 0.34, W: 0.26, r: 0.09, off: 52 },
-  { n: 4, L: 0.26, W: 0.21, r: 0.1, off: 8 },
-  { n: 3, L: 0.18, W: 0.17, r: 0.135, off: 33, heart: true },
-  { n: 3, L: 0.13, W: 0.14, r: 0.13, off: 93, heart: true },
-]
+// Unit cupped petal: base at the origin, broad rounded rim toward -y.
+const PETAL = 'M0 0C.35 -.02 .95 -.3 .98 -.62C1 -.9 .55 -1.04 0 -1C-.55 -1.04 -1 -.9 -.98 -.62C-.95 -.3 -.35 -.02 0 0Z'
+// The rim rolled back on itself, catching the light.
+const LIP = 'M.94 -.66C.86 -.95 .4 -1.03 0 -1C-.4 -1.03 -.86 -.95 -.94 -.66C-.72 -.84 -.36 -.88 0 -.86C.36 -.88 .72 -.84 .94 -.66Z'
+const GOLDEN = 137.508
 
 export default function create(host, template, { onOpened, setCaption }) {
   const small = Math.min(window.innerWidth, window.innerHeight) < 640
@@ -124,67 +117,37 @@ export default function create(host, template, { onOpened, setCaption }) {
   })
 
   /* ------------------------------------------------------------- rose svg */
-  const rose = svgEl('svg', { class: 'rose', viewBox: '-1 -1 2 2' }, world)
+  // viewBox unit = open radius of the bloom
+  const rose = svgEl('svg', { class: 'rose', viewBox: '-1.15 -1.15 2.3 2.3' }, world)
   const defs = svgEl('defs', {}, rose)
   defs.innerHTML = `
-<linearGradient id="${id}pb" x1="0" y1="1" x2="0" y2="0">
-  <stop offset="0" stop-color="#2c030e"/><stop offset=".22" stop-color="#5e0920"/><stop offset=".58" stop-color="#9a1238"/><stop offset=".86" stop-color="#b81f4a"/><stop offset="1" stop-color="#8e0f33"/></linearGradient>
-<radialGradient id="${id}ps" cx=".5" cy=".38" r=".6"><stop offset="0" stop-color="#ff8fab" stop-opacity=".34"/><stop offset=".6" stop-color="#ff6f8e" stop-opacity=".08"/><stop offset="1" stop-color="#ff6f8e" stop-opacity="0"/></radialGradient>
-<radialGradient id="${id}pe" cx=".5" cy=".55" r=".62"><stop offset=".62" stop-color="#1a0208" stop-opacity="0"/><stop offset="1" stop-color="#1a0208" stop-opacity=".75"/></radialGradient>
-<radialGradient id="${id}hh" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#4a0a1a"/><stop offset=".65" stop-color="#22030b"/><stop offset="1" stop-color="#0d0104"/></radialGradient>
-<radialGradient id="${id}hg" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ffd690" stop-opacity=".55"/><stop offset=".5" stop-color="#ff9f6a" stop-opacity=".18"/><stop offset="1" stop-color="#ff9f6a" stop-opacity="0"/></radialGradient>
+<radialGradient id="${id}pb" cx=".5" cy="1" r="1.04">
+  <stop offset="0" stop-color="#22020a"/><stop offset=".28" stop-color="#4f061b"/><stop offset=".58" stop-color="#8a0f35"/>
+  <stop offset=".8" stop-color="#ad1b45"/><stop offset=".92" stop-color="#c7355f"/><stop offset=".975" stop-color="#b52650"/><stop offset="1" stop-color="#7c0b2b"/></radialGradient>
+<radialGradient id="${id}ps" cx=".5" cy=".42" r=".55"><stop offset="0" stop-color="#ffb3c4" stop-opacity=".2"/><stop offset="1" stop-color="#ff8fab" stop-opacity="0"/></radialGradient>
+<radialGradient id="${id}sh" cx=".5" cy=".75" r=".62"><stop offset="0" stop-color="#050001" stop-opacity=".75"/><stop offset=".7" stop-color="#050001" stop-opacity=".35"/><stop offset="1" stop-color="#050001" stop-opacity="0"/></radialGradient>
+<linearGradient id="${id}lp" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffc2cf" stop-opacity=".7"/><stop offset=".55" stop-color="#e2557a" stop-opacity=".35"/><stop offset="1" stop-color="#b01c47" stop-opacity="0"/></linearGradient>
+<radialGradient id="${id}hh" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#3c0715"/><stop offset=".7" stop-color="#1c0208"/><stop offset="1" stop-color="#0a0003"/></radialGradient>
+<radialGradient id="${id}hg" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ffd690" stop-opacity=".5"/><stop offset=".5" stop-color="#ff9f6a" stop-opacity=".16"/><stop offset="1" stop-color="#ff9f6a" stop-opacity="0"/></radialGradient>
+<radialGradient id="${id}cl" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ffb070" stop-opacity=".22"/><stop offset="1" stop-color="#ffb070" stop-opacity="0"/></radialGradient>
 <linearGradient id="${id}mg" x1="0" y1="0" x2=".9" y2="1">
   <stop offset="0" stop-color="#8a6322"/><stop offset=".25" stop-color="#f3d27f"/><stop offset=".38" stop-color="#fff2c2"/><stop offset=".55" stop-color="#c39040"/><stop offset=".78" stop-color="#efcc7c"/><stop offset="1" stop-color="#83591b"/></linearGradient>
 <pattern id="${id}mf" patternUnits="userSpaceOnUse" width="60" height="60"><image href="${foil}" width="60" height="60"/></pattern>
-<path id="${id}p" d="${PETAL}"/>`
+<path id="${id}p" d="${PETAL}"/>
+<path id="${id}l" d="${LIP}"/>`
 
-  const random = seeded(19)
-  const petals = []
-  const ringCount = RINGS.length
-  let heartGroup = null
-  RINGS.forEach((ring, ri) => {
-    if (ring.heart && !heartGroup) heartGroup = buildHeart()
-    for (let i = 0; i < ring.n; i += 1) {
-      const g = svgEl('g', {}, rose)
-      // shadow, body, sheen, edge darkening, closed-state shade, rolled lip
-      svgEl('use', { href: `#${id}p`, fill: '#080003', opacity: '.55', transform: 'translate(0 .04) scale(1.06 1.04)' }, g)
-      svgEl('use', { href: `#${id}p`, fill: `url(#${id}pb)` }, g)
-      svgEl('use', { href: `#${id}p`, fill: `url(#${id}ps)` }, g)
-      svgEl('use', { href: `#${id}p`, fill: `url(#${id}pe)` }, g)
-      const shade = svgEl('use', { href: `#${id}p`, fill: '#14010a', opacity: '.5' }, g)
-      svgEl('path', { d: LIP, fill: 'none', stroke: '#ff9ab3', 'stroke-opacity': '.38', 'stroke-width': '.035', 'stroke-linecap': 'round' }, g)
-      svgEl('path', { d: VEIN, fill: 'none', stroke: '#3a0412', 'stroke-opacity': '.35', 'stroke-width': '.02' }, g)
-      const depth = ri / (ringCount - 1) // 0 outer .. 1 inner
-      petals.push({
-        g,
-        shade,
-        angle: ring.off + (i * 360) / ring.n + (random() - 0.5) * 10,
-        L: ring.L * (0.94 + random() * 0.12),
-        W: ring.W * (0.94 + random() * 0.12),
-        r: ring.r,
-        // closed bud: petals pulled in, twisted and cupped over the heart
-        rc: ring.heart ? 0.0 : 0.02 + 0.03 * (1 - depth),
-        sc: ring.heart ? 1.25 : 0.34 + 0.24 * depth,
-        twist: 46 + 20 * depth,
-        start: depth * 0.5 + random() * 0.05,
-        fall: -1,
-        fallSeed: random(),
-      })
-    }
-  })
-
-  // the heart: dark hollow, glow and a gold-foil monogram (drawn below the inner petals)
-  function buildHeart() {
-    const group = svgEl('g', {}, rose)
-    svgEl('circle', { r: '.17', fill: `url(#${id}hh)` }, group)
-    const glow = svgEl('circle', { r: '.3', fill: `url(#${id}hg)`, opacity: '0' }, group)
-    const mono = svgEl('g', { transform: 'scale(.01)' }, group)
+  // the heart: dark hollow, warm glow and the gold-foil monogram (under every petal)
+  const heart = svgEl('g', {}, rose)
+  svgEl('circle', { r: '.24', fill: `url(#${id}hh)` }, heart)
+  const heartGlow = svgEl('circle', { r: '.36', fill: `url(#${id}hg)`, opacity: '0' }, heart)
+  {
+    const mono = svgEl('g', { transform: 'scale(.0155)' }, heart)
     const locale = template.lang === 'tr' ? 'tr-TR' : 'en-GB'
     const initial = (name) => (Array.from(String(name ?? '').trim())[0] ?? '').toLocaleUpperCase(locale)
     const layer = (fill, dx, dy, opacity = 1) => {
       const g = svgEl('g', { fill, transform: `translate(${dx} ${dy})`, opacity: String(opacity) }, mono)
-      svgEl('circle', { r: '12.8', fill: 'none', stroke: fill, 'stroke-width': '.9' }, g)
-      svgEl('circle', { r: '11.3', fill: 'none', stroke: fill, 'stroke-width': '.4' }, g)
+      svgEl('circle', { r: '12.8', fill: 'none', stroke: fill, 'stroke-width': '.8' }, g)
+      svgEl('circle', { r: '11.4', fill: 'none', stroke: fill, 'stroke-width': '.35' }, g)
       const text = (value, x, y, size) => {
         const t = svgEl('text', { x, y, 'font-size': size, 'text-anchor': 'middle', 'dominant-baseline': 'central' }, g)
         t.style.fontFamily = "'Cormorant Garamond', Garamond, Georgia, serif"
@@ -196,27 +159,67 @@ export default function create(host, template, { onOpened, setCaption }) {
       text(initial(template.couple[1]), '4.4', '2.2', '13')
       text('&', '0', '.6', '5.2')
     }
-    layer('#120800', 0.4, 0.6, 0.8)
-    layer('#fff4cf', -0.25, -0.25, 0.6)
+    layer('#120800', 0.35, 0.5, 0.8)
+    layer('#fff4cf', -0.22, -0.22, 0.6)
     layer(`url(#${id}mg)`, 0, 0)
     layer(`url(#${id}mf)`, 0, 0)
-    group.dataset.heart = '1'
-    return { group, glow }
   }
 
-  // which outer petals let go
-  const fallers = [petals[1], petals[3], petals[7]]
+  // petals in phyllotaxis order: outermost drawn first, the tight spiral last
+  const N = small ? 46 : 60
+  const random = seeded(19)
+  const petals = []
+  for (let i = N - 1; i >= 0; i -= 1) {
+    const t = i / (N - 1) // 0 = innermost .. 1 = outermost
+    const g = svgEl('g', {}, rose)
+    // soft shadow cast on the ring below, body, velvet sheen, darkening, rolled lip
+    svgEl('use', { href: `#${id}p`, fill: `url(#${id}sh)`, transform: 'translate(0 .05) scale(1.16 1.1)' }, g)
+    svgEl('use', { href: `#${id}p`, fill: `url(#${id}pb)` }, g)
+    svgEl('use', { href: `#${id}p`, fill: `url(#${id}ps)` }, g)
+    const shade = svgEl('use', { href: `#${id}p`, fill: '#160109', opacity: '.4' }, g)
+    const lip = t > 0.4 ? svgEl('use', { href: `#${id}l`, fill: `url(#${id}lp)`, opacity: '0' }, g) : null
+    const jitter = 0.92 + random() * 0.16
+    petals.push({
+      g,
+      shade,
+      lip,
+      t,
+      angle: i * GOLDEN + (random() - 0.5) * 8,
+      // open: cupped rings around the heart; closed: a tight spiral bud
+      r: 0.2 + 0.38 * Math.pow(t, 0.85),
+      L: (0.12 + 0.37 * t) * jitter,
+      W: (0.11 + 0.25 * t) * jitter,
+      rc: 0.015 + 0.17 * t,
+      sc: 1.9 + (0.62 - 1.9) * t,
+      twist: 30 + 30 * (1 - t),
+      start: (1 - t) * 0.55 + random() * 0.04,
+      dark: 0.2 * (1 - t),
+    })
+  }
+
+  // candlelight falling on the bloom from both sides
+  svgEl('circle', { cx: '-.75', cy: '.05', r: '.9', fill: `url(#${id}cl)`, style: 'mix-blend-mode:screen' }, rose)
+  svgEl('circle', { cx: '.75', cy: '.05', r: '.9', fill: `url(#${id}cl)`, style: 'mix-blend-mode:screen' }, rose)
+
+  // a few small, curled petals that drift down beside the bloom
+  const fallen = [235, 122, 302].map((deg, i) => {
+    const g = svgEl('g', { opacity: '0' }, rose)
+    svgEl('use', { href: `#${id}p`, fill: `url(#${id}sh)`, transform: 'translate(0 .06) scale(1.1)' }, g)
+    svgEl('use', { href: `#${id}p`, fill: `url(#${id}pb)` }, g)
+    svgEl('use', { href: `#${id}l`, fill: `url(#${id}lp)`, opacity: '.8' }, g)
+    const rad = (deg * Math.PI) / 180
+    return { g, x: Math.sin(rad) * 0.95, y: -Math.cos(rad) * 0.95, f: -1, seed: i * 1.7 + 0.4, spin: i % 2 ? -1 : 1 }
+  })
 
   /* ---------------------------------------------------------------- names */
   const [first, second] = template.couple
-  const nameNodes = [first, second].map((name) => {
-    const node = el('div', 'name', world)
-    el('span', 'gold', node, name)
-    return node
-  })
+  const names = el('div', 'name', world)
+  el('span', 'gold', names, first)
+  el('span', 'gold amp', names, '&')
+  el('span', 'gold', names, second)
 
   /* --------------------------------------------------------------- layout */
-  const L = { W: 0, H: 0, S: 1, cx: 0, cy: 0, nameH: 0 }
+  const L = { W: 0, H: 0, R: 1, nameH: 0, painted: false }
   let velvetTimer = 0
   const layout = () => {
     const W = host.clientWidth || window.innerWidth
@@ -228,38 +231,37 @@ export default function create(host, template, { onOpened, setCaption }) {
     velvetTimer = setTimeout(() => paintVelvet(velvet, W, H, Math.min(window.devicePixelRatio || 1, small ? 1 : 1.25)), L.painted ? 120 : 0)
     L.painted = true
 
-    // the open rose's radius
-    const S = Math.min(W * 0.42, H * 0.235)
-    L.S = S
-    L.cx = W / 2
-    L.cy = H * 0.46
-    Object.assign(rose.style, { left: `${L.cx - S}px`, top: `${L.cy - S}px`, width: `${S * 2}px`, height: `${S * 2}px` })
-    Object.assign(spot.style, { left: `${L.cx - S * 2.2}px`, top: `${L.cy - S * 2}px`, width: `${S * 4.4}px`, height: `${S * 4}px` })
+    // open bloom ≈ 60% of the short side, closed bud ≈ 28%
+    const short = Math.min(W, H)
+    const R = Math.min(short * 0.285, H * 0.27, W * 0.45)
+    L.R = R
+    const cx = W / 2
+    const cy = H * (W > H ? 0.49 : 0.46)
+    const box = R * 2.3
+    Object.assign(rose.style, { left: `${cx - box / 2}px`, top: `${cy - box / 2}px`, width: `${box}px`, height: `${box}px` })
+    Object.assign(spot.style, { left: `${cx - R * 2.4}px`, top: `${cy - R * 2.2}px`, width: `${R * 4.8}px`, height: `${R * 4.4}px` })
 
-    // names above and below the bloom, clear of the date caption
-    const maxW = Math.min(W * 0.84, H * 0.95)
-    const widest = Math.max(textWidth(first, 'italic 500 100px "Cormorant Garamond", Georgia, serif'), textWidth(second, 'italic 500 100px "Cormorant Garamond", Georgia, serif'))
-    const size = Math.min(H * 0.085, (maxW * 100) / Math.max(widest, 1) / 1.06)
-    nameNodes.forEach((node, i) => {
-      node.style.fontSize = `${size.toFixed(1)}px`
-      node.style.top = `${(i === 0 ? L.cy - S * 1.08 - size * 0.55 : L.cy + S * 1.0 + size * 0.6).toFixed(1)}px`
-    })
+    // names on one line below the bloom; the date caption sits at the top
+    const probe = (size) => `italic 500 ${size}px "Cormorant Garamond", Georgia, serif`
+    const line = textWidth(`${first}${second}`, probe(100)) + textWidth('&', probe(70)) + 60
+    const size = Math.min(H * 0.075, (W * 0.86 * 100) / Math.max(line, 1))
+    names.style.fontSize = `${size.toFixed(1)}px`
+    const y = Math.min(cy + R * 1.08 + H * 0.035 + size * 0.6, H * 0.9 - size * 0.6)
+    names.style.top = `${y.toFixed(1)}px`
     L.nameH = size
 
-    // candles flank the rose at the edges
-    const cw = Math.max(16, Math.min(W, H) * 0.055)
+    // candles flank the bloom at the edges
+    const cw = Math.max(16, short * 0.055)
     const x = Math.max(W * 0.05, W / 2 - H * 0.78)
     candles.forEach((c) => {
       const left = c.side < 0 ? x : W - x
       const height = H * 0.4
       Object.assign(c.candle.style, { left: `${left}px`, width: `${cw}px`, height: `${height}px` })
       Object.assign(c.flame.style, { width: `${cw * 0.62}px`, height: `${cw * 1.55}px`, marginLeft: `${-cw * 0.31}px`, marginBottom: `${cw * 0.02}px` })
-      c.fx = left
-      c.fy = H * 1.02 - height - cw * 0.9
-      c.cw = cw
+      const fy = H * 1.02 - height - cw * 0.9
       const pool = Math.max(W, H) * 0.55
-      Object.assign(c.pool.style, { left: `${left - pool / 2}px`, top: `${c.fy - pool / 2}px`, width: `${pool}px`, height: `${pool}px` })
-      Object.assign(c.glow.style, { left: `${left}px`, top: `${c.fy}px`, width: `${cw * 9}px`, height: `${cw * 9}px` })
+      Object.assign(c.pool.style, { left: `${left - pool / 2}px`, top: `${fy - pool / 2}px`, width: `${pool}px`, height: `${pool}px` })
+      Object.assign(c.glow.style, { left: `${left}px`, top: `${fy}px`, width: `${cw * 9}px`, height: `${cw * 9}px` })
     })
   }
   const observer = new ResizeObserver(layout)
@@ -276,35 +278,39 @@ export default function create(host, template, { onOpened, setCaption }) {
 
   const stop = loop((dt, t) => {
     // the bloom: each petal unfurls on its own schedule, outside-in
-    const sway = Math.sin(t * 0.4) * 2.2
+    const sway = Math.sin(t * 0.4) * 1.8
     for (let i = 0; i < petals.length; i += 1) {
       const p = petals[i]
-      let o = smooth((state.bloom - p.start) / 0.5)
-      o = Math.min(1, o + (1 - o) * 0.035 * (0.5 + 0.5 * Math.sin(t * 0.9 + i)))
+      let o = smooth((state.bloom - p.start) / 0.45)
+      o = Math.min(1, o + (1 - o) * 0.03 * p.t * (0.5 + 0.5 * Math.sin(t * 0.9 + i)))
       const angle = p.angle + p.twist * (1 - o) + sway
       const r = lerp(p.rc, p.r, o)
-      const sy = p.L * lerp(p.sc, 1, o)
-      const sx = p.W * lerp(p.sc * 0.82, 1, o)
-      let prefix = ''
-      if (p.fall >= 0) {
-        p.fall += dt
-        const f = p.fall
-        // drift outward, tumble and drop out of frame (rose units)
-        const drop = 0.35 * f * f + 0.25 * f
-        const drift = Math.sin(f * 1.9 + p.fallSeed * 6) * 0.18 * f
-        const rad = (angle * Math.PI) / 180
-        const dirX = Math.sin(rad)
-        const dirY = -Math.cos(rad)
-        const mid = r + sy * 0.5
-        const dx = drift + dirX * 0.22 * f
-        const dy = drop + dirY * 0.22 * f
-        const spin = f * 70 * (p.fallSeed > 0.5 ? 1 : -1)
-        prefix = `translate(${dx.toFixed(4)} ${dy.toFixed(4)}) rotate(${spin.toFixed(2)} ${(dirX * mid).toFixed(4)} ${(dirY * mid).toFixed(4)})`
-      }
-      p.g.setAttribute('transform', `${prefix} rotate(${angle.toFixed(2)}) translate(0 ${(-r).toFixed(4)}) scale(${sx.toFixed(4)} ${sy.toFixed(4)})`)
-      p.shade.setAttribute('opacity', (0.55 * (1 - o) + 0.06).toFixed(3))
+      const s = lerp(p.sc, 1, o)
+      p.g.setAttribute(
+        'transform',
+        `rotate(${angle.toFixed(2)}) translate(0 ${(-r).toFixed(4)}) scale(${(p.W * s * lerp(0.86, 1, o)).toFixed(4)} ${(p.L * s).toFixed(4)})`,
+      )
+      p.shade.setAttribute('opacity', (p.dark + 0.32 * (1 - o)).toFixed(3))
+      if (p.lip) p.lip.setAttribute('opacity', (0.15 + 0.7 * o).toFixed(3))
     }
-    if (heartGroup) heartGroup.glow.setAttribute('opacity', (state.glow * (0.85 + 0.15 * Math.sin(t * 2.1))).toFixed(3))
+    heartGlow.setAttribute('opacity', (state.glow * (0.85 + 0.15 * Math.sin(t * 2.1))).toFixed(3))
+
+    for (let i = 0; i < fallen.length; i += 1) {
+      const p = fallen[i]
+      if (p.f < 0) continue
+      p.f += dt
+      const f = p.f
+      const out = Math.sign(p.x) || 1
+      const x = p.x + out * (0.22 * f + 0.08 * Math.sin(f * 1.8 + p.seed))
+      const y = p.y + 0.2 * f * f + 0.18 * f
+      const curl = 0.35 + 0.65 * Math.abs(Math.cos(f * 2.1 + p.seed))
+      p.g.setAttribute('opacity', Math.min(1, f * 3).toFixed(3))
+      p.g.setAttribute(
+        'transform',
+        `translate(${x.toFixed(4)} ${y.toFixed(4)}) rotate(${(p.spin * (40 + f * 75)).toFixed(2)}) scale(${(0.15 * curl).toFixed(4)} .26) translate(0 .5)`,
+      )
+    }
+
     const breathe = 1 + 0.008 * Math.sin(t * 0.9)
     rose.style.transform = `translate3d(${(state.px * 5).toFixed(1)}px,${(state.py * 4).toFixed(1)}px,0) scale(${breathe.toFixed(4)})`
 
@@ -321,15 +327,12 @@ export default function create(host, template, { onOpened, setCaption }) {
     }
 
     // names
-    nameNodes.forEach((node, i) => {
-      node.style.opacity = state.names.toFixed(3)
-      const dy = (1 - state.names) * L.nameH * (i === 0 ? -0.45 : 0.45)
-      node.style.transform = `translate(-50%,calc(-50% + ${dy.toFixed(1)}px))`
-      node.style.setProperty('--sheen', `${(state.sheen < 0 ? 130 : lerp(130, -30, state.sheen)).toFixed(1)}%`)
-    })
+    names.style.opacity = state.names.toFixed(3)
+    names.style.transform = `translate(-50%,calc(-50% + ${((1 - state.names) * L.nameH * 0.45).toFixed(1)}px))`
+    names.style.setProperty('--sheen', `${(state.sheen < 0 ? 130 : lerp(130, -30, state.sheen)).toFixed(1)}%`)
 
     // the view rises over the bloom and leans in
-    world.style.transform = state.rise > 0 ? `translate3d(0,${(state.rise * L.H * 0.035).toFixed(1)}px,0) scale(${(1 + state.rise * 0.12).toFixed(4)})` : ''
+    world.style.transform = state.rise > 0 ? `translate3d(0,${(state.rise * L.H * 0.03).toFixed(1)}px,0) scale(${(1 + state.rise * 0.1).toFixed(4)})` : ''
   })
 
   /* ----------------------------------------------------------------- open */
@@ -343,22 +346,13 @@ export default function create(host, template, { onOpened, setCaption }) {
       // petals unfurl outside-in, the heart glows
       .to(state, { bloom: 1, duration: 2.6, ease: 'sine.inOut' }, 0)
       .to(state, { glow: 1, duration: 1.2, ease: 'power2.out' }, 1.4)
-    // a few outer petals let go and fall in front of the bloom
-    fallers.forEach((p, i) =>
-      timeline.call(
-        () => {
-          p.fall = 0
-          rose.appendChild(p.g)
-        },
-        null,
-        1.6 + i * 0.3,
-      ),
-    )
+    // small petals let go at the rim and drift down beside the bloom
+    fallen.forEach((p, i) => timeline.call(() => (p.f = 0), null, 1.5 + i * 0.35))
     timeline
       .to(state, { names: 1, duration: 1.2, ease: 'power2.out' }, 2.1)
       .set(state, { sheen: 0 }, 2.3)
       .to(state, { sheen: 1, duration: 1.4, ease: 'sine.inOut' }, 2.3)
-      .call(() => setCaption?.('date'), null, 2.9)
+      .call(() => setCaption?.('date', 'top'), null, 2.9)
       .to(state, { rise: 1, duration: 1.5, ease: 'power2.inOut' }, 3.3)
   }
 

@@ -3,15 +3,8 @@ import { templates } from '../templates/registry.js'
 import { site, whatsappLink } from '../app/site.js'
 import ContactSection from './ContactSection.jsx'
 import PhoneDemo from './PhoneDemo.jsx'
+import TemplatePreview from './TemplatePreview.jsx'
 import './landing.css'
-
-// Phone-sized screenshots of each template, keyed by slug (missing ones fall back to the template colours).
-const previews = Object.fromEntries(
-  Object.entries(import.meta.glob('./previews/*.jpg', { eager: true, import: 'default' })).map(([path, url]) => [
-    path.match(/([\w-]+)\.jpg$/)[1],
-    url,
-  ]),
-)
 
 const COLLECTIONS = [
   { id: 'all', label: 'Tümü' },
@@ -20,6 +13,9 @@ const COLLECTIONS = [
   { id: 'modern', label: 'Modern ve eğlenceli', slugs: ['karakoy', 'cinema', 'b-side', 'departures', 'storybook', 'art-deco'] },
   { id: 'nature', label: 'Doğa ve mevsimler', slugs: ['autumn', 'sakura', 'kapadokya', 'orangerie', 'snow-globe', 'aegean'] },
 ]
+
+// the designs offered in the hero phone, strongest first
+const FEATURED = ['kapadokya', 'bogaz', 'iznik', 'kina', 'cinema', 'celestial', 'orangerie', 'art-deco']
 
 const FEATURES = [
   { title: 'Dokunarak açılan giriş', text: 'Her tasarımın kendine özgü bir açılışı var: kayan yıldız, yükselen balon, açan gül, aralanan paravan.' },
@@ -43,15 +39,6 @@ const FAQ = [
   { q: 'Yabancı misafirlerimiz var, İngilizce olur mu?', a: 'Tüm davetiyelerde Türkçe ve İngilizce arasında tek dokunuşla geçiş var.' },
   { q: 'Tasarımda değişiklik isteyebilir miyim?', a: 'Renkler, yazı tipleri ve bölümler size göre uyarlanabilir. Tamamen size özel bir tasarım için de bize yazın.' },
 ]
-
-function Preview({ template }) {
-  const src = previews[template.slug]
-  return (
-    <div className="lp-card__media" style={{ background: template.intro.bg }}>
-      {src ? <img src={src} alt="" loading="lazy" /> : <span className="lp-card__fallback">{template.name}</span>}
-    </div>
-  )
-}
 
 export default function LandingPage() {
   const [active, setActive] = useState(() => templates.find((t) => t.slug === 'kapadokya') ?? templates[0])
@@ -119,11 +106,13 @@ export default function LandingPage() {
           <div className="lp-hero__demo">
             <PhoneDemo template={active} autoLoad />
             <div className="lp-switch" role="radiogroup" aria-label="Önizlenecek tasarım">
-              {templates.slice(0, 8).map((t) => (
-                <button key={t.slug} type="button" role="radio" aria-checked={t.slug === active.slug} onClick={() => setActive(t)}>
-                  {t.name}
-                </button>
-              ))}
+              {FEATURED.map((slug) => templates.find((t) => t.slug === slug))
+                .filter(Boolean)
+                .map((t) => (
+                  <button key={t.slug} type="button" role="radio" aria-checked={t.slug === active.slug} onClick={() => setActive(t)}>
+                    {t.name}
+                  </button>
+                ))}
             </div>
           </div>
         </section>
@@ -146,7 +135,7 @@ export default function LandingPage() {
             {shown.map((t) => (
               <li key={t.slug}>
                 <a className="lp-card" href={`/tasarim/${t.slug}`}>
-                  <Preview template={t} />
+                  <TemplatePreview template={t} />
                   <div className="lp-card__body">
                     <h3>{t.name}</h3>
                     <p>{t.mood}</p>

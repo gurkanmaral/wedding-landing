@@ -1,0 +1,284 @@
+/* B-Side deck: sleeve, turntable, record and tonearm (shared by hero + intro). */
+
+.bsd-stage {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 .95 0 0 0 0 .88 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.bsd-display {
+  font-family: 'Fraunces', Georgia, serif;
+  font-weight: 800;
+  font-variation-settings: 'SOFT' 100, 'opsz' 96;
+}
+
+.bsd-mono {
+  font-family: 'Space Mono', ui-monospace, monospace;
+  font-weight: 700;
+}
+
+.bsd-layer {
+  position: absolute;
+  inset: 0;
+}
+
+.bsd-layer--sleeve { z-index: 2; }
+.bsd-layer--deck { z-index: 3; }
+.bsd-layer--record { z-index: 4; }
+.bsd-layer--arm { z-index: 5; }
+
+.bsd-backdrop {
+  position: absolute;
+  inset: -4%;
+  z-index: 0;
+}
+
+.bsd-arcs {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.22;
+}
+
+.bsd-grain {
+  position: absolute;
+  inset: 0;
+  z-index: 9;
+  background-image: var(--grain);
+  opacity: 0.09;
+  mix-blend-mode: overlay;
+}
+
+/* ------------------------------------------------------------ sleeve */
+.bsd-sleeve {
+  position: absolute;
+  left: 0;
+  top: 0;
+  border-radius: 0.5%;
+  background: #f7f1e3;
+  box-shadow:
+    0 calc(var(--deck-w) * 0.05) calc(var(--deck-w) * 0.09) rgb(0 0 0 / 0.5),
+    0 2px 6px rgb(0 0 0 / 0.35);
+  overflow: hidden;
+}
+
+.bsd-sleeve svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.bsd-sleeve-wear {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(115deg, rgb(255 255 255 / 0.18) 0%, transparent 32%, transparent 70%, rgb(255 255 255 / 0.08) 100%),
+    radial-gradient(140% 140% at 50% 50%, transparent 58%, rgb(70 40 15 / 0.22) 100%),
+    var(--grain);
+  background-size: 100% 100%, 100% 100%, 180px 180px;
+  mix-blend-mode: multiply;
+  opacity: 0.9;
+}
+
+/* -------------------------------------------------------------- deck */
+.bsd-deck {
+  position: absolute;
+  left: 0;
+  top: 0;
+  border-radius: 2.6% / 3.3%;
+  background:
+    linear-gradient(180deg, rgb(255 230 200 / 0.14), transparent 30%, rgb(0 0 0 / 0.28)),
+    repeating-linear-gradient(91deg, rgb(0 0 0 / 0.16) 0 2px, transparent 2px 7px, rgb(255 214 170 / 0.06) 7px 9px, transparent 9px 16px),
+    repeating-linear-gradient(88deg, transparent 0 23px, rgb(30 12 4 / 0.18) 23px 25px, transparent 25px 61px),
+    linear-gradient(90deg, #4e2c19, #6d4126 28%, #5a341e 55%, #74462a 80%, #4b2a18);
+  box-shadow:
+    0 calc(var(--deck-w) * 0.06) calc(var(--deck-w) * 0.1) rgb(0 0 0 / 0.6),
+    0 calc(var(--deck-w) * 0.012) calc(var(--deck-w) * 0.02) rgb(0 0 0 / 0.55),
+    inset 0 1px 0 rgb(255 230 200 / 0.25),
+    inset 0 -2px 0 rgb(0 0 0 / 0.35);
+}
+
+.bsd-plate {
+  position: absolute;
+  inset: 4% 3.2%;
+  border-radius: 1.4% / 1.8%;
+  background:
+    radial-gradient(90% 70% at 72% 18%, rgb(255 240 220 / 0.09), transparent 60%),
+    repeating-linear-gradient(90deg, rgb(255 255 255 / 0.022) 0 1px, transparent 1px 3px),
+    linear-gradient(160deg, #353330, #1f1e1c 70%);
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 0.07),
+    inset 0 2px 8px rgb(0 0 0 / 0.7);
+}
+
+/* plate is inset 3.2% / 4%, so platter coords are re-based on the plate box */
+.bsd-platter {
+  position: absolute;
+  left: calc((38% - 33% - 3.2%) / 0.936);
+  top: calc((50% - 42.3% - 4%) / 0.92);
+  width: calc(66% / 0.936);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: repeating-conic-gradient(#e4e1d9 0 1.4deg, #6c6862 1.4deg 3.6deg);
+  box-shadow:
+    0 calc(var(--deck-w) * 0.01) calc(var(--deck-w) * 0.025) rgb(0 0 0 / 0.65),
+    inset 0 0 0 1px rgb(255 255 255 / 0.3);
+}
+
+.bsd-platter::after {
+  content: '';
+  position: absolute;
+  inset: 3.2%;
+  border-radius: 50%;
+  background:
+    repeating-radial-gradient(circle closest-side, #191919 0 2%, #141414 2% 4%),
+    #151515;
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.8);
+}
+
+.bsd-start {
+  position: absolute;
+  left: 4%;
+  bottom: 6%;
+  width: 12%;
+  height: 7%;
+  border-radius: 6px;
+  background: linear-gradient(180deg, #d9d6cf, #8e8a83);
+  box-shadow: 0 2px 3px rgb(0 0 0 / 0.6), inset 0 1px 0 #fff;
+}
+
+.bsd-speeds {
+  position: absolute;
+  left: 18%;
+  bottom: 6.5%;
+  display: flex;
+  gap: calc(var(--deck-w) * 0.012);
+}
+
+.bsd-speeds span {
+  width: calc(var(--deck-w) * 0.032);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #f1eee7, #8b877f);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.6);
+}
+
+.bsd-speeds span.is-on {
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.6), 0 0 0 2px rgb(242 193 78 / 0.85);
+}
+
+.bsd-led {
+  position: absolute;
+  left: 4.6%;
+  top: 6%;
+  width: calc(var(--deck-w) * 0.016);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: #ff6a3d;
+  box-shadow: 0 0 6px 2px rgb(255 106 61 / 0.75);
+  animation: bsd-led 2.4s ease-in-out infinite;
+}
+
+@keyframes bsd-led {
+  50% { opacity: 0.55; }
+}
+
+.bsd-pitch {
+  position: absolute;
+  right: 4.5%;
+  bottom: 9%;
+  width: 2.6%;
+  height: 34%;
+  border-radius: 3px;
+  background: #0e0e0d;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.08);
+}
+
+.bsd-pitch span {
+  position: absolute;
+  left: -70%;
+  top: 46%;
+  width: 240%;
+  height: 9%;
+  border-radius: 2px;
+  background: linear-gradient(180deg, #e8e5de, #8d8981);
+  box-shadow: 0 2px 3px rgb(0 0 0 / 0.6);
+}
+
+.bsd-badge {
+  position: absolute;
+  right: 11%;
+  bottom: 5.5%;
+  color: rgb(247 241 227 / 0.55);
+  font: 700 calc(var(--deck-w) * 0.017) / 1 'Space Mono', ui-monospace, monospace;
+  letter-spacing: 0.24em;
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------------------ record */
+.bsd-record {
+  position: absolute;
+  left: 0;
+  top: 0;
+  border-radius: 50%;
+  --sheen: 0deg;
+  box-shadow:
+    0 calc(var(--deck-w) * 0.012) calc(var(--deck-w) * 0.03) rgb(0 0 0 / 0.65),
+    inset 0 0 0 1px rgb(255 255 255 / 0.06);
+}
+
+.bsd-spin {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 71% 27%, rgb(255 255 255 / 0.07), transparent 3.5%),
+    radial-gradient(circle closest-side, transparent 0 35.5%, rgb(255 255 255 / 0.05) 36% 37%, transparent 37.5% 47%, rgb(255 255 255 / 0.045) 47.4% 48.1%, transparent 48.5% 61%, rgb(255 255 255 / 0.045) 61.4% 62.1%, transparent 62.5% 77%, rgb(255 255 255 / 0.04) 77.4% 78.1%, transparent 78.5% 95.5%, rgb(255 255 255 / 0.1) 96.4% 98.2%, transparent 98.8%),
+    repeating-radial-gradient(circle closest-side, #121212 0 0.55%, #181818 0.55% 1.1%),
+    #131313;
+}
+
+.bsd-label {
+  position: absolute;
+  left: 32%;
+  top: 32%;
+  width: 36%;
+  height: 36%;
+  border-radius: 50%;
+  overflow: visible;
+}
+
+/* the groove highlight: fixed to the light, so it stays put while the record turns */
+.bsd-sheen {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background:
+    conic-gradient(from var(--sheen), transparent 0deg 20deg, rgb(255 236 210 / 0.12) 30deg, rgb(255 250 240 / 0.34) 37deg, rgb(255 236 210 / 0.12) 44deg, transparent 56deg 200deg, rgb(170 200 255 / 0.1) 210deg, rgb(225 235 255 / 0.26) 217deg, rgb(170 200 255 / 0.1) 224deg, transparent 236deg),
+    conic-gradient(from calc(var(--sheen) + 100deg), transparent 0deg 8deg, rgb(255 255 255 / 0.06) 18deg, transparent 30deg 188deg, rgb(255 255 255 / 0.05) 198deg, transparent 210deg);
+  -webkit-mask: radial-gradient(circle closest-side, transparent 0 36%, #000 37% 95%, transparent 96.5%);
+  mask: radial-gradient(circle closest-side, transparent 0 36%, #000 37% 95%, transparent 96.5%);
+  mix-blend-mode: screen;
+}
+
+/* ---------------------------------------------------------- tonearm */
+.bsd-arm {
+  position: absolute;
+  left: 0;
+  top: 0;
+  overflow: visible;
+  --lift: 0;
+  filter:
+    drop-shadow(calc(var(--deck-w) * (0.006 + var(--lift) * 0.014)) calc(var(--deck-w) * (0.01 + var(--lift) * 0.022)) calc(var(--deck-w) * (0.006 + var(--lift) * 0.012)) rgb(0 0 0 / 0.55));
+}
+
+.bsd-stage.is-paused .bsd-led {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bsd-led { animation: none; }
+}

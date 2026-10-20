@@ -22,8 +22,6 @@ export const copy = {
 const IMAGE_ASPECT = 1080 / 1920
 // where the gold sun drop lands, in hero-image uv (y up): low in the sunset sky, left
 const SUN_UV = [0.27, 0.71]
-// faint graphite under-drawing of the hero's ink lines on the blank paper (0 = truly blank)
-const SKETCH = 0.16
 
 /* ---------------------------------------------------------------- textures */
 
@@ -179,7 +177,7 @@ const fragmentShader = /* glsl */ `
   uniform float uImgAspect;
   uniform float uTime;
   uniform float uReady;
-  uniform float uSketch;
+  uniform float uMarkLen;
   uniform vec2 uLight;
   uniform float uMark;
   uniform vec2 uTap;
@@ -216,8 +214,14 @@ const fragmentShader = /* glsl */ `
     return s / 0.875;
   }
 
+  // Cockling as a few long, irrational sine swells: perfectly smooth, so its
+  // finite-difference lighting can't pick up the hardware-filtered noise lattice
+  // (which drew a hairline along q.y = 0).
   float cockle(vec2 q) {
-    return vn(q * 1.4 + 11.0) * 0.65 + vn(q * 3.1 - 4.0) * 0.35;
+    return 0.5
+      + 0.24 * sin(dot(q, vec2(2.13, 1.37)) + 1.7)
+      + 0.16 * sin(dot(q, vec2(-1.41, 3.29)) + 0.4)
+      + 0.10 * sin(dot(q, vec2(4.71, -2.23)) + 2.9);
   }
 
   vec2 coverUv(vec2 s) {
@@ -228,18 +232,19 @@ const fragmentShader = /* glsl */ `
     return uv;
   }
 
-  // the loaded brush stroke: a short tilted arc, heavy where the brush landed
-  float markSd(vec2 q) {
-    vec2 p = q - vec2(-0.01, 0.0);
-    float c = cos(0.2);
-    float s = sin(0.2);
+  // the loaded brush stroke: a shallow tilted arc uMarkLen long, heavy where the
+  // brush landed (t = 0) and tapering to a dry tail (t = 1); across = -1..1 over its width
+  float markSd(vec2 q, out float t, out float across) {
+    vec2 p = (q - vec2(0.0, 0.01)) / uMarkLen;
+    float c = cos(0.22);
+    float s = sin(0.22);
     p = mat2(c, -s, s, c) * p;
-    p.y += 1.3 * p.x * p.x - 0.01;
-    float L = 0.12;
-    float h = clamp(p.x, -L, L);
-    float t = (h + L) / (2.0 * L);
-    float w = 0.032 * (1.0 - 0.72 * t * t) * (0.75 + 0.25 * smoothstep(0.0, 0.12, t));
-    return length(p - vec2(h, 0.0)) - w;
+    p.y += 0.55 * p.x * p.x - 0.04;
+    float h = clamp(p.x, -0.5, 0.5);
+    t = h + 0.5;
+    float w = 0.1 * (1.0 - 0.82 * t * t) * (0.72 + 0.28 * smoothstep(0.0, 0.1, t));
+    across = p.y / max(w, 1e-3);
+    return (length(p - vec2(h, 0.0)) - w) * uMarkLen;
   }
 
   void main() {
@@ -250,20 +255,19 @@ const fragmentShader = /* glsl */ `
     vec2 uv = coverUv(s);
 
     /* paper: tooth + cockling, raking light that follows the pointer */
-    vec2 pu = px / 470.0;
+    vec2 pu = px / 470.0 + vec2(0.371, 0.613);
     float e = 1.0 / 512.0;
     vec4 P = texture2D(uPaper, pu);
     float hx = texture2D(uPaper, pu + vec2(e, 0.0)).r;
     float hy = texture2D(uPaper, pu + vec2(0.0, e)).r;
     float c0 = cockle(q);
-    vec2 cs = vec2(c0 - cockle(q + vec2(0.01, 0.0)), c0 - cockle(q + vec2(0.0, 0.01))) * 6.0;
-    vec3 n = normalize(vec3(vec2(P.r - hx, P.r - hy) * 2.4 + cs, 1.0));
-    vec3 nc = normalize(vec3(cs * 2.5, 1.0));
-    vec3 L = normalize(vec3(-0.5 + uLight.x * 0.35 + sin(uTime * 0.23) * 0.06, 0.6 - uLight.y * 0.35, 0.8));
+    vec2 cs = vec2(c0 - cockle(q + vec2(0.01, 0.0)), c0 - cockle(q + vec2(0.0, 0.01))) * 4.0;
+    vec3 n = normalize(vec3(vec2(P.r - hx, P.r - hy) * 0.6 + cs, 1.0));
+    vec3 nc = normalize(vec3(cs * 3.5, 1.0));
+    vec3 L = normalize(vec3(-0.5 + uLight.x * 0.35 + sin(uTime * 0.23) * 0.06, 0.6 - uLight.y * 0.35, 1.6));
     vec3 H = normalize(L + vec3(0.0, 0.0, 1.0));
-    float shade = 1.0 + (dot(n, L) - L.z) * 1.7;
+    float shade = 1.0 + (dot(n, L) - L.z) * 1.0;
     vec2 vg = s - 0.5;
-    vec3 tone = PAPER * (1.0 + (P.b - 0.5) * 0.035) * shade * (1.0 - dot(vg, vg) * 0.08);
 
     vec3 T = vec3(1.0);
     float bare = 1.0;
@@ -302,7 +306,7 @@ const fragmentShader = /* glsl */ `
       // pigment pools at the drying edge (darker, more saturated), granulates in the tooth
       float pool = exp(-max(f, 0.0) / 0.08) * uWet;
       float ring = (1.0 - smoothstep(0.0, 0.045, f)) * uWet;
-      float gran = (P.g - 0.5) * (0.25 + sea * 0.45);
+      float gran = (P.g - 0.5) * (0.12 + sea * 0.25) * (0.3 + 0.7 * uWet);
       vec3 Tp = pow(Ti, vec3(1.0 + pool * 0.9 + ring * 0.7 + gran));
       // water runs ahead of the pigment carrying a faint diluted tint
       float halo = smoothstep(-0.16, 0.0, f) * (1.0 - cov) * uWet;
@@ -312,29 +316,32 @@ const fragmentShader = /* glsl */ `
       wet = cov * exp(-max(f, 0.0) / 0.5) * uWet + halo * 0.5;
     }
 
-    /* graphite under-drawing, painted over as the washes arrive */
-    float lum = dot(texture2D(uImage, uv).rgb, vec3(0.3, 0.59, 0.11));
-    float lumB = dot(texture2D(uImage, uv, 2.5).rgb, vec3(0.3, 0.59, 0.11));
-    float line = smoothstep(0.05, 0.2, lumB - lum) * smoothstep(0.25, 0.65, P.r + 0.15);
-    T *= mix(vec3(1.0), vec3(0.56, 0.56, 0.6), line * uSketch * uReady * bare);
-
     /* the wet brush mark: ultramarine, dark rim, glossy meniscus */
     if (uMark > 0.001) {
-      float ms = markSd(q);
-      vec2 g = vec2(markSd(q + vec2(0.002, 0.0)) - ms, markSd(q + vec2(0.0, 0.002)) - ms) / 0.002;
-      float sd = ms + (fbm(q * 30.0 + 3.0) - 0.5) * 0.012 + (vn(q * 9.0) - 0.5) * 0.01;
-      float mc = (1.0 - smoothstep(-0.002, 0.003, sd)) * uMark;
+      float mt;
+      float across;
+      float dummyT;
+      float dummyA;
+      float ms = markSd(q, mt, across);
+      vec2 g = vec2(markSd(q + vec2(0.0015, 0.0), dummyT, dummyA) - ms, markSd(q + vec2(0.0, 0.0015), dummyT, dummyA) - ms) / 0.0015;
+      float sd = ms + (fbm(q * 40.0 + 3.0) - 0.5) * 0.004 + (vn(q * 12.0) - 0.5) * 0.004;
+      // bristle streaks along the stroke, breaking up into dry-brush toward the tail
+      float streak = vn(vec2(across * 6.0 + 3.0, mt * 2.5));
+      float dry = smoothstep(0.45, 0.95, mt) * (1.0 - smoothstep(0.3, 0.6, streak + (P.r - 0.5) * 0.4));
+      float mc = (1.0 - smoothstep(-0.0015, 0.002, sd)) * (1.0 - dry) * uMark;
       float inside = -sd;
-      float rim = exp(-max(inside, 0.0) / 0.007);
-      float swirl = fbm(q * 9.0 + vec2(uTime * 0.05, -uTime * 0.03));
-      vec3 Tm = pow(vec3(0.30, 0.40, 0.70), vec3(max(0.45 + rim * 0.9 + (swirl - 0.5) * 0.7 + (P.g - 0.5) * 0.4, 0.2)));
-      T *= mix(vec3(1.0), Tm, mc);
-      float bead = smoothstep(0.0, 0.02, inside);
-      vec2 ripple = vec2(vn(q * 60.0 + uTime * 0.6), vn(q * 60.0 - uTime * 0.5 + 17.0)) - 0.5;
-      vec3 nw = normalize(vec3(g * (1.0 - bead) * 0.9 + ripple * 0.05 + cs * 0.3, 1.0));
+      float rim = exp(-max(inside, 0.0) / 0.0035);
+      float swirl = fbm(q * 14.0 + vec2(uTime * 0.05, -uTime * 0.03));
+      float k = 0.55 + rim * 0.8 + (1.0 - mt) * 0.35 + (swirl - 0.5) * 0.5 + (streak - 0.5) * 0.45 + (P.g - 0.5) * 0.15;
+      T *= mix(vec3(1.0), pow(vec3(0.28, 0.38, 0.70), vec3(max(k, 0.2))), mc);
+      // glossy meniscus: steep at the edge, a flat wet pool inside with a slow ripple
+      float bead = smoothstep(0.0, 0.006, inside);
+      vec2 ripple = vec2(vn(q * 50.0 + uTime * 0.6), vn(q * 50.0 - uTime * 0.5 + 17.0)) - 0.5;
+      float wetness = mc * (1.0 - smoothstep(0.55, 1.0, mt) * 0.7);
+      vec3 nw = normalize(vec3(g * (1.0 - bead) * 0.8 + ripple * 0.06 + cs * 0.4, 1.0));
       float hd = max(dot(nw, H), 0.0);
-      spec += (pow(hd, 90.0) * 1.1 + pow(hd, 12.0) * 0.06) * mc;
-      wet = max(wet, mc);
+      spec += (pow(hd, 80.0) * 1.3 + pow(hd, 18.0) * 0.12) * wetness;
+      wet = max(wet, wetness);
     }
 
     /* gold sun drop: a bloom with a cauliflower edge and a little mica */
@@ -345,10 +352,10 @@ const fragmentShader = /* glsl */ `
       float eN = fbm(dir * 2.5 + r * 8.0 + 9.0);
       float R = uSunR * (0.85 + eN * 0.35);
       float sd = r - R;
-      float sc = 1.0 - smoothstep(-0.003, 0.003, sd);
-      float rim = exp(-max(-sd, 0.0) / 0.012) * (0.4 + 0.6 * uSunWet);
-      float core = 1.0 - smoothstep(0.0, R, r);
-      vec3 Ts = pow(vec3(0.99, 0.80, 0.42), vec3(0.75 + rim - core * 0.3 + (P.g - 0.5) * 0.4));
+      float sc = 1.0 - smoothstep(-0.01, 0.006, sd);
+      float rim = smoothstep(-0.03, -0.006, sd) * (1.0 - smoothstep(-0.006, 0.004, sd)) * (0.6 + 0.4 * uSunWet);
+      float core = 1.0 - smoothstep(0.0, R * 0.75, r);
+      vec3 Ts = pow(vec3(0.98, 0.76, 0.34), vec3(1.05 + rim * 0.45 - core * 0.45 + (P.g - 0.5) * 0.2));
       float glow = exp(-max(sd, 0.0) / 0.045) * (1.0 - sc) * 0.35;
       T *= mix(vec3(1.0), Ts, sc) * mix(vec3(1.0), vec3(1.0, 0.86, 0.6), glow);
       float hash = texture2D(uNoise, floor(px * 0.8) / 256.0 + 0.37).g;
@@ -370,7 +377,7 @@ const fragmentShader = /* glsl */ `
       float reach = smoothstep(0.0, 0.035, tf);
       // a soft lift of clean water just ahead of the brush keeps the letters legible on dark washes
       float room = smoothstep(0.0, 0.35, texture2D(uText, tuv, 5.5).r) * smoothstep(-0.15, 0.1, tf);
-      T = mix(T, vec3(1.0), room * 0.55);
+      T = mix(T, vec3(1.0), room * 0.7);
       // the tooth breaks the stroke edges like a dry-ish brush
       float tooth = (P.r - 0.5) * 0.35 + (vn(px * 0.35) - 0.5) * 0.2;
       float tc = smoothstep(0.42, 0.6, a + tooth * (1.0 - a)) * reach;
@@ -385,10 +392,13 @@ const fragmentShader = /* glsl */ `
 
     /* hand-off: clean water lifts the lower paint, like the page's own hero wash */
     if (uLift > 0.0) {
-      float lift = (1.0 - smoothstep(0.08, 0.46, s.y + (fbm(q * 4.0 + 1.0) - 0.5) * 0.1)) * uLift;
-      T = mix(T, vec3(1.0), lift * 0.8);
+      float lift = (1.0 - smoothstep(0.3, 0.62, s.y + (fbm(q * 4.0 + 1.37) - 0.5) * 0.1)) * uLift;
+      T = mix(T, vec3(1.0), lift * 0.86);
     }
 
+    // the paper's relief shows on bare paper and through wet paint, almost not at all once dry
+    float grain = mix(1.0, mix(0.06, 0.35, uWet), 1.0 - bare);
+    vec3 tone = PAPER * (1.0 + (P.b - 0.5) * 0.035 * grain) * mix(1.0, shade, grain) * (1.0 - dot(vg, vg) * 0.08 * grain);
     vec3 col = tone * T * (1.0 - wet * 0.035);
     col += spec;
     col += wet * pow(max(dot(nc, H), 0.0), 24.0) * 0.07;
@@ -418,7 +428,7 @@ export default function create(host, template, { onOpened, setCaption }) {
     uImgAspect: { value: IMAGE_ASPECT },
     uTime: { value: 0 },
     uReady: { value: 0 },
-    uSketch: { value: SKETCH },
+    uMarkLen: { value: 0.12 },
     uLight: { value: new THREE.Vector2(0, 0) },
     uMark: { value: 1 },
     uTap: { value: new THREE.Vector2(-0.03, 0) },
@@ -469,13 +479,16 @@ export default function create(host, template, { onOpened, setCaption }) {
 
   const layout = (view) => {
     uniforms.uCss.value.set(view.width, view.height)
-    // names: centred in the upper sky, as large as the screen allows
+    // the brush stroke spans ~27% of the screen width
+    uniforms.uMarkLen.value = THREE.MathUtils.clamp(0.27 * view.aspect, 0.12, 0.42)
+    // names: in the lower cream wash where the page hero sets its own title,
+    // as large as the screen allows, above the date caption
     const limitH = view.aspect > 1 ? 0.3 : 0.2
     const h = Math.min(view.height * limitH, (view.width * 0.84) / names.aspect)
     const w = h * names.aspect
     const tw = w / view.width
     const th = h / view.height
-    uniforms.uTextRect.value.set(0.5 - tw / 2, 0.79 - th / 2, tw, th)
+    uniforms.uTextRect.value.set(0.5 - tw / 2, 0.36 - th / 2, tw, th)
     // sun: the same spot in the painting, wherever the cover crop puts it
     const [u, v] = SUN_UV
     let sx = u
@@ -545,13 +558,13 @@ export default function create(host, template, { onOpened, setCaption }) {
       .to(u.uWet, { value: 0, duration: 1.2, ease: 'sine.inOut' }, 1.6)
       .to(u.uSunR, { value: 0.062, duration: 1.0, ease: 'power2.out' }, 1.8)
       .to(u.uSunWet, { value: 0, duration: 1.0, ease: 'sine.inOut' }, 2.4)
-      // the names are lettered in, then dry
-      .to(u.uTP, { value: 1.12, duration: 1.6, ease: 'power1.inOut' }, 2.1)
-      .to(u.uTextWet, { value: 0, duration: 1.0, ease: 'sine.inOut' }, 3.3)
-      // clean water lifts the lower half toward the page hero; the date lands there
-      .to(u.uLift, { value: 1, duration: 1.0, ease: 'power2.inOut' }, 3.4)
-      .call(() => setCaption?.('date'), null, 3.6)
-      .to({}, { duration: 0.01 }, 4.6)
+      // clean water lifts the lower half toward the page hero's cream wash…
+      .to(u.uLift, { value: 1, duration: 1.0, ease: 'power2.inOut' }, 1.9)
+      // …and the names are lettered into it, then dry; the date lands below them
+      .to(u.uTP, { value: 1.12, duration: 1.6, ease: 'power1.inOut' }, 2.4)
+      .to(u.uTextWet, { value: 0, duration: 1.0, ease: 'sine.inOut' }, 3.6)
+      .call(() => setCaption?.('date'), null, 3.8)
+      .to({}, { duration: 0.01 }, 4.8)
     return timeline
   }
 

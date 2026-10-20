@@ -1,0 +1,229 @@
+/* Cinéma theatre layers — used by the intro and the page hero. */
+
+.cn-theatre {
+  --cn-px: 0;
+  --cn-py: 0;
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: radial-gradient(120% 80% at 50% 40%, #1a1513 0%, #0d0d0d 60%, #060505 100%);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.cn-hall {
+  position: absolute;
+  inset: 0;
+  will-change: transform;
+}
+
+/* the proscenium line, only seen when the hall is viewed from further back */
+.cn-hall::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border: 1px solid rgb(201 168 92 / 0.4);
+  box-shadow: 0 0 0 6px rgb(8 7 6 / 0.9), 0 0 0 7px rgb(201 168 92 / 0.18);
+  pointer-events: none;
+}
+
+.cn-wall {
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(90deg, rgb(255 255 255 / 0.012) 0 2px, transparent 2px 9px),
+    radial-gradient(70% 50% at 50% 42%, #1c1715, #0b0a09 70%);
+}
+
+.cn-screen {
+  position: absolute;
+  background: #111;
+  box-shadow:
+    0 0 0 clamp(5px, 1vw, 12px) #050505,
+    0 0 70px 14px rgb(0 0 0 / 0.65);
+}
+
+.cn-screen canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.cn-spill {
+  position: absolute;
+  background: radial-gradient(closest-side, rgb(236 228 210 / 0.42), rgb(236 228 210 / 0.1) 58%, transparent);
+  mix-blend-mode: screen;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.cn-drape {
+  position: absolute;
+  top: 0;
+  transform: translate3d(calc(var(--cn-px) * -9px), calc(var(--cn-py) * -2px), 0);
+  transition: transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.cn-drape--left {
+  left: 0;
+}
+
+.cn-drape--right {
+  right: 0;
+  transform: translate3d(calc(var(--cn-px) * -9px), calc(var(--cn-py) * -2px), 0);
+}
+
+.cn-drape-body {
+  position: absolute;
+  inset: 0;
+  transform-origin: 0 0;
+  will-change: transform;
+  box-shadow: 18px 0 40px -10px rgb(0 0 0 / 0.75);
+}
+
+.cn-drape--right .cn-drape-body {
+  transform-origin: 100% 0;
+  box-shadow: -18px 0 40px -10px rgb(0 0 0 / 0.75);
+}
+
+.cn-drape canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.cn-drape-sheen {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 32%, rgb(255 150 140 / 0.1) 46%, transparent 60%);
+  background-size: 260% 100%;
+  mix-blend-mode: screen;
+  animation: cn-sheen 11s ease-in-out infinite alternate;
+}
+
+.cn-drape--right .cn-drape-sheen {
+  animation-delay: -5s;
+}
+
+@keyframes cn-sheen {
+  from { background-position: 100% 0; }
+  to { background-position: 0 0; }
+}
+
+.cn-valance {
+  position: absolute;
+  top: 0;
+  left: -2%;
+  width: 104%;
+  transform: translate3d(calc(var(--cn-px) * -4px), calc(var(--cn-py) * -3px), 0);
+  transition: transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1);
+  filter: drop-shadow(0 12px 14px rgb(0 0 0 / 0.65));
+}
+
+.cn-valance svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.cn-stage {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background:
+    repeating-linear-gradient(90deg, rgb(0 0 0 / 0.18) 0 1px, transparent 1px 64px),
+    linear-gradient(#3a2416, #160d09 14%, #0b0807 55%, #070606);
+  box-shadow: 0 -1px 0 #c9a85c, 0 -2px 0 rgb(0 0 0 / 0.7);
+}
+
+.cn-stage::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 100%;
+  height: 24vh;
+  background: linear-gradient(to top, rgb(255 166 88 / 0.2), transparent);
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+
+.cn-footlights {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -5px;
+  height: 34px;
+  background: radial-gradient(circle at 50% 5px, #fff3d2 0 1.6px, rgb(255 196 120 / 0.6) 2.6px, rgb(255 160 80 / 0) 13px) 0 0 / 46px 34px repeat-x;
+  animation: cn-foot 4s ease-in-out infinite alternate;
+}
+
+@keyframes cn-foot {
+  from { opacity: 0.85; }
+  to { opacity: 1; }
+}
+
+.cn-beam {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+
+.cn-dust {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* projector (intro only) */
+.cn-projector {
+  position: absolute;
+  /* lens a little right of centre, so the beam rises almost straight */
+  left: calc(58vw - min(68vw, 420px) * 0.962);
+  bottom: 1svh;
+  width: min(68vw, 420px);
+  aspect-ratio: 420 / 300;
+  filter: drop-shadow(0 24px 30px rgb(0 0 0 / 0.8));
+  cursor: pointer;
+}
+
+.cn-projector svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+@media (min-aspect-ratio: 9 / 10) {
+  .cn-projector {
+    left: calc(57vw - min(28vw, 420px) * 0.962);
+    width: min(28vw, 420px);
+  }
+}
+
+.cn-lamp {
+  opacity: 0.08;
+}
+
+.cn-pilot {
+  animation: cn-pilot 1.6s steps(2, jump-none) infinite;
+}
+
+@keyframes cn-pilot {
+  from { opacity: 1; }
+  to { opacity: 0.25; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cn-drape-sheen,
+  .cn-footlights,
+  .cn-pilot {
+    animation: none;
+  }
+}

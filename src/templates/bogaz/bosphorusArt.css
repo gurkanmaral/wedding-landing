@@ -1,0 +1,108 @@
+/* Boğaz night illustration: layers, transitions and grain. Shared by the hero and the intro. */
+
+.bz-art {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: linear-gradient(180deg, #03081a 0%, #0b1630 30%, #13284a 56%, #1f3a5f 70%, #0b1630 100%);
+  contain: strict;
+}
+
+.bz-layer {
+  position: absolute;
+  left: -3%;
+  top: -3%;
+  width: 106%;
+  height: 106%;
+  display: block;
+  will-change: transform;
+}
+
+.bz-lit {
+  transition: opacity 0.55s ease;
+}
+
+.bz-glow {
+  transition: opacity 0.9s ease;
+}
+
+.bz-wash {
+  transition: opacity 1.4s ease;
+}
+
+.bz-twinkle {
+  animation: bz-twinkle 3.8s ease-in-out infinite;
+}
+
+.bz-blink {
+  animation: bz-blink 1.8s steps(1) infinite;
+}
+
+.bz-vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(130% 85% at 50% 38%, transparent 52%, rgb(2 5 16 / 0.6) 100%),
+    linear-gradient(180deg, rgb(3 8 26 / 0.35) 0%, transparent 22%);
+}
+
+.bz-grain {
+  position: absolute;
+  inset: -50%;
+  pointer-events: none;
+  opacity: 0.1;
+  mix-blend-mode: overlay;
+  background-size: 180px 180px;
+  animation: bz-grain 0.9s steps(5) infinite;
+}
+
+@keyframes bz-twinkle {
+  0%,
+  100% {
+    opacity: 0.25;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes bz-blink {
+  0%,
+  55% {
+    opacity: 1;
+  }
+  56%,
+  100% {
+    opacity: 0.12;
+  }
+}
+
+@keyframes bz-grain {
+  0% {
+    transform: translate(0, 0);
+  }
+  20% {
+    transform: translate(-3%, 2%);
+  }
+  40% {
+    transform: translate(2%, -3%);
+  }
+  60% {
+    transform: translate(-2%, -1%);
+  }
+  80% {
+    transform: translate(3%, 3%);
+  }
+  100% {
+    transform: translate(0, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bz-twinkle,
+  .bz-blink,
+  .bz-grain {
+    animation: none;
+  }
+}

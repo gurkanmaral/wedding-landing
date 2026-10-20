@@ -1,0 +1,445 @@
+/* Oya — ivory linen, dusty rose and sage needle lace. */
+
+@property --oya-w1 { syntax: '<percentage>'; inherits: false; initial-value: 100%; }
+@property --oya-h1 { syntax: '<percentage>'; inherits: false; initial-value: 100%; }
+@property --oya-w2 { syntax: '<percentage>'; inherits: false; initial-value: 100%; }
+@property --oya-h2 { syntax: '<percentage>'; inherits: false; initial-value: 100%; }
+
+.theme-oya {
+  --inv-bg: #f4ede3;
+  --inv-surface: #fffdf8;
+  --inv-alt: #efe6da;
+  --inv-ink: #4f423c;
+  --inv-muted: #7a6961;
+  --inv-accent: #a3726a;
+  --inv-accent-ink: #fffdf8;
+  --inv-line: rgb(107 91 83 / 0.2);
+  --inv-display: 'Marcellus', Georgia, serif;
+  --inv-script: 'Italianno', cursive;
+  --inv-body: 'Cormorant Garamond', Georgia, serif;
+  --inv-radius: 2px;
+  --oya-stitch: #c7a9a0;
+  /* a handkerchief with a scalloped needle-lace edge and rose corner flowers (9-slice, 14px) */
+  --oya-hankie: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='42' height='42' viewBox='0 0 42 42'%3E%3Cg fill='%23fffdf8' fill-rule='evenodd'%3E%3Crect x='13.5' y='13.5' width='15' height='15'/%3E%3Cpath d='M14 14A7 7 0 0 1 28 14ZM19.2 10.6a1.8 1.8 0 1 0 3.6 0a1.8 1.8 0 1 0-3.6 0Z'/%3E%3Cpath d='M14 28A7 7 0 0 0 28 28ZM19.2 31.4a1.8 1.8 0 1 0 3.6 0a1.8 1.8 0 1 0-3.6 0Z'/%3E%3Cpath d='M14 14A7 7 0 0 0 14 28ZM8.7 21a1.8 1.8 0 1 0 3.6 0a1.8 1.8 0 1 0-3.6 0Z'/%3E%3Cpath d='M28 14A7 7 0 0 1 28 28ZM29.7 21a1.8 1.8 0 1 0 3.6 0a1.8 1.8 0 1 0-3.6 0Z'/%3E%3Ccircle cx='21' cy='5.6' r='1.6'/%3E%3Ccircle cx='21' cy='36.4' r='1.6'/%3E%3Ccircle cx='5.6' cy='21' r='1.6'/%3E%3Ccircle cx='36.4' cy='21' r='1.6'/%3E%3Cpath d='M14 8A6 6 0 0 0 8 14L14 14ZM28 8A6 6 0 0 1 34 14L28 14ZM14 34A6 6 0 0 1 8 28L14 28ZM28 34A6 6 0 0 0 34 28L28 28Z'/%3E%3C/g%3E%3Cg fill='%23c7a9a0'%3E%3Cg id='f'%3E%3Ccircle cx='9' cy='6.4' r='2.2'/%3E%3Ccircle cx='11.5' cy='8.2' r='2.2'/%3E%3Ccircle cx='10.5' cy='11' r='2.2'/%3E%3Ccircle cx='7.5' cy='11' r='2.2'/%3E%3Ccircle cx='6.5' cy='8.2' r='2.2'/%3E%3C/g%3E%3Cuse href='%23f' x='24'/%3E%3Cuse href='%23f' y='24'/%3E%3Cuse href='%23f' x='24' y='24'/%3E%3C/g%3E%3Cg fill='%23b89b5e'%3E%3Ccircle cx='9' cy='9' r='1.2'/%3E%3Ccircle cx='33' cy='9' r='1.2'/%3E%3Ccircle cx='9' cy='33' r='1.2'/%3E%3Ccircle cx='33' cy='33' r='1.2'/%3E%3C/g%3E%3C/svg%3E");
+  /* oya flower border strip */
+  --oya-edge: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='24' viewBox='0 0 60 24'%3E%3Cg fill='none' stroke='%23b4a096' stroke-width='1.1' stroke-linecap='round'%3E%3Cpath d='M0 4H60' stroke-dasharray='2 2.5'/%3E%3Cpath d='M0 4Q15 21 30 4Q45 21 60 4'/%3E%3C/g%3E%3Cg fill='%23c7a9a0'%3E%3Ccircle cx='15' cy='13.4' r='1.9'/%3E%3Ccircle cx='17.5' cy='15.2' r='1.9'/%3E%3Ccircle cx='16.5' cy='18' r='1.9'/%3E%3Ccircle cx='13.5' cy='18' r='1.9'/%3E%3Ccircle cx='12.5' cy='15.2' r='1.9'/%3E%3C/g%3E%3Ccircle cx='15' cy='16' r='1.1' fill='%23b89b5e'/%3E%3Cpath d='M41 15C43 11 47 11 49 13C46 14 44 15 41 15Z' fill='%23a3b18a'/%3E%3Ccircle cx='45' cy='17.5' r='1.3' fill='%23b4a096'/%3E%3C/svg%3E");
+
+  font-size: 1.2rem;
+  font-weight: 500;
+  background:
+    repeating-linear-gradient(0deg, rgb(107 91 83 / 0.035) 0 1px, transparent 1px 3px),
+    repeating-linear-gradient(90deg, rgb(255 255 255 / 0.3) 0 1px, transparent 1px 3px),
+    linear-gradient(180deg, #f6f0e7, #efe6da);
+}
+
+/* lace shadow drifting over the whole page */
+.oya-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.oya-backdrop-lace {
+  position: absolute;
+  inset: -60px;
+  background-size: 180px 180px;
+  opacity: 0.1;
+  filter: blur(1.8px);
+  will-change: transform;
+}
+
+/* ------------------------------------------------------------ hero */
+.oya-hero {
+  position: relative;
+  height: 100svh;
+  min-height: 560px;
+  overflow: hidden;
+  color: #5d4e47;
+}
+
+.oya-hero-scene {
+  position: absolute;
+  inset: 0;
+}
+
+.oya-hero .oya-center {
+  z-index: 2;
+}
+
+.oya-hero-kicker {
+  position: absolute;
+  z-index: 2;
+  top: max(4.2rem, 8svh);
+  left: 50%;
+  width: min(26rem, 78vw);
+  margin: 0;
+  translate: -50% 0;
+  color: #85726a;
+  font-size: 0.8rem;
+  letter-spacing: 0.24em;
+  line-height: 1.6;
+  text-align: center;
+  text-transform: uppercase;
+  text-wrap: balance;
+  text-shadow: 0 0 10px #fbf8f3;
+}
+
+.oya-hero-foot {
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  bottom: max(1.2rem, 4svh);
+  display: grid;
+  justify-items: center;
+  width: min(28rem, 90vw);
+  translate: -50% 0;
+  text-align: center;
+  text-shadow: 0 0 12px #fbf8f3, 0 0 4px #fbf8f3;
+}
+
+.oya-hero-foot p {
+  margin: 0;
+}
+
+.oya-hero-date {
+  font-size: 0.82rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.oya-hero-place {
+  color: #9b6f66;
+  font-family: 'Italianno', cursive;
+  font-size: 2.1rem;
+  line-height: 1.1;
+}
+
+@media (min-aspect-ratio: 5/4) {
+  .oya-hero-kicker {
+    top: 7svh;
+    left: 4vw;
+    width: min(18rem, 24vw);
+    translate: none;
+    text-align: left;
+  }
+
+  .oya-hero-foot {
+    left: auto;
+    right: 4vw;
+    bottom: 7svh;
+    width: min(20rem, 24vw);
+    translate: none;
+    justify-items: end;
+    text-align: right;
+  }
+}
+
+/* ------------------------------------------------- section language */
+.theme-oya .inv-section {
+  background: transparent;
+}
+
+.theme-oya .inv-section:nth-of-type(even) {
+  background: rgb(251 248 243 / 0.55);
+}
+
+.theme-oya .inv-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 24px;
+  background: var(--oya-edge) center top / 60px 24px repeat-x;
+}
+
+.theme-oya .inv-kicker {
+  color: #a3726a;
+}
+
+.theme-oya .inv-title {
+  color: #5d4e47;
+  letter-spacing: 0.02em;
+}
+
+.theme-oya .inv-ornament {
+  color: #b4a096;
+}
+
+.theme-oya .inv-ornament svg {
+  width: min(240px, 66vw);
+}
+
+.theme-oya .inv-lead {
+  font-family: var(--inv-body);
+  font-style: italic;
+  font-weight: 500;
+  font-size: clamp(1.4rem, 4.6vw, 1.9rem);
+}
+
+/* welcome on a handkerchief */
+.theme-oya .inv-welcome .inv-narrow {
+  position: relative;
+  padding: 1.8rem 1.4rem;
+  border: 14px solid transparent;
+  border-image: var(--oya-hankie) 14 fill round;
+  filter: drop-shadow(0 10px 16px rgb(107 91 83 / 0.14));
+}
+
+.theme-oya .inv-welcome .inv-narrow::after,
+.theme-oya .inv-schedule-list li::after {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border: 1.5px dashed rgb(199 169 160 / 0.85);
+  pointer-events: none;
+}
+
+/* countdown in embroidery hoops (kasnak) */
+.theme-oya .inv-countdown {
+  gap: clamp(0.9rem, 4vw, 1.8rem);
+  max-width: 32rem;
+}
+
+.theme-oya .inv-countdown-cell {
+  position: relative;
+  aspect-ratio: 1;
+  align-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background:
+    repeating-linear-gradient(0deg, rgb(107 91 83 / 0.05) 0 1px, transparent 1px 3px),
+    repeating-linear-gradient(90deg, rgb(255 255 255 / 0.5) 0 1px, transparent 1px 3px),
+    radial-gradient(circle at 40% 35%, #fffdf8, #f1e8dc);
+  box-shadow:
+    inset 0 0 0 1px rgb(107 91 83 / 0.12),
+    0 0 0 4px #e2c9a2,
+    0 0 0 5px #b8956a,
+    0 0 0 7px #ead7b8,
+    0 12px 18px -8px rgb(107 91 83 / 0.45);
+}
+
+.theme-oya .inv-countdown-cell::after {
+  content: '';
+  position: absolute;
+  top: -11px;
+  left: 50%;
+  width: 10px;
+  height: 7px;
+  margin-left: -5px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #8a6c3a, #e9d29a, #8a6c3a);
+}
+
+.theme-oya .inv-countdown-value {
+  color: #5d4e47;
+  font-size: clamp(1.4rem, 6vw, 2.5rem);
+}
+
+.theme-oya .inv-countdown-label {
+  color: #a3726a;
+  font-size: 0.58rem;
+  letter-spacing: 0.12em;
+}
+
+/* story — a running stitch with little rosettes */
+.theme-oya .inv-timeline li {
+  position: relative;
+  border-left: 1.5px dashed #c7a9a0;
+}
+
+.theme-oya .inv-timeline li::before {
+  content: '';
+  position: absolute;
+  top: 0.45rem;
+  left: -7px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #c7a9a0;
+  box-shadow: 0 0 0 3px #f6f0e7, 0 0 0 4px #c7a9a0;
+}
+
+.theme-oya .inv-timeline-when {
+  color: #a3726a;
+}
+
+.theme-oya .inv-timeline h3,
+.theme-oya .inv-schedule-list h3 {
+  font-family: var(--inv-display);
+  font-weight: 400;
+  font-size: 1.45rem;
+  color: #5d4e47;
+}
+
+/* schedule — lace-edged handkerchief cards */
+.theme-oya .inv-schedule-list {
+  display: grid;
+  gap: 1.7rem;
+  max-width: 54rem;
+}
+
+.theme-oya .inv-schedule-list li {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+  gap: 0.35rem;
+  padding: 1.3rem 1.1rem 1.5rem;
+  border: 14px solid transparent;
+  border-image: var(--oya-hankie) 14 fill round;
+  text-align: center;
+  filter: drop-shadow(0 10px 14px rgb(107 91 83 / 0.16));
+  rotate: -0.8deg;
+}
+
+.theme-oya .inv-schedule-list li:nth-child(even) {
+  rotate: 1deg;
+}
+
+.theme-oya .inv-schedule-time {
+  padding: 0;
+  color: #a3726a;
+  font-family: var(--inv-display);
+  font-size: 1.7rem;
+  letter-spacing: 0.04em;
+}
+
+.theme-oya .inv-schedule-list p {
+  color: var(--inv-muted);
+}
+
+@media (min-width: 720px) {
+  .theme-oya .inv-schedule-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .theme-oya .inv-schedule-list li:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+    justify-self: center;
+    width: calc(50% - 0.85rem);
+  }
+}
+
+/* venue */
+.theme-oya .inv-venue-address {
+  font-family: var(--inv-display);
+  color: #5d4e47;
+}
+
+.theme-oya .inv-map {
+  border: 14px solid transparent;
+  border-image: var(--oya-hankie) 14 fill round;
+  border-radius: 0;
+  filter: drop-shadow(0 10px 16px rgb(107 91 83 / 0.16));
+}
+
+.theme-oya .inv-map iframe {
+  filter: grayscale(0.55) sepia(0.25) brightness(1.04);
+}
+
+/* dress code — thread skeins */
+.theme-oya .inv-swatches {
+  gap: 1rem;
+}
+
+.theme-oya .inv-swatches li {
+  width: 46px;
+  height: 46px;
+  outline: 1.5px dashed rgb(107 91 83 / 0.35);
+  outline-offset: 4px;
+  box-shadow: inset 0 0 0 1px rgb(107 91 83 / 0.15), inset 0 -10px 16px rgb(107 91 83 / 0.12);
+}
+
+.theme-oya .inv-iban code {
+  border: 1.5px dashed #c7a9a0;
+  background: rgb(255 253 248 / 0.7);
+}
+
+/* rsvp — the frame is stitched around the form as it comes into view */
+.theme-oya .inv-rsvp-section .inv-narrow {
+  position: relative;
+  padding: 2.2rem 1.5rem 2rem;
+  background: rgb(255 253 248 / 0.88);
+  box-shadow: 0 18px 40px -24px rgb(107 91 83 / 0.5);
+}
+
+.theme-oya .inv-rsvp-section .inv-narrow::before {
+  content: '';
+  position: absolute;
+  inset: 10px;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(90deg, var(--oya-stitch) 0 8px, transparent 8px 13px) left top / var(--oya-w1) 2px no-repeat,
+    repeating-linear-gradient(180deg, var(--oya-stitch) 0 8px, transparent 8px 13px) right top / 2px var(--oya-h1) no-repeat,
+    repeating-linear-gradient(270deg, var(--oya-stitch) 0 8px, transparent 8px 13px) right bottom / var(--oya-w2) 2px no-repeat,
+    repeating-linear-gradient(0deg, var(--oya-stitch) 0 8px, transparent 8px 13px) left bottom / 2px var(--oya-h2) no-repeat;
+}
+
+.theme-oya.inv-animate .inv-rsvp-section .inv-narrow:not([data-shown])::before {
+  --oya-w1: 0%;
+  --oya-h1: 0%;
+  --oya-w2: 0%;
+  --oya-h2: 0%;
+}
+
+.theme-oya.inv-animate .inv-rsvp-section .inv-narrow[data-shown]::before {
+  animation: oya-stitch 2.6s cubic-bezier(0.45, 0, 0.55, 1) both;
+}
+
+@keyframes oya-stitch {
+  0% { --oya-w1: 0%; --oya-h1: 0%; --oya-w2: 0%; --oya-h2: 0%; }
+  25% { --oya-w1: 100%; --oya-h1: 0%; --oya-w2: 0%; --oya-h2: 0%; }
+  50% { --oya-w1: 100%; --oya-h1: 100%; --oya-w2: 0%; --oya-h2: 0%; }
+  75% { --oya-w1: 100%; --oya-h1: 100%; --oya-w2: 100%; --oya-h2: 0%; }
+  100% { --oya-w1: 100%; --oya-h1: 100%; --oya-w2: 100%; --oya-h2: 100%; }
+}
+
+.theme-oya .inv-field input,
+.theme-oya .inv-field select,
+.theme-oya .inv-field textarea {
+  border: 0;
+  border-bottom: 1.5px dashed #c7a9a0;
+  border-radius: 0;
+  background: rgb(244 237 227 / 0.55);
+  font-family: var(--inv-body);
+  font-size: 1.1rem;
+}
+
+.theme-oya .inv-field input:focus,
+.theme-oya .inv-field select:focus,
+.theme-oya .inv-field textarea:focus {
+  border-bottom-style: solid;
+  border-bottom-color: #a3726a;
+}
+
+.theme-oya .inv-button {
+  border-color: #a3726a;
+  background: #a3726a;
+  outline: 1.5px dashed rgb(255 253 248 / 0.85);
+  outline-offset: -6px;
+  font-family: var(--inv-body);
+  font-weight: 600;
+}
+
+.theme-oya .inv-button:hover {
+  outline-color: #a3726a;
+}
+
+.theme-oya .inv-rsvp-thanks {
+  font-family: var(--inv-body);
+  font-style: italic;
+}
+
+/* footer */
+.theme-oya .inv-footer-names {
+  color: #8f6a62 !important;
+  font-size: clamp(3rem, 11vw, 4.6rem);
+}
+
+.theme-oya .inv-lang {
+  background: rgb(255 253 248 / 0.85);
+}

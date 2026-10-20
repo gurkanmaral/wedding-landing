@@ -1,0 +1,644 @@
+/* Snow Globe — a winter wedding sealed in glass: night blue, snow, frost, berry red and gold.
+   Sections are frosted glass over a slow snowfall; the day is an advent calendar. */
+
+.theme-snow-globe {
+  --inv-bg: #0f2a44;
+  --inv-surface: rgb(221 231 240 / 0.08);
+  --inv-alt: #0b2238;
+  --inv-ink: #eef3f8;
+  --inv-muted: #a9bfd2;
+  --inv-accent: #d4af37;
+  --inv-accent-ink: #0f2a44;
+  --inv-line: rgb(221 231 240 / 0.22);
+  --inv-display: 'Cinzel', 'Cormorant Garamond', Georgia, serif;
+  --inv-script: 'Great Vibes', cursive;
+  --inv-body: 'Jost', system-ui, sans-serif;
+  --inv-radius: 14px;
+  --sng-frost: linear-gradient(160deg, rgb(255 255 255 / 0.13), rgb(255 255 255 / 0.04) 55%, rgb(159 184 204 / 0.08));
+  --sng-berry: #c0392b;
+  --sng-gold: linear-gradient(180deg, #fff0b6 0%, #d4af37 40%, #a77a24 70%, #f0d27a 100%);
+
+  background:
+    radial-gradient(120% 50% at 50% 0%, #1d3a5c 0%, transparent 60%),
+    linear-gradient(180deg, #0f2a44, #081726);
+}
+
+/* a slow snowfall behind every section */
+.theme-snow-globe::before {
+  content: '';
+  position: fixed;
+  inset: -100% 0 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(1.6px 1.6px at 12% 18%, rgb(255 255 255 / 0.7), transparent 2px),
+    radial-gradient(1.2px 1.2px at 32% 64%, rgb(255 255 255 / 0.55), transparent 2px),
+    radial-gradient(2.2px 2.2px at 54% 32%, rgb(255 255 255 / 0.6), transparent 3px),
+    radial-gradient(1.4px 1.4px at 71% 82%, rgb(255 255 255 / 0.5), transparent 2px),
+    radial-gradient(2px 2px at 88% 46%, rgb(255 255 255 / 0.65), transparent 3px),
+    radial-gradient(1px 1px at 44% 92%, rgb(255 255 255 / 0.5), transparent 2px);
+  background-size: 320px 420px;
+  animation: sng-fall 38s linear infinite;
+  opacity: 0.55;
+}
+
+@keyframes sng-fall {
+  from { transform: translateY(0); }
+  to { transform: translateY(50%); }
+}
+
+.theme-snow-globe .inv-footer {
+  z-index: 1;
+}
+
+.theme-snow-globe .inv-lang {
+  background: rgb(15 42 68 / 0.6);
+  box-shadow: inset 0 0 0 1px rgb(221 231 240 / 0.2);
+}
+
+.theme-snow-globe .inv-lang button[aria-pressed='true'] {
+  background: var(--sng-gold);
+}
+
+/* ---------------------------------------------------------------- hero */
+
+.sng-hero {
+  position: relative;
+  display: grid;
+  align-content: start;
+  justify-items: center;
+  min-height: 100svh;
+  padding: clamp(4.25rem, 10svh, 7rem) 1.25rem 0;
+  overflow: hidden;
+  background: #0f2a44;
+  color: #f4f8fc;
+  text-align: center;
+}
+
+.sng-art {
+  position: absolute;
+  inset: 0;
+}
+
+.sng-hero-veil {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 55%;
+  background: radial-gradient(70% 60% at 50% 25%, rgb(6 17 31 / 0.55), rgb(6 17 31 / 0) 75%);
+  pointer-events: none;
+}
+
+.sng-hero-copy {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  justify-items: center;
+  gap: 0.4rem;
+  text-shadow: 0 2px 18px rgb(6 17 31 / 0.8), 0 1px 2px rgb(6 17 31 / 0.6);
+}
+
+.sng-eyebrow {
+  margin: 0 0 0.6rem;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-style: italic;
+  font-size: clamp(1.05rem, 3.8vw, 1.3rem);
+  color: #dde7f0;
+}
+
+.sng-names {
+  display: grid;
+  margin: 0;
+  font-family: 'Cinzel', Georgia, serif;
+  font-weight: 500;
+  font-size: clamp(2.7rem, 12.5vw, 6rem);
+  line-height: 1;
+  letter-spacing: 0.06em;
+}
+
+.sng-amp {
+  font-family: 'Great Vibes', cursive;
+  font-size: 0.78em;
+  line-height: 1;
+  letter-spacing: 0;
+  background: var(--sng-gold);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: none;
+  filter: drop-shadow(0 2px 6px rgb(6 17 31 / 0.6));
+}
+
+.sng-date {
+  margin: 1.1rem 0 0;
+  font-size: 0.82rem;
+  font-weight: 500;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: #f0d27a;
+}
+
+.sng-place {
+  margin: 0;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 1.25rem;
+  font-style: italic;
+}
+
+@media (min-aspect-ratio: 1 / 1) {
+  .sng-names {
+    display: block;
+  }
+
+  .sng-amp {
+    margin: 0 0.2em;
+  }
+}
+
+.sng-weather {
+  position: absolute;
+  z-index: 3;
+  left: 50%;
+  bottom: max(1.25rem, env(safe-area-inset-bottom));
+  display: grid;
+  grid-template-columns: auto auto;
+  grid-template-areas: 'icon label' 'icon temp' 'note note';
+  align-items: center;
+  column-gap: 0.75rem;
+  padding: 0.75rem 1.1rem 0.8rem;
+  transform: translateX(-50%);
+  border: 1px solid rgb(221 231 240 / 0.35);
+  border-radius: 16px;
+  background: linear-gradient(160deg, rgb(255 255 255 / 0.22), rgb(221 231 240 / 0.08));
+  -webkit-backdrop-filter: blur(10px) saturate(1.2);
+  backdrop-filter: blur(10px) saturate(1.2);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.35), 0 12px 30px -12px rgb(6 17 31 / 0.7);
+  color: #f4f8fc;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.sng-weather-icon {
+  grid-area: icon;
+  width: 2.1rem;
+  height: 2.1rem;
+  color: #dde7f0;
+}
+
+.sng-weather-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.sng-weather-label {
+  grid-area: label;
+  font-size: 0.68rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #c9d8e6;
+}
+
+.sng-weather-temp {
+  grid-area: temp;
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: 1.25rem;
+  line-height: 1.1;
+}
+
+.sng-weather-note {
+  grid-area: note;
+  margin-top: 0.35rem;
+  padding-top: 0.35rem;
+  border-top: 1px solid rgb(221 231 240 / 0.2);
+  font-size: 0.74rem;
+  color: #c9d8e6;
+}
+
+@media (min-aspect-ratio: 1 / 1) {
+  .sng-weather {
+    left: auto;
+    right: 1.5rem;
+    transform: none;
+  }
+}
+
+/* ------------------------------------------------------------ sections */
+
+.theme-snow-globe .inv-section {
+  z-index: 1;
+}
+
+.theme-snow-globe .inv-section:nth-of-type(even) {
+  background:
+    radial-gradient(90% 60% at 50% 0%, rgb(159 184 204 / 0.1), transparent 70%),
+    rgb(8 23 38 / 0.55);
+}
+
+.theme-snow-globe .inv-kicker {
+  color: #f0d27a;
+  font-weight: 500;
+}
+
+.theme-snow-globe .inv-title {
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-shadow: 0 2px 22px rgb(159 184 204 / 0.25);
+}
+
+.theme-snow-globe .inv-ornament {
+  color: #d4af37;
+}
+
+/* frosted glass, shared by every card on the page */
+.theme-snow-globe .inv-welcome .inv-narrow,
+.theme-snow-globe .inv-countdown-cell,
+.theme-snow-globe .inv-timeline li,
+.theme-snow-globe .inv-schedule-list li,
+.theme-snow-globe .inv-venue-copy,
+.theme-snow-globe .inv-dresscode .inv-narrow,
+.theme-snow-globe .inv-gifts .inv-narrow,
+.theme-snow-globe .inv-rsvp-section .inv-narrow {
+  border: 1px solid rgb(221 231 240 / 0.26);
+  border-radius: var(--inv-radius);
+  background:
+    radial-gradient(60% 40% at 0% 0%, rgb(255 255 255 / 0.16), transparent 70%),
+    radial-gradient(50% 35% at 100% 100%, rgb(221 231 240 / 0.12), transparent 70%),
+    var(--sng-frost);
+  -webkit-backdrop-filter: blur(12px) saturate(1.15);
+  backdrop-filter: blur(12px) saturate(1.15);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.28), inset 0 0 22px rgb(221 231 240 / 0.06), 0 20px 40px -26px rgb(0 0 0 / 0.8);
+}
+
+.theme-snow-globe .inv-welcome .inv-narrow,
+.theme-snow-globe .inv-dresscode .inv-narrow,
+.theme-snow-globe .inv-rsvp-section .inv-narrow {
+  padding: clamp(1.75rem, 6vw, 3rem) clamp(1.25rem, 5vw, 2.75rem);
+}
+
+.theme-snow-globe .inv-lead {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-style: italic;
+}
+
+/* countdown: frosted tiles with gilded numerals */
+.theme-snow-globe .inv-countdown-value {
+  font-family: 'Cinzel', Georgia, serif;
+  background: var(--sng-gold);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* story: frosted cards strung on a gold thread */
+.theme-snow-globe .inv-timeline {
+  position: relative;
+  gap: 1.5rem;
+}
+
+.theme-snow-globe .inv-timeline::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 1.4rem;
+  width: 1px;
+  background: linear-gradient(180deg, transparent, #d4af37 12%, #d4af37 88%, transparent);
+}
+
+.theme-snow-globe .inv-timeline li {
+  position: relative;
+  margin-left: 2.6rem;
+  padding: 1.4rem 1.5rem;
+  border-left: 1px solid rgb(221 231 240 / 0.26);
+}
+
+.theme-snow-globe .inv-timeline li::before {
+  content: '';
+  position: absolute;
+  top: 1.75rem;
+  left: -1.55rem;
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #ff8a7a, #c0392b 55%, #5e1510);
+  box-shadow: 0 0 10px rgb(192 57 43 / 0.6);
+}
+
+.theme-snow-globe .inv-timeline-when {
+  justify-self: start;
+  padding: 0.15rem 0.65rem;
+  border-radius: 999px;
+  background: var(--sng-berry);
+  color: #fff4ee;
+  font-weight: 500;
+}
+
+.theme-snow-globe .inv-timeline h3 {
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: 1.35rem;
+  letter-spacing: 0.04em;
+}
+
+/* schedule: an advent calendar — numbered doors swing open as you scroll */
+.theme-snow-globe .inv-schedule-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: 1rem;
+  max-width: 60rem;
+  counter-reset: door;
+  perspective: 1200px;
+}
+
+.theme-snow-globe .inv-schedule-list li {
+  counter-increment: door;
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  gap: 0.4rem;
+  min-height: 11.5rem;
+  padding: 1.25rem 1.25rem 1.4rem;
+  border-bottom: 1px solid rgb(221 231 240 / 0.26);
+}
+
+.theme-snow-globe .inv-schedule-time {
+  padding: 0;
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: 1.6rem;
+  color: #f0d27a;
+}
+
+.theme-snow-globe .inv-schedule-list h3 {
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: 1.2rem;
+  letter-spacing: 0.04em;
+}
+
+.theme-snow-globe .inv-schedule-list p {
+  font-size: 0.95rem;
+}
+
+/* the door */
+.theme-snow-globe .inv-schedule-list li::before {
+  content: counter(door);
+  position: absolute;
+  inset: -1px;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  border-radius: var(--inv-radius);
+  background:
+    radial-gradient(circle at 50% 50%, transparent 0 2.6rem, rgb(212 175 55 / 0.8) 2.65rem 2.75rem, transparent 2.8rem),
+    linear-gradient(90deg, rgb(0 0 0 / 0.18), transparent 12%, transparent 88%, rgb(0 0 0 / 0.28)),
+    radial-gradient(120% 90% at 30% 20%, #d4483a, #a3302a 55%, #6e1c17);
+  box-shadow: inset 0 0 0 4px #7a1e18, inset 0 0 0 5px rgb(240 210 122 / 0.75), inset 0 0 0 9px rgb(0 0 0 / 0.12);
+  color: #f0d27a;
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: 2.8rem;
+  text-shadow: 0 2px 0 #5e1510, 0 0 14px rgb(240 210 122 / 0.4);
+  transform-origin: 0 50%;
+  backface-visibility: hidden;
+  transition: transform 1.3s cubic-bezier(0.55, 0, 0.2, 1), opacity 1.3s ease;
+}
+
+.theme-snow-globe .inv-schedule-list li:nth-child(3n + 2)::before {
+  background:
+    radial-gradient(circle at 50% 50%, transparent 0 2.6rem, rgb(212 175 55 / 0.8) 2.65rem 2.75rem, transparent 2.8rem),
+    linear-gradient(90deg, rgb(0 0 0 / 0.18), transparent 12%, transparent 88%, rgb(0 0 0 / 0.28)),
+    radial-gradient(120% 90% at 30% 20%, #2b5579, #173a5c 55%, #0b2238);
+  box-shadow: inset 0 0 0 4px #0b1e33, inset 0 0 0 5px rgb(240 210 122 / 0.75), inset 0 0 0 9px rgb(0 0 0 / 0.12);
+}
+
+.theme-snow-globe .inv-schedule-list li:nth-child(3n)::before {
+  background:
+    radial-gradient(circle at 50% 50%, transparent 0 2.6rem, rgb(212 175 55 / 0.8) 2.65rem 2.75rem, transparent 2.8rem),
+    linear-gradient(90deg, rgb(0 0 0 / 0.18), transparent 12%, transparent 88%, rgb(0 0 0 / 0.28)),
+    radial-gradient(120% 90% at 30% 20%, #2f6b56, #1d4a3b 55%, #10302a);
+  box-shadow: inset 0 0 0 4px #0d2a22, inset 0 0 0 5px rgb(240 210 122 / 0.75), inset 0 0 0 9px rgb(0 0 0 / 0.12);
+}
+
+/* a little gold knob */
+.theme-snow-globe .inv-schedule-list li::after {
+  content: '';
+  position: absolute;
+  z-index: 3;
+  top: 50%;
+  right: 0.9rem;
+  width: 0.55rem;
+  height: 0.55rem;
+  margin-top: -0.28rem;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff0b6, #d4af37 55%, #6b4a12);
+  transition: opacity 0.4s ease;
+}
+
+.theme-snow-globe .inv-schedule-list li[data-shown]::before {
+  transform: rotateY(-108deg);
+  opacity: 0;
+}
+
+.theme-snow-globe .inv-schedule-list li[data-shown]::after {
+  opacity: 0;
+}
+
+.theme-snow-globe .inv-schedule-list li:nth-child(2)::before { transition-delay: 0.15s; }
+.theme-snow-globe .inv-schedule-list li:nth-child(3)::before { transition-delay: 0.3s; }
+.theme-snow-globe .inv-schedule-list li:nth-child(4)::before { transition-delay: 0.45s; }
+.theme-snow-globe .inv-schedule-list li:nth-child(5)::before { transition-delay: 0.6s; }
+.theme-snow-globe .inv-schedule-list li:nth-child(6)::before { transition-delay: 0.75s; }
+
+/* without scroll animation (reduced motion) the doors are simply open */
+.theme-snow-globe:not(.inv-animate) .inv-schedule-list li::before,
+.theme-snow-globe:not(.inv-animate) .inv-schedule-list li::after {
+  display: none;
+}
+
+/* venue */
+.theme-snow-globe .inv-venue-copy {
+  padding: 1.75rem;
+}
+
+.theme-snow-globe .inv-venue-address {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+}
+
+.theme-snow-globe .inv-map {
+  border: 1px solid rgb(221 231 240 / 0.3);
+  border-radius: var(--inv-radius);
+  box-shadow: 0 0 0 6px rgb(221 231 240 / 0.06), 0 24px 40px -24px rgb(0 0 0 / 0.8);
+}
+
+.theme-snow-globe .inv-map iframe {
+  filter: invert(0.9) hue-rotate(185deg) saturate(0.55) brightness(0.92) contrast(0.95);
+}
+
+/* dress code: swatches as glass baubles with gold caps */
+.theme-snow-globe .inv-swatches {
+  gap: 1.1rem;
+  margin-top: 2.2rem;
+}
+
+.theme-snow-globe .inv-swatches li {
+  position: relative;
+  width: 46px;
+  height: 46px;
+  background-image: radial-gradient(circle at 32% 28%, rgb(255 255 255 / 0.75) 0 8%, rgb(255 255 255 / 0.15) 22%, transparent 45%), radial-gradient(circle at 60% 70%, transparent 40%, rgb(0 0 0 / 0.3));
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.25), 0 8px 16px -8px rgb(0 0 0 / 0.8);
+}
+
+.theme-snow-globe .inv-swatches li::before {
+  content: '';
+  position: absolute;
+  top: -9px;
+  left: 50%;
+  width: 14px;
+  height: 9px;
+  margin-left: -7px;
+  border-radius: 3px 3px 1px 1px;
+  background: var(--sng-gold);
+}
+
+.theme-snow-globe .inv-swatches li::after {
+  content: '';
+  position: absolute;
+  top: -16px;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  margin-left: -4px;
+  border: 1.5px solid #d4af37;
+  border-radius: 50%;
+}
+
+/* gifts: a frosted present tied with a berry-red ribbon */
+.theme-snow-globe .inv-gifts .inv-narrow {
+  position: relative;
+  margin-top: 2rem;
+  padding: 3.5rem clamp(1.5rem, 6vw, 3rem) 2.5rem;
+  background:
+    linear-gradient(90deg, transparent calc(50% - 14px), #b8352a calc(50% - 14px), #d4483a 50%, #a3302a calc(50% + 14px), transparent calc(50% + 14px)),
+    linear-gradient(180deg, transparent 1.6rem, #a3302a 1.6rem, #d4483a 2.1rem, #a3302a 2.6rem, transparent 2.6rem),
+    radial-gradient(60% 40% at 0% 0%, rgb(255 255 255 / 0.16), transparent 70%),
+    var(--sng-frost);
+}
+
+.theme-snow-globe .inv-gifts .inv-narrow > * {
+  position: relative;
+  padding: 0.6rem 0.75rem;
+  border-radius: 10px;
+  background: rgb(11 34 56 / 0.72);
+}
+
+.theme-snow-globe .inv-gifts .inv-narrow::before {
+  content: '';
+  position: absolute;
+  top: -1.4rem;
+  left: 50%;
+  width: 6.4rem;
+  height: 3rem;
+  margin-left: -3.2rem;
+  background:
+    radial-gradient(50% 50% at 25% 55%, #d4483a 0 55%, #7a1e18 56% 62%, transparent 64%),
+    radial-gradient(50% 50% at 75% 55%, #d4483a 0 55%, #7a1e18 56% 62%, transparent 64%),
+    radial-gradient(circle at 50% 62%, #e2574a 0 0.55rem, transparent 0.6rem);
+  filter: drop-shadow(0 4px 6px rgb(0 0 0 / 0.4));
+}
+
+.theme-snow-globe .inv-iban code {
+  border-color: rgb(212 175 55 / 0.6);
+  color: #f0d27a;
+}
+
+/* rsvp */
+.theme-snow-globe .inv-field input,
+.theme-snow-globe .inv-field select,
+.theme-snow-globe .inv-field textarea {
+  border-color: rgb(221 231 240 / 0.3);
+  background: rgb(8 23 38 / 0.55);
+  color: #f4f8fc;
+}
+
+.theme-snow-globe .inv-field select option {
+  background: #0f2a44;
+}
+
+.theme-snow-globe .inv-choice input {
+  accent-color: #d4af37;
+}
+
+.theme-snow-globe .inv-button {
+  border-color: #d4af37;
+  background: var(--sng-gold);
+  color: #0f2a44;
+  font-weight: 500;
+  box-shadow: inset 0 1px 0 rgb(255 248 220 / 0.8), 0 10px 24px -12px rgb(212 175 55 / 0.7);
+}
+
+.theme-snow-globe .inv-button:hover {
+  background: transparent;
+  color: #f0d27a;
+}
+
+.theme-snow-globe .inv-button--ghost {
+  background: transparent;
+  color: #f0d27a;
+  box-shadow: none;
+}
+
+.theme-snow-globe .inv-button--ghost:hover {
+  background: var(--sng-gold);
+  color: #0f2a44;
+}
+
+.theme-snow-globe .inv-link-button {
+  color: #f0d27a;
+}
+
+/* footer */
+.theme-snow-globe .inv-footer {
+  background: radial-gradient(80% 60% at 50% 100%, rgb(212 175 55 / 0.12), transparent 70%);
+}
+
+.theme-snow-globe .inv-footer-names span {
+  color: #d4af37;
+}
+
+@media (max-width: 520px) {
+  .theme-snow-globe .inv-schedule-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.7rem;
+  }
+
+  .theme-snow-globe .inv-schedule-list li {
+    min-height: 12.5rem;
+    padding: 1rem 0.9rem 1.1rem;
+  }
+
+  .theme-snow-globe .inv-schedule-list li:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+    min-height: 9rem;
+  }
+
+  .theme-snow-globe .inv-schedule-time {
+    font-size: 1.3rem;
+  }
+
+  .theme-snow-globe .inv-schedule-list h3 {
+    font-size: 1.02rem;
+  }
+
+  .theme-snow-globe .inv-schedule-list p {
+    font-size: 0.86rem;
+  }
+
+  .theme-snow-globe .inv-timeline li {
+    margin-left: 1.8rem;
+  }
+
+  .theme-snow-globe .inv-timeline li::before {
+    left: -1.3rem;
+  }
+
+  .theme-snow-globe .inv-timeline::before {
+    left: 0.85rem;
+  }
+}

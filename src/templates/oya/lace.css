@@ -1,0 +1,110 @@
+/* Lace medallion on linen — shared by the oya hero and intro. */
+
+.oya-stage {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: #efe6da;
+  pointer-events: none;
+}
+
+.oya-linen {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.oya-light {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(48% 40% at var(--lx, 50%) var(--ly, 42%), rgb(255 251 240 / 0.85), rgb(255 248 232 / 0.25) 45%, transparent 72%),
+    radial-gradient(120% 90% at 50% 50%, transparent 55%, rgb(107 91 83 / 0.16) 100%);
+  mix-blend-mode: screen;
+}
+
+.oya-medallion,
+.oya-center {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: min(112vw, 64svh);
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  container-type: inline-size;
+}
+
+.oya-shadow,
+.oya-lace-wrap {
+  position: absolute;
+  inset: 0;
+  will-change: transform;
+}
+
+/* the shadow is the same lace, in one warm taupe, blurred */
+.oya-shadow {
+  --oya-thread: #6b5b53;
+  --oya-rose: #6b5b53;
+  --oya-sage: #6b5b53;
+  --oya-gold: #6b5b53;
+  --oya-petal: #6b5b53;
+  --oya-petal-edge: #6b5b53;
+  --oya-stitch: transparent;
+  --oya-bead: #6b5b53;
+  opacity: 0.34;
+}
+
+.oya-shadow-inner {
+  position: absolute;
+  inset: 0;
+  filter: blur(2.6px);
+}
+
+.oya-shadow svg,
+.oya-lace-wrap svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.oya-lace-wrap svg {
+  filter: drop-shadow(0 0.7px 0.5px rgb(107 91 83 / 0.55));
+}
+
+.oya-names {
+  position: absolute;
+  inset: 31%;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  margin: 0;
+  color: #5d4e47;
+  font-family: 'Marcellus', Georgia, serif;
+  font-weight: 400;
+  font-size: var(--oya-name-size, 7.5cqi);
+  line-height: 1.08;
+  text-align: center;
+  text-shadow: 0 0 10px #fbf8f3, 0 0 3px #fbf8f3;
+}
+
+.oya-names > span {
+  display: block;
+  white-space: nowrap;
+}
+
+.oya-names .oya-amp {
+  color: #b08a80;
+  font-family: 'Italianno', cursive;
+  font-size: 1.25em;
+  line-height: 0.9;
+}
+
+@media (min-aspect-ratio: 5/4) {
+  .oya-medallion,
+  .oya-center {
+    width: min(76svh, 60vw);
+  }
+}

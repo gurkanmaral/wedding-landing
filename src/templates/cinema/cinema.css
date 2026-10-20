@@ -1,0 +1,690 @@
+/* Cinéma — opening night on 35 mm: black, silver-screen cream, velvet red,
+   brass. Limelight for marquee type, Cormorant for the romance, Josefin for
+   credits, Courier Prime for the typewritten bits. */
+
+.theme-cinema {
+  --inv-bg: #0d0d0d;
+  --inv-surface: #141211;
+  --inv-alt: #110e0d;
+  --inv-ink: #e8dcc2;
+  --inv-muted: #a99d88;
+  --inv-accent: #c9a85c;
+  --inv-accent-ink: #0d0d0d;
+  --inv-line: rgb(201 168 92 / 0.28);
+  --inv-display: 'Limelight', 'Cormorant Garamond', Georgia, serif;
+  --inv-script: 'Cormorant Garamond', Georgia, serif;
+  --inv-body: 'Josefin Sans', system-ui, sans-serif;
+  --inv-radius: 2px;
+  --cn-red: #b5121b;
+  --cn-brass: #c9a85c;
+  --cn-cream: #e8dcc2;
+  --cn-serif: 'Cormorant Garamond', Georgia, serif;
+  --cn-type: 'Courier Prime', 'Courier New', monospace;
+
+  font-size: 1.05rem;
+  counter-reset: cn-reel;
+}
+
+/* a whisper of film grain over the whole page */
+.theme-cinema::before {
+  content: '';
+  position: fixed;
+  inset: -50%;
+  z-index: 30;
+  pointer-events: none;
+  opacity: 0.06;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  animation: cn-grain 0.5s steps(4) infinite;
+}
+
+@keyframes cn-grain {
+  0% { transform: translate(0, 0); }
+  25% { transform: translate(-3%, 2%); }
+  50% { transform: translate(2%, -3%); }
+  75% { transform: translate(-1%, -1%); }
+  100% { transform: translate(3%, 1%); }
+}
+
+.cn-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------------------- hero */
+
+.cn-hero {
+  position: relative;
+  height: 100svh;
+  min-height: 560px;
+  overflow: hidden;
+  background: #0d0d0d;
+  color: var(--cn-cream);
+  text-align: center;
+}
+
+.cn-hero-stage {
+  position: absolute;
+  inset: 0;
+}
+
+.cn-hero-kicker,
+.cn-hero-date,
+.cn-hero-place {
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  margin: 0;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  text-shadow: 0 2px 14px rgb(0 0 0 / 0.8);
+}
+
+.cn-hero-kicker {
+  top: calc(var(--cn-stage-y, 62svh) + 1.6rem);
+  font: 600 0.72rem/1 var(--inv-body);
+  letter-spacing: 0.42em;
+  text-transform: uppercase;
+  color: var(--cn-brass);
+}
+
+.cn-hero-kicker::before,
+.cn-hero-kicker::after {
+  content: '✦';
+  margin: 0 0.9em;
+  color: var(--cn-red);
+  letter-spacing: 0;
+}
+
+/* exactly where the intro's date caption was */
+.cn-hero-date {
+  bottom: max(16svh, 6rem);
+  font-family: 'Limelight', Georgia, serif;
+  font-size: clamp(1rem, 3vw, 1.35rem);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  opacity: 0.92;
+}
+
+.cn-hero-place {
+  bottom: calc(max(16svh, 6rem) - 2.2rem);
+  font: italic 500 clamp(1.05rem, 3.4vw, 1.3rem)/1.2 var(--cn-serif);
+  color: var(--inv-muted);
+}
+
+@media (min-aspect-ratio: 9 / 10) {
+  .cn-hero-kicker {
+    display: none;
+  }
+}
+
+/* -------------------------------------------------------- chrome */
+
+.theme-cinema .inv-lang {
+  background: rgb(13 13 13 / 0.75);
+  box-shadow: inset 0 0 0 1px rgb(201 168 92 / 0.6);
+}
+
+.theme-cinema .inv-lang button {
+  color: var(--cn-cream);
+  font-family: var(--inv-body);
+}
+
+.theme-cinema .inv-lang button[aria-pressed='true'] {
+  background: var(--cn-brass);
+  color: #0d0d0d;
+}
+
+.theme-cinema .inv-button {
+  min-height: 50px;
+  border: 1px solid var(--cn-brass);
+  background: linear-gradient(180deg, #c41a24, #8c0c14);
+  color: var(--cn-cream);
+  font: 600 0.8rem/1 var(--inv-body);
+  letter-spacing: 0.24em;
+  box-shadow: inset 0 0 0 3px #0d0d0d, inset 0 0 0 4px rgb(201 168 92 / 0.5);
+}
+
+.theme-cinema .inv-button:hover {
+  background: var(--cn-brass);
+  color: #0d0d0d;
+}
+
+.theme-cinema .inv-button--ghost {
+  background: transparent;
+  color: var(--cn-brass);
+}
+
+.theme-cinema .inv-link-button {
+  color: var(--cn-brass);
+  font-family: var(--cn-type);
+}
+
+/* --------------------------------------------------------- sections */
+
+.theme-cinema .inv-section {
+  background: #0d0d0d;
+}
+
+.theme-cinema .inv-section:nth-of-type(even) {
+  background:
+    radial-gradient(90% 60% at 50% 0%, rgb(201 168 92 / 0.07), transparent 70%),
+    #110e0d;
+}
+
+.theme-cinema .inv-kicker {
+  color: var(--cn-brass);
+  font-family: var(--inv-body);
+  font-weight: 600;
+  letter-spacing: 0.34em;
+}
+
+.theme-cinema .inv-title {
+  font-size: clamp(2.3rem, 9vw, 4.4rem);
+  line-height: 1.08;
+  color: var(--cn-cream);
+  text-shadow: 0 0 24px rgb(255 240 210 / 0.18);
+}
+
+.theme-cinema .inv-ornament {
+  color: var(--cn-brass);
+}
+
+.theme-cinema .inv-lead {
+  font-family: var(--cn-serif);
+  font-style: italic;
+  font-size: clamp(1.5rem, 4.6vw, 2.15rem);
+}
+
+.theme-cinema .inv-welcome .inv-narrow::before {
+  content: 'A Love Story';
+  display: block;
+  margin-bottom: 1.2rem;
+  font: 400 0.95rem/1 var(--inv-display);
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--cn-red);
+}
+
+.theme-cinema:lang(tr) .inv-welcome .inv-narrow::before {
+  content: 'Bir Aşk Hikâyesi';
+}
+
+/* countdown: four frames of 35 mm film */
+.theme-cinema .inv-countdown-section {
+  background:
+    repeating-linear-gradient(90deg, rgb(0 0 0 / 0.35) 0 2px, transparent 2px 46px),
+    linear-gradient(180deg, #2a0306, #5a0a10 50%, #2a0306);
+}
+
+.theme-cinema .inv-countdown {
+  position: relative;
+  gap: 0;
+  max-width: 40rem;
+  padding: 26px 6px;
+  background:
+    radial-gradient(ellipse 4px 3px at 50% 50%, #d9cdb3 98%, transparent) 0 8px / 22px 10px repeat-x,
+    radial-gradient(ellipse 4px 3px at 50% 50%, #d9cdb3 98%, transparent) 0 calc(100% - 8px) / 22px 10px repeat-x,
+    #080707;
+  box-shadow: 0 18px 40px rgb(0 0 0 / 0.55);
+  transform: rotate(-1.2deg);
+}
+
+.theme-cinema .inv-countdown-cell {
+  position: relative;
+  gap: 0.4rem;
+  margin: 0 3px;
+  padding: clamp(1rem, 4vw, 1.8rem) 0.2rem;
+  border: 0;
+  border-radius: 3px;
+  background: radial-gradient(120% 100% at 50% 45%, #3b352d, #1a1714 70%, #0e0c0b);
+  box-shadow: inset 0 0 18px rgb(0 0 0 / 0.75);
+  animation: cn-flicker 3.2s steps(1, end) infinite;
+}
+
+.theme-cinema .inv-countdown-cell:nth-child(2) { animation-delay: -0.9s; }
+.theme-cinema .inv-countdown-cell:nth-child(3) { animation-delay: -1.7s; }
+.theme-cinema .inv-countdown-cell:nth-child(4) { animation-delay: -2.4s; }
+
+@keyframes cn-flicker {
+  0%, 100% { filter: brightness(1); }
+  12% { filter: brightness(0.86); }
+  14% { filter: brightness(1.04); }
+  57% { filter: brightness(0.93); }
+  59% { filter: brightness(1); }
+}
+
+.theme-cinema .inv-countdown-value {
+  font-family: var(--inv-display);
+  font-size: clamp(2rem, 9vw, 3.6rem);
+  color: var(--cn-cream);
+  text-shadow: 0 0 18px rgb(255 240 210 / 0.25);
+}
+
+.theme-cinema .inv-countdown-label {
+  font: 600 0.6rem/1 var(--inv-body);
+  letter-spacing: 0.22em;
+  color: var(--cn-brass);
+}
+
+.theme-cinema .inv-countdown-today {
+  font-family: var(--inv-display);
+}
+
+.theme-cinema .inv-countdown-section .inv-kicker {
+  color: var(--cn-cream);
+}
+
+/* story: three reels */
+.theme-cinema .inv-timeline {
+  gap: 1.5rem;
+}
+
+.theme-cinema .inv-timeline li {
+  counter-increment: cn-reel;
+  gap: 0.5rem;
+  padding: 2.2rem 1.4rem 1.6rem;
+  border: 1px solid var(--inv-line);
+  background: linear-gradient(180deg, #171413, #0f0d0c);
+  position: relative;
+  overflow: hidden;
+}
+
+/* clapperboard stripes */
+.theme-cinema .inv-timeline li::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 12px;
+  background: repeating-linear-gradient(-55deg, var(--cn-cream) 0 12px, #0d0d0d 12px 24px);
+  opacity: 0.85;
+}
+
+.theme-cinema .inv-timeline-when {
+  font-family: var(--cn-type);
+  letter-spacing: 0.12em;
+  color: var(--cn-brass);
+}
+
+.theme-cinema .inv-timeline-when::before {
+  content: 'Reel ' counter(cn-reel) ' · ';
+  color: var(--cn-red);
+}
+
+.theme-cinema:lang(tr) .inv-timeline-when::before {
+  content: 'Makara ' counter(cn-reel) ' · ';
+}
+
+.theme-cinema .inv-timeline h3 {
+  font-family: var(--inv-display);
+  font-weight: 400;
+  font-size: 1.55rem;
+}
+
+.theme-cinema .inv-timeline p {
+  font-family: var(--cn-serif);
+  font-size: 1.2rem;
+  line-height: 1.5;
+}
+
+/* schedule: rolling credits */
+.theme-cinema .inv-schedule {
+  overflow: hidden;
+  background: #070606;
+}
+
+.theme-cinema .inv-schedule-list {
+  max-width: 34rem;
+  text-align: center;
+  -webkit-mask-image: linear-gradient(transparent, #000 9%, #000 91%, transparent);
+  mask-image: linear-gradient(transparent, #000 9%, #000 91%, transparent);
+  padding: 1.5rem 0;
+}
+
+.theme-cinema .inv-schedule-list li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+  gap: 0.35rem;
+  padding: 1.6rem 0;
+  border: 0;
+}
+
+.theme-cinema .inv-schedule-time {
+  padding: 0;
+  font: 400 0.85rem/1 var(--cn-type);
+  letter-spacing: 0.3em;
+  color: var(--cn-brass);
+}
+
+.theme-cinema .inv-schedule-list h3 {
+  font-family: var(--inv-body);
+  font-weight: 600;
+  font-size: clamp(1.15rem, 4vw, 1.5rem);
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: var(--cn-cream);
+}
+
+.theme-cinema .inv-schedule-list p {
+  max-width: 30ch;
+  margin: 0.2rem auto 0;
+  font-family: var(--cn-serif);
+  font-style: italic;
+  font-size: 1.15rem;
+  line-height: 1.45;
+}
+
+.theme-cinema .inv-schedule-list li + li::before {
+  content: '';
+  display: block;
+  width: 2.5rem;
+  height: 1px;
+  margin: 0 auto 1.4rem;
+  background: var(--inv-line);
+}
+
+/* the credits drift upward a little faster than you scroll */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .theme-cinema .inv-schedule-list {
+      animation: cn-roll linear both;
+      animation-timeline: view();
+      animation-range: cover 0% cover 100%;
+    }
+
+    @keyframes cn-roll {
+      from { transform: translateY(14vh); }
+      to { transform: translateY(-14vh); }
+    }
+  }
+}
+
+/* venue: a marquee lit with bulbs */
+.theme-cinema .inv-venue-copy {
+  padding: 1.6rem 1.4rem;
+  border: 6px dotted #f3d27a;
+  border-radius: 6px;
+  background: #0f0c0b;
+  box-shadow:
+    0 0 26px rgb(255 200 110 / 0.22),
+    inset 0 0 0 4px #0f0c0b,
+    inset 0 0 0 5px rgb(201 168 92 / 0.6);
+}
+
+.theme-cinema .inv-venue-copy::before {
+  content: 'Now showing at';
+  font: 600 0.7rem/1 var(--inv-body);
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  color: var(--cn-red);
+}
+
+.theme-cinema:lang(tr) .inv-venue-copy::before {
+  content: 'Gösterim yeri';
+}
+
+.theme-cinema .inv-venue-address {
+  font-family: var(--inv-display);
+  font-size: 1.3rem;
+  color: var(--cn-cream);
+}
+
+.theme-cinema .inv-map {
+  border: 1px solid rgb(201 168 92 / 0.5);
+  box-shadow: 0 0 0 6px #0a0909, 0 0 0 7px rgb(201 168 92 / 0.25);
+}
+
+.theme-cinema .inv-map iframe {
+  filter: grayscale(1) sepia(0.35) contrast(1.1) brightness(0.85);
+}
+
+/* dress code: reels of colour */
+.theme-cinema .inv-swatches {
+  gap: 1rem;
+}
+
+.theme-cinema .inv-swatches li {
+  width: 48px;
+  height: 48px;
+  box-shadow: 0 0 0 3px #0d0d0d, 0 0 0 4px var(--cn-brass), inset 0 0 0 6px rgb(0 0 0 / 0.25);
+}
+
+/* gifts */
+.theme-cinema .inv-iban code {
+  border-color: rgb(201 168 92 / 0.5);
+  font-family: var(--cn-type);
+  color: var(--cn-cream);
+}
+
+/* ---------------------------------------- RSVP: an admission ticket */
+
+.theme-cinema .inv-rsvp-section {
+  background:
+    repeating-linear-gradient(90deg, rgb(0 0 0 / 0.35) 0 2px, transparent 2px 52px),
+    linear-gradient(180deg, #1c0204, #4a070d 50%, #1c0204);
+}
+
+.theme-cinema .inv-rsvp,
+.theme-cinema .inv-rsvp-thanks {
+  --inv-ink: #1c1411;
+  --inv-muted: #5f5145;
+  --inv-surface: transparent;
+  --inv-line: rgb(28 20 17 / 0.4);
+  --inv-accent: #b5121b;
+  --inv-accent-ink: #e8dcc2;
+  --cn-stub: 6.5;
+  --cn-cut: calc(100% - 6.5rem);
+
+  position: relative;
+  color: var(--inv-ink);
+  background:
+    radial-gradient(circle at 0 var(--cn-cut), transparent 13px, #e8dcc2 14px) left / 51% 100% no-repeat,
+    radial-gradient(circle at 100% var(--cn-cut), transparent 13px, #e8dcc2 14px) right / 51% 100% no-repeat;
+  filter: drop-shadow(0 18px 26px rgb(0 0 0 / 0.5));
+}
+
+.theme-cinema .inv-rsvp {
+  gap: 1rem;
+  padding: 3.6rem clamp(1.2rem, 5vw, 2.4rem) 1.6rem;
+}
+
+/* printed border, title and serial */
+.theme-cinema .inv-rsvp::before {
+  content: 'Admit One · Opening Night';
+  position: absolute;
+  top: 1.25rem;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font: 400 1rem/1 var(--inv-display);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--cn-red);
+}
+
+.theme-cinema:lang(tr) .inv-rsvp::before {
+  content: 'Davetiye · Gala Gecesi';
+}
+
+.theme-cinema .inv-rsvp::after {
+  content: '';
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  bottom: 6.5rem;
+  border-top: 2px dashed rgb(28 20 17 / 0.35);
+}
+
+.theme-cinema .inv-rsvp-deadline {
+  font-family: var(--cn-type);
+  font-size: 0.85rem;
+  color: var(--inv-muted);
+}
+
+.theme-cinema .inv-rsvp .inv-field,
+.theme-cinema .inv-rsvp .inv-choice legend {
+  font: 600 0.68rem/1.3 var(--inv-body);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--inv-muted);
+}
+
+.theme-cinema .inv-rsvp .inv-field input,
+.theme-cinema .inv-rsvp .inv-field select,
+.theme-cinema .inv-rsvp .inv-field textarea {
+  border: 0;
+  border-bottom: 1px dotted rgb(28 20 17 / 0.55);
+  border-radius: 0;
+  background: transparent;
+  padding-inline: 0.1rem;
+  font: 400 1.05rem/1.4 var(--cn-type);
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: var(--inv-ink);
+}
+
+.theme-cinema .inv-rsvp .inv-field textarea {
+  border: 1px dotted rgb(28 20 17 / 0.45);
+  padding: 0.6rem;
+}
+
+.theme-cinema .inv-rsvp .inv-choice {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.theme-cinema .inv-rsvp .inv-choice legend {
+  grid-column: 1 / -1;
+}
+
+.theme-cinema .inv-rsvp .inv-choice label {
+  justify-content: center;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid rgb(28 20 17 / 0.3);
+  font-family: var(--cn-serif);
+  font-style: italic;
+  font-size: 1.05rem;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.theme-cinema .inv-rsvp .inv-choice label:has(input:checked) {
+  border-color: var(--cn-red);
+  box-shadow: inset 0 0 0 1px var(--cn-red);
+  color: var(--cn-red);
+}
+
+.theme-cinema .inv-rsvp .inv-choice input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.theme-cinema .inv-rsvp .inv-choice label:has(input:focus-visible) {
+  outline: 2px solid var(--cn-red);
+  outline-offset: 2px;
+}
+
+.theme-cinema .inv-rsvp .inv-button {
+  margin-top: 2rem;
+}
+
+/* the half you keep */
+.theme-cinema .inv-rsvp-thanks {
+  --cn-cut: calc(100% - 0px);
+  padding: 3.4rem 1.6rem 2.2rem;
+  background: #e8dcc2;
+  font-family: var(--cn-serif);
+  font-style: italic;
+  font-size: clamp(1.4rem, 4.6vw, 1.8rem);
+  line-height: 1.35;
+  color: var(--inv-ink);
+  animation: cn-kept 0.8s 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.theme-cinema .inv-rsvp-thanks::before {
+  content: 'Admitted';
+  position: absolute;
+  top: 1.2rem;
+  left: 50%;
+  padding: 0.2rem 0.8rem;
+  border: 2px solid var(--cn-red);
+  transform: translateX(-50%) rotate(-4deg);
+  font: 400 0.95rem/1.2 var(--inv-display);
+  font-style: normal;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--cn-red);
+}
+
+.theme-cinema:lang(tr) .inv-rsvp-thanks::before {
+  content: 'Kabul edildi';
+}
+
+.theme-cinema .inv-rsvp-thanks::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -5px;
+  height: 6px;
+  background: radial-gradient(circle at 5px 0, #e8dcc2 4px, transparent 4.5px) 0 0 / 10px 6px repeat-x;
+}
+
+@keyframes cn-kept {
+  from { opacity: 0; transform: translateY(10px) rotate(-1deg); }
+  to { opacity: 1; transform: none; }
+}
+
+/* the torn copies laid over the form while it is replaced */
+.cn-tear {
+  position: absolute;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.theme-cinema .cn-tear > .inv-rsvp {
+  position: absolute;
+  top: 0;
+  left: 0;
+  margin: 0;
+}
+
+/* ---------------------------------------------------------- footer */
+
+.theme-cinema .inv-footer::before {
+  content: 'The End';
+  font: italic 500 clamp(2.4rem, 9vw, 4rem)/1 var(--cn-serif);
+  color: var(--cn-cream);
+}
+
+.theme-cinema:lang(tr) .inv-footer::before {
+  content: 'Son';
+}
+
+.theme-cinema .inv-footer-names {
+  font-family: var(--inv-display);
+  font-size: clamp(1.6rem, 6vw, 2.6rem);
+  letter-spacing: 0.08em;
+  color: var(--cn-brass) !important;
+}
+
+.theme-cinema .inv-footer-names span {
+  color: var(--cn-red);
+}
+
+.theme-cinema .inv-footer-date {
+  font-family: var(--cn-type);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .theme-cinema::before {
+    animation: none;
+  }
+}

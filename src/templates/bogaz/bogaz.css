@@ -1,0 +1,503 @@
+/* Boğaz — a Bosphorus night: midnight navy, lamplight gold, pearl and a
+   touch of ferry-funnel red. Schedule as a vapur departure board, countdown
+   as split-flap tiles, story as ferry stops, RSVP as a boarding pass. */
+
+.theme-bogaz {
+  --inv-bg: #0b1630;
+  --inv-surface: #12224a;
+  --inv-alt: #0e1b3b;
+  --inv-ink: #e9eef5;
+  --inv-muted: #a8b5cc;
+  --inv-accent: #f6c667;
+  --inv-accent-ink: #0b1630;
+  --inv-line: rgb(233 238 245 / 0.14);
+  --inv-display: 'Playfair Display', Georgia, serif;
+  --inv-script: 'Great Vibes', cursive;
+  --inv-body: 'Jost', system-ui, sans-serif;
+  --inv-radius: 3px;
+  --bz-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --bz-red: #b23a48;
+  --bz-board: #060c1b;
+
+  background:
+    radial-gradient(90% 60% at 80% 0%, rgb(31 58 95 / 0.55), transparent 70%),
+    var(--inv-bg);
+  font-weight: 300;
+}
+
+/* ------------------------------------------------------------- hero */
+
+.bz-hero {
+  position: relative;
+  display: grid;
+  align-content: start;
+  justify-items: center;
+  min-height: 100svh;
+  padding: clamp(5rem, 13svh, 8.5rem) 1.25rem 0;
+  overflow: hidden;
+  background: #0b1630;
+  color: #f6e7c8;
+  text-align: center;
+}
+
+.bz-hero-art {
+  position: absolute;
+  inset: 0;
+}
+
+.bz-hero-copy {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  justify-items: center;
+  gap: 0.35rem;
+  text-shadow: 0 2px 28px rgb(3 8 26 / 0.85), 0 1px 3px rgb(3 8 26 / 0.7);
+}
+
+.bz-eyebrow {
+  margin: 0 0 0.9rem;
+  font-family: var(--bz-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: #f6c667;
+}
+
+.bz-names {
+  display: grid;
+  margin: 0;
+  font-family: var(--inv-display);
+  font-style: italic;
+  font-weight: 400;
+  font-size: clamp(3.3rem, 13.5vw, 7.2rem);
+  line-height: 0.95;
+  color: #fbf3e2;
+}
+
+.bz-amp {
+  font-family: var(--inv-script);
+  font-style: normal;
+  font-size: 0.62em;
+  line-height: 1.15;
+  color: #f6c667;
+}
+
+.bz-date {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 1.3rem 0 0;
+  font-family: var(--bz-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.bz-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #f6c667;
+  box-shadow: 0 0 10px #f6c667;
+}
+
+.bz-place {
+  margin: 0;
+  font-family: var(--inv-display);
+  font-style: italic;
+  font-size: 1.25rem;
+  color: #e9eef5;
+}
+
+@media (min-aspect-ratio: 4 / 3) {
+  .bz-hero {
+    padding-top: clamp(3.5rem, 9svh, 6rem);
+  }
+
+  .bz-names {
+    font-size: clamp(3.2rem, 8vw, 6.4rem);
+  }
+}
+
+/* --------------------------------------------------------- sections */
+
+.theme-bogaz .inv-section {
+  padding-block: clamp(4.5rem, 11vw, 7.5rem);
+}
+
+.theme-bogaz .inv-section:nth-of-type(even) {
+  background:
+    radial-gradient(70% 50% at 50% 0%, rgb(246 198 103 / 0.07), transparent 70%),
+    var(--inv-alt);
+}
+
+.theme-bogaz .inv-section::before {
+  /* a hairline horizon with a lamp in the middle between sections */
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: min(36rem, 80%);
+  height: 1px;
+  transform: translateX(-50%);
+  background: linear-gradient(90deg, transparent, rgb(246 198 103 / 0.35), transparent);
+}
+
+.theme-bogaz .inv-kicker {
+  font-family: var(--bz-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.28em;
+}
+
+.theme-bogaz .inv-title {
+  font-style: italic;
+  color: #fbf3e2;
+}
+
+.theme-bogaz .inv-lead {
+  font-style: italic;
+  color: #f2ead9;
+}
+
+.theme-bogaz .inv-welcome .inv-narrow::before {
+  content: '“';
+  display: block;
+  height: 3.2rem;
+  font-family: var(--inv-display);
+  font-size: 5rem;
+  line-height: 1;
+  color: var(--inv-accent);
+}
+
+/* countdown — split-flap tiles */
+.theme-bogaz .inv-countdown-cell {
+  position: relative;
+  padding: 1.1rem 0.25rem 0.8rem;
+  border: 1px solid #1d2c4d;
+  border-radius: 6px;
+  background: linear-gradient(180deg, #111d38 0%, #0a1329 49.5%, #050b1b 50.5%, #0b1530 100%);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.06), 0 10px 24px rgb(0 0 0 / 0.35);
+}
+
+.theme-bogaz .inv-countdown-cell::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(50% - 0.5px);
+  height: 1px;
+  background: rgb(0 0 0 / 0.8);
+  box-shadow: 0 1px 0 rgb(255 255 255 / 0.05);
+}
+
+.theme-bogaz .inv-countdown-value {
+  font-family: var(--bz-mono);
+  font-weight: 500;
+  color: #f6c667;
+  text-shadow: 0 0 14px rgb(246 198 103 / 0.45);
+}
+
+.theme-bogaz .inv-countdown-label {
+  font-family: var(--bz-mono);
+  font-size: 0.62rem;
+  color: var(--inv-muted);
+}
+
+/* story — stops along a ferry route */
+.theme-bogaz .inv-timeline li {
+  position: relative;
+  padding-left: 2rem;
+  border-left: 1px dashed rgb(246 198 103 / 0.4);
+}
+
+.theme-bogaz .inv-timeline li::before {
+  content: '';
+  position: absolute;
+  left: -7px;
+  top: 0.3rem;
+  width: 11px;
+  height: 11px;
+  border: 2px solid var(--inv-accent);
+  border-radius: 50%;
+  background: var(--inv-bg);
+  box-shadow: 0 0 12px rgb(246 198 103 / 0.5);
+}
+
+.theme-bogaz .inv-timeline-when {
+  font-family: var(--bz-mono);
+}
+
+.theme-bogaz .inv-timeline h3 {
+  font-style: italic;
+}
+
+/* schedule — vapur departure board */
+.theme-bogaz .inv-schedule-list {
+  position: relative;
+  max-width: 42rem;
+  padding: 3.4rem clamp(0.9rem, 3vw, 1.75rem) 1.25rem;
+  border: 1px solid #22345a;
+  border-radius: 10px;
+  background:
+    radial-gradient(circle at 14px 14px, #3a4c70 2px, transparent 2.5px),
+    radial-gradient(circle at calc(100% - 14px) 14px, #3a4c70 2px, transparent 2.5px),
+    radial-gradient(circle at 14px calc(100% - 14px), #3a4c70 2px, transparent 2.5px),
+    radial-gradient(circle at calc(100% - 14px) calc(100% - 14px), #3a4c70 2px, transparent 2.5px),
+    repeating-linear-gradient(180deg, rgb(255 255 255 / 0.015) 0 2px, transparent 2px 4px),
+    var(--bz-board);
+  box-shadow: 0 0 0 6px #0f1a33, 0 0 0 7px #2a3d63, 0 30px 60px rgb(0 0 0 / 0.45);
+  counter-reset: sefer;
+}
+
+.theme-bogaz .inv-schedule-list::before {
+  position: absolute;
+  top: 1.1rem;
+  left: clamp(0.9rem, 3vw, 1.75rem);
+  right: clamp(0.9rem, 3vw, 1.75rem);
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid rgb(246 198 103 / 0.3);
+  font-family: var(--bz-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.24em;
+  text-align: left;
+  text-transform: uppercase;
+  color: var(--inv-accent);
+}
+
+.theme-bogaz[lang='tr'] .inv-schedule-list::before {
+  content: 'Kalkış · Sefer · Kandilli iskelesi';
+}
+
+.theme-bogaz[lang='en'] .inv-schedule-list::before {
+  content: 'Departs · Service · Kandilli pier';
+}
+
+.theme-bogaz .inv-schedule-list li {
+  position: relative;
+  grid-template-columns: 5.6rem minmax(0, 1fr) 2.2rem;
+  align-items: start;
+  padding: 1.05rem 0;
+  border-bottom: 1px dashed rgb(233 238 245 / 0.12);
+  counter-increment: sefer;
+}
+
+.theme-bogaz .inv-schedule-list li:last-child {
+  border-bottom: 0;
+}
+
+.theme-bogaz .inv-schedule-list li::after {
+  content: counter(sefer, decimal-leading-zero);
+  justify-self: end;
+  padding-top: 0.45rem;
+  font-family: var(--bz-mono);
+  font-size: 0.7rem;
+  color: rgb(233 238 245 / 0.4);
+}
+
+.theme-bogaz .inv-schedule-time {
+  justify-self: start;
+  padding: 0.35rem 0.5rem;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #121e3a 0 49%, #070d1e 51% 100%);
+  box-shadow: inset 0 0 0 1px #1f2f52;
+  font-family: var(--bz-mono);
+  font-size: 1.15rem;
+  font-weight: 500;
+  line-height: 1.2;
+  color: #f6c667;
+  text-shadow: 0 0 10px rgb(246 198 103 / 0.5);
+}
+
+.theme-bogaz .inv-schedule-list h3 {
+  font-family: var(--bz-mono);
+  font-style: normal;
+  font-weight: 500;
+  font-size: 1rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #e9eef5;
+}
+
+.theme-bogaz .inv-schedule-list p {
+  margin-top: 0.3rem;
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+/* venue — the map seen through a ferry porthole frame, at night */
+.theme-bogaz .inv-map {
+  border: 0;
+  border-radius: 22px;
+  box-shadow: 0 0 0 5px #1a2a4b, 0 0 0 6px rgb(246 198 103 / 0.5), 0 24px 50px rgb(0 0 0 / 0.45);
+}
+
+.theme-bogaz .inv-map iframe {
+  filter: invert(0.92) hue-rotate(185deg) saturate(0.6) brightness(0.95);
+}
+
+.theme-bogaz .inv-venue-address {
+  font-style: italic;
+  color: #fbf3e2;
+}
+
+/* dress code — lantern swatches */
+.theme-bogaz .inv-swatches li {
+  width: 46px;
+  height: 46px;
+  box-shadow: 0 0 0 3px var(--inv-alt), 0 0 0 4px rgb(246 198 103 / 0.45), 0 0 22px rgb(246 198 103 / 0.18);
+}
+
+/* gifts — IBAN on a ferry token */
+.theme-bogaz .inv-iban code {
+  border: 1px solid rgb(246 198 103 / 0.45);
+  border-radius: 999px;
+  padding: 0.7rem 1.3rem;
+  background: rgb(246 198 103 / 0.06);
+  font-family: var(--bz-mono);
+  color: #f6e7c8;
+}
+
+/* rsvp — a boarding pass */
+.theme-bogaz .inv-rsvp {
+  position: relative;
+  gap: 1rem;
+  padding: 4.2rem clamp(1.1rem, 4vw, 2rem) 1.8rem;
+  border-radius: 10px;
+  background:
+    radial-gradient(circle at 0 3.1rem, var(--inv-bg) 9px, transparent 9.5px),
+    radial-gradient(circle at 100% 3.1rem, var(--inv-bg) 9px, transparent 9.5px),
+    #e9eef5;
+  color: #0b1630;
+  box-shadow: 0 30px 60px rgb(0 0 0 / 0.45);
+}
+
+.theme-bogaz .inv-section:nth-of-type(even) .inv-rsvp {
+  background:
+    radial-gradient(circle at 0 3.1rem, var(--inv-alt) 9px, transparent 9.5px),
+    radial-gradient(circle at 100% 3.1rem, var(--inv-alt) 9px, transparent 9.5px),
+    #e9eef5;
+}
+
+.theme-bogaz .inv-rsvp::before {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3.1rem;
+  padding: 0 1.25rem;
+  border-radius: 10px 10px 0 0;
+  border-bottom: 2px dashed rgb(11 22 48 / 0.25);
+  background: linear-gradient(90deg, #0b1630 0 70%, var(--bz-red) 70% 100%);
+  display: flex;
+  align-items: center;
+  font-family: var(--bz-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #f6e7c8;
+}
+
+.theme-bogaz[lang='tr'] .inv-rsvp::before {
+  content: 'Biniş kartı · Kandilli ⇄ Boğaz';
+}
+
+.theme-bogaz[lang='en'] .inv-rsvp::before {
+  content: 'Boarding pass · Kandilli ⇄ Bosphorus';
+}
+
+.theme-bogaz .inv-rsvp-deadline {
+  color: #3b4b68;
+}
+
+.theme-bogaz .inv-rsvp .inv-field,
+.theme-bogaz .inv-rsvp .inv-choice legend {
+  font-family: var(--bz-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #3b4b68;
+}
+
+.theme-bogaz .inv-rsvp .inv-field input,
+.theme-bogaz .inv-rsvp .inv-field select,
+.theme-bogaz .inv-rsvp .inv-field textarea {
+  border: 0;
+  border-bottom: 1px solid rgb(11 22 48 / 0.3);
+  border-radius: 0;
+  background: transparent;
+  color: #0b1630;
+  font-family: var(--inv-body);
+  font-size: 1.05rem;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.theme-bogaz .inv-rsvp .inv-choice label {
+  color: #0b1630;
+}
+
+.theme-bogaz .inv-rsvp .inv-choice input {
+  accent-color: var(--bz-red);
+}
+
+.theme-bogaz .inv-rsvp .inv-button {
+  border-color: #0b1630;
+  background: #0b1630;
+  color: #f6c667;
+  font-family: var(--bz-mono);
+}
+
+.theme-bogaz .inv-rsvp .inv-button:hover {
+  background: var(--bz-red);
+  border-color: var(--bz-red);
+  color: #fff;
+}
+
+.theme-bogaz .inv-rsvp-thanks {
+  font-style: italic;
+  color: #fbf3e2;
+}
+
+/* buttons and the language switch */
+.theme-bogaz .inv-button {
+  font-family: var(--bz-mono);
+  letter-spacing: 0.16em;
+}
+
+.theme-bogaz .inv-lang {
+  background: rgb(11 22 48 / 0.7);
+  box-shadow: 0 0 0 1px rgb(246 198 103 / 0.25);
+}
+
+.theme-bogaz .inv-lang button {
+  font-family: var(--bz-mono);
+  color: #c9d3e3;
+}
+
+/* footer — the far shore at midnight */
+.theme-bogaz .inv-footer {
+  padding-bottom: 5rem;
+  background:
+    radial-gradient(60% 50% at 50% 100%, rgb(246 198 103 / 0.12), transparent 70%),
+    linear-gradient(180deg, transparent, #050b1b);
+}
+
+.theme-bogaz .inv-footer-names {
+  color: #f6c667 !important;
+  text-shadow: 0 0 24px rgb(246 198 103 / 0.35);
+}
+
+.theme-bogaz .inv-footer-date {
+  font-family: var(--bz-mono);
+}
+
+@media (max-width: 760px) {
+  .theme-bogaz .inv-schedule-list li {
+    grid-template-columns: 4.6rem minmax(0, 1fr) 1.6rem;
+    gap: 0.75rem;
+  }
+
+  .theme-bogaz .inv-schedule-time {
+    font-size: 1rem;
+  }
+}

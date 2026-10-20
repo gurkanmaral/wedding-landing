@@ -1,0 +1,633 @@
+/* B-Side — 70s record-sleeve graphic design: vinyl black, label yellow,
+   red-orange, sleeve cream and blue. */
+
+.theme-bside {
+  --bs-black: #1a1a1a;
+  --bs-yellow: #f2c14e;
+  --bs-orange: #e4572e;
+  --bs-cream: #f7f1e3;
+  --bs-blue: #3a6ea5;
+  --bs-mono: 'Space Mono', ui-monospace, monospace;
+  --bs-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .1 0 0 0 0 .08 0 0 0 0 .06 0 0 0 .5 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+
+  --inv-bg: var(--bs-black);
+  --inv-surface: #232120;
+  --inv-alt: var(--bs-cream);
+  --inv-ink: var(--bs-cream);
+  --inv-muted: rgb(247 241 227 / 0.68);
+  --inv-accent: var(--bs-yellow);
+  --inv-accent-ink: var(--bs-black);
+  --inv-line: rgb(247 241 227 / 0.18);
+  --inv-display: 'Fraunces', Georgia, serif;
+  --inv-script: 'Fraunces', Georgia, serif;
+  --inv-body: 'Space Grotesk', system-ui, sans-serif;
+  --inv-radius: 4px;
+  font-variation-settings: 'SOFT' 100;
+}
+
+.theme-bside .inv-title,
+.theme-bside .inv-lead,
+.theme-bside h3,
+.theme-bside .inv-footer-names {
+  font-variation-settings: 'SOFT' 100, 'WONK' 0;
+}
+
+.theme-bside .inv-title {
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.theme-bside .inv-kicker {
+  font-family: var(--bs-mono);
+  font-weight: 700;
+  font-size: 0.72rem;
+  letter-spacing: 0.22em;
+}
+
+.theme-bside .inv-lang {
+  background: rgb(26 26 26 / 0.78);
+  box-shadow: 0 0 0 1px rgb(247 241 227 / 0.14);
+}
+
+.theme-bside .inv-lang button {
+  color: rgb(247 241 227 / 0.7);
+  font-family: var(--bs-mono);
+}
+
+/* light sections reuse the tokens with dark ink */
+.theme-bside .inv-welcome,
+.theme-bside .inv-story,
+.theme-bside .inv-dresscode,
+.theme-bside .inv-gifts {
+  --inv-ink: var(--bs-black);
+  --inv-muted: rgb(26 26 26 / 0.7);
+  --inv-surface: #fffaf0;
+  --inv-line: rgb(26 26 26 / 0.16);
+  --inv-accent: var(--bs-orange);
+  --inv-accent-ink: var(--bs-cream);
+}
+
+.theme-bside .inv-section {
+  color: var(--inv-ink);
+  background: var(--bs-black);
+}
+
+.theme-bside .inv-section::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--bs-grain);
+  opacity: 0.35;
+  mix-blend-mode: overlay;
+  pointer-events: none;
+}
+
+.theme-bside .inv-section > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* ------------------------------------------------------------- hero */
+.bs-hero {
+  position: relative;
+  min-height: 100svh;
+  overflow: hidden;
+  background:
+    radial-gradient(90% 60% at 50% 100%, #2c2622, transparent 70%),
+    radial-gradient(120% 90% at 50% 30%, #2a2622 0%, #1a1a1a 70%);
+  color: var(--bs-cream);
+}
+
+.bs-deck-host {
+  position: absolute;
+  inset: 0;
+}
+
+.bs-hero-copy {
+  position: relative;
+  z-index: 10;
+  display: grid;
+  justify-items: center;
+  gap: 0.35rem;
+  padding: max(4.6rem, 9svh) 1.25rem 0;
+  text-align: center;
+  pointer-events: none;
+}
+
+.bs-eyebrow,
+.bs-date,
+.bs-place,
+.bs-now {
+  margin: 0;
+  font-family: var(--bs-mono);
+  font-size: 0.74rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.bs-eyebrow {
+  color: var(--bs-yellow);
+}
+
+.bs-names {
+  display: grid;
+  margin: 0.35rem 0 0.6rem;
+  font-family: 'Fraunces', Georgia, serif;
+  font-weight: 800;
+  font-variation-settings: 'SOFT' 100, 'opsz' 144;
+  font-size: clamp(3rem, min(15vw, 9.5svh), 7.4rem);
+  line-height: 0.92;
+  letter-spacing: -0.02em;
+  color: var(--bs-cream);
+  text-shadow:
+    0.035em 0.035em 0 var(--bs-orange),
+    0.07em 0.07em 0 var(--bs-yellow),
+    0.105em 0.105em 0 var(--bs-blue);
+}
+
+.bs-names em {
+  font-style: italic;
+  font-weight: 500;
+  color: var(--bs-yellow);
+  text-shadow: none;
+}
+
+.bs-date {
+  color: var(--bs-cream);
+}
+
+.bs-place {
+  color: rgb(247 241 227 / 0.7);
+}
+
+.bs-now {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.9rem;
+  padding: 0.45rem 0.9rem;
+  border: 1px solid rgb(242 193 78 / 0.5);
+  border-radius: 999px;
+  color: var(--bs-yellow);
+  font-size: 0.66rem;
+  letter-spacing: 0.14em;
+  background: rgb(26 26 26 / 0.55);
+}
+
+.bs-eq {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 12px;
+}
+
+.bs-eq i {
+  width: 3px;
+  height: 100%;
+  background: var(--bs-yellow);
+  transform-origin: bottom;
+  animation: bs-eq 0.9s ease-in-out infinite;
+}
+
+.bs-eq i:nth-child(2) { animation-delay: -0.3s; }
+.bs-eq i:nth-child(3) { animation-delay: -0.55s; }
+.bs-eq i:nth-child(4) { animation-delay: -0.15s; }
+
+@keyframes bs-eq {
+  0%, 100% { transform: scaleY(0.3); }
+  50% { transform: scaleY(1); }
+}
+
+.bs-hero-stripes {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10;
+  height: 22px;
+  background: linear-gradient(180deg, var(--bs-blue) 0 25%, var(--bs-yellow) 25% 50%, var(--bs-orange) 50% 75%, var(--bs-cream) 75%);
+}
+
+@media (max-height: 720px) and (max-aspect-ratio: 11/10) {
+  .bs-now { display: none; }
+}
+
+@media (min-aspect-ratio: 11/10) {
+  .bs-hero-copy {
+    justify-items: start;
+    align-content: center;
+    min-height: 100svh;
+    max-width: 46vw;
+    padding: 4rem 0 4rem 6vw;
+    text-align: left;
+  }
+
+  .bs-names {
+    font-size: clamp(3rem, min(8.4vw, 15svh), 8.5rem);
+  }
+}
+
+/* ----------------------------------------------------------- welcome */
+.theme-bside .inv-welcome {
+  background:
+    linear-gradient(90deg, var(--bs-blue) 0 10px, var(--bs-yellow) 10px 20px, var(--bs-orange) 20px 30px, transparent 30px),
+    var(--bs-cream);
+}
+
+.theme-bside .inv-welcome .inv-lead {
+  font-weight: 600;
+  font-size: clamp(1.5rem, 4.6vw, 2.3rem);
+  line-height: 1.32;
+}
+
+/* ---------------------------------------------- countdown: VU meters */
+.theme-bside .inv-countdown-section {
+  background:
+    radial-gradient(70% 60% at 50% 40%, rgb(242 193 78 / 0.08), transparent 70%),
+    var(--bs-black);
+}
+
+.theme-bside .inv-countdown {
+  max-width: 44rem;
+  gap: clamp(0.5rem, 2vw, 1rem);
+  padding: clamp(0.8rem, 3vw, 1.4rem);
+  border-radius: 10px;
+  background:
+    repeating-linear-gradient(90deg, rgb(255 255 255 / 0.025) 0 1px, transparent 1px 3px),
+    linear-gradient(180deg, #34322f, #1f1e1c);
+  box-shadow:
+    0 20px 40px rgb(0 0 0 / 0.5),
+    inset 0 1px 0 rgb(255 255 255 / 0.12),
+    inset 0 0 0 1px rgb(0 0 0 / 0.6);
+}
+
+.theme-bside .inv-countdown-cell {
+  position: relative;
+  gap: 0.2rem;
+  padding: 72% 0 0.2rem;
+  border: 0;
+  background: transparent;
+}
+
+.theme-bside .inv-countdown-cell::before,
+.theme-bside .inv-countdown-cell::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  aspect-ratio: 1.45;
+  border-radius: 6px;
+}
+
+.theme-bside .inv-countdown-cell::before {
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 145 100'%3E%3Cpath d='M20.5 49.2A70 70 0 0 1 124.5 49.2' fill='none' stroke='%231a1a1a' stroke-width='1.2'/%3E%3Cpath d='M101 32.1A70 70 0 0 1 124.5 49.2' fill='none' stroke='%23e4572e' stroke-width='4'/%3E%3Cpath d='M25.7 53.8L19.7 48.5M35.5 45.0L30.8 38.6M46.9 38.4L43.6 31.1M59.4 34.4L57.7 26.6M72.5 33.0L72.5 25.0M85.6 34.4L87.3 26.6M98.1 38.4L102.6 28.4M109.5 45.0L116.0 36.1M119.3 53.8L127.5 46.5' stroke='%231a1a1a' stroke-width='1.2'/%3E%3Ctext x='72.5' y='78' text-anchor='middle' font-family='monospace' font-weight='700' font-size='13' fill='%231a1a1a'%3EVU%3C/text%3E%3C/svg%3E") center / 100% 100% no-repeat,
+    radial-gradient(120% 100% at 50% 115%, #fff1c4, #f5cf6e 55%, #e0a83a);
+  box-shadow:
+    inset 0 0 0 2px #0d0d0d,
+    inset 0 8px 16px rgb(0 0 0 / 0.35),
+    0 0 26px rgb(242 193 78 / 0.28);
+}
+
+.theme-bside .inv-countdown-cell::after {
+  background:
+    radial-gradient(circle at 50% 96%, #1a1a1a 0 4%, transparent 4.5%),
+    linear-gradient(90deg, transparent calc(50% - 1px), #1a1a1a calc(50% - 1px) calc(50% + 0.5px), transparent calc(50% + 0.5px)) 50% 6% / 100% 90% no-repeat;
+  transform-origin: 50% 96%;
+  transform: rotate(calc(-46deg + var(--level, 0) * 92deg));
+  transition: transform 0.6s cubic-bezier(0.3, 1.5, 0.5, 1);
+  clip-path: inset(0 round 6px);
+}
+
+.theme-bside .inv-countdown-value {
+  font-family: var(--bs-mono);
+  font-weight: 700;
+  font-size: clamp(1.25rem, 5vw, 2rem);
+  color: var(--bs-cream);
+}
+
+.theme-bside .inv-countdown-label {
+  font-family: var(--bs-mono);
+  font-size: 0.6rem;
+  color: var(--bs-yellow);
+}
+
+/* ------------------------------------------------ story: liner notes */
+.theme-bside .inv-story {
+  background: var(--bs-cream);
+}
+
+.theme-bside .inv-story .inv-timeline {
+  max-width: 52rem;
+  gap: 1.5rem;
+}
+
+.theme-bside .inv-timeline li {
+  position: relative;
+  padding: 1.4rem 1.4rem 1.4rem 4.6rem;
+  border: 2px solid var(--bs-black);
+  border-radius: 4px;
+  background: #fffaf0;
+  box-shadow: 6px 6px 0 var(--bs-black);
+}
+
+.theme-bside .inv-timeline li::before {
+  content: '';
+  position: absolute;
+  left: 1.1rem;
+  top: 1.4rem;
+  width: 2.5rem;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, var(--bs-black) 0 7%, var(--bs-yellow) 8% 32%, transparent 33%),
+    repeating-radial-gradient(circle, #1a1a1a 0 1px, #2a2a2a 1px 2px);
+}
+
+.theme-bside .inv-timeline li:nth-child(2)::before {
+  background:
+    radial-gradient(circle, var(--bs-black) 0 7%, var(--bs-orange) 8% 32%, transparent 33%),
+    repeating-radial-gradient(circle, #1a1a1a 0 1px, #2a2a2a 1px 2px);
+}
+
+.theme-bside .inv-timeline li:nth-child(3)::before {
+  background:
+    radial-gradient(circle, var(--bs-black) 0 7%, var(--bs-blue) 8% 32%, transparent 33%),
+    repeating-radial-gradient(circle, #1a1a1a 0 1px, #2a2a2a 1px 2px);
+}
+
+.theme-bside .inv-timeline-when {
+  font-family: var(--bs-mono);
+  font-weight: 700;
+  color: var(--bs-orange);
+}
+
+.theme-bside .inv-timeline h3 {
+  font-weight: 700;
+}
+
+/* ------------------------------------------------- schedule: tracklist */
+.theme-bside .inv-schedule {
+  background:
+    linear-gradient(180deg, transparent calc(100% - 8px), var(--bs-orange) calc(100% - 8px)),
+    var(--bs-black);
+}
+
+.theme-bside .inv-schedule-list {
+  position: relative;
+  max-width: 44rem;
+  padding: 2.6rem clamp(1rem, 4vw, 2.2rem) 1.6rem;
+  border-radius: 4px;
+  background: var(--bs-cream);
+  color: var(--bs-black);
+  counter-reset: track;
+  box-shadow: 10px 10px 0 var(--bs-yellow);
+}
+
+.theme-bside .inv-schedule-list::before {
+  content: 'SIDE A';
+  position: absolute;
+  top: 1rem;
+  left: clamp(1rem, 4vw, 2.2rem);
+  font: 700 0.7rem/1 var(--bs-mono);
+  letter-spacing: 0.3em;
+  color: var(--bs-orange);
+}
+
+.theme-bside:lang(tr) .inv-schedule-list::before {
+  content: 'A YÜZÜ';
+}
+
+.theme-bside .inv-schedule-list li {
+  position: relative;
+  grid-template-columns: 2.6rem minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 0.9rem;
+  padding: 1rem 0;
+  border-bottom: 1px dashed rgb(26 26 26 / 0.25);
+  counter-increment: track;
+}
+
+.theme-bside .inv-schedule-list li::before {
+  content: 'A' counter(track);
+  grid-column: 1;
+  grid-row: 1;
+  font: 700 0.85rem/1 var(--bs-mono);
+  color: var(--bs-orange);
+}
+
+.theme-bside .inv-schedule-list li:nth-child(n + 4)::before {
+  content: 'B' counter(track);
+  color: var(--bs-blue);
+}
+
+.theme-bside .inv-schedule-list li:nth-child(4) {
+  counter-set: track 1;
+  margin-top: 2.6rem;
+  border-top: 2px solid var(--bs-black);
+}
+
+.theme-bside .inv-schedule-list li:nth-child(4) > div::before {
+  content: 'SIDE B';
+  position: absolute;
+  top: -1.7rem;
+  left: 0;
+  font: 700 0.7rem/1 var(--bs-mono);
+  letter-spacing: 0.3em;
+  color: var(--bs-blue);
+}
+
+.theme-bside:lang(tr) .inv-schedule-list li:nth-child(4) > div::before {
+  content: 'B YÜZÜ';
+}
+
+.theme-bside .inv-schedule-list li > div {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.theme-bside .inv-schedule-list h3 {
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+.theme-bside .inv-schedule-list p {
+  color: rgb(26 26 26 / 0.66);
+  font-size: 0.95rem;
+}
+
+.theme-bside .inv-schedule-time {
+  grid-column: 3;
+  grid-row: 1;
+  padding: 0;
+  font: 700 0.95rem/1 var(--bs-mono);
+  color: var(--bs-black);
+}
+
+/* -------------------------------------------------------------- venue */
+.theme-bside .inv-venue {
+  --inv-accent: var(--bs-yellow);
+  --inv-muted: rgb(247 241 227 / 0.8);
+  background:
+    repeating-linear-gradient(180deg, transparent 0 46px, rgb(0 0 0 / 0.06) 46px 48px),
+    var(--bs-blue);
+}
+
+.theme-bside .inv-venue-address {
+  font-weight: 700;
+}
+
+.theme-bside .inv-map {
+  aspect-ratio: 1;
+  border: 10px solid var(--bs-cream);
+  border-radius: 2px;
+  box-shadow: 12px 12px 0 var(--bs-black);
+}
+
+.theme-bside .inv-map iframe {
+  filter: grayscale(0.6) sepia(0.25) contrast(1.05);
+}
+
+/* -------------------------------------------- dress code: little records */
+.theme-bside .inv-dresscode {
+  background: var(--bs-cream);
+}
+
+.theme-bside .inv-swatches {
+  gap: clamp(0.5rem, 2.4vw, 1rem);
+}
+
+.theme-bside .inv-swatches li {
+  position: relative;
+  width: clamp(48px, 13vw, 68px);
+  height: auto;
+  aspect-ratio: 1;
+  box-shadow: 0 6px 12px rgb(0 0 0 / 0.25);
+}
+
+.theme-bside .inv-swatches li::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: repeating-radial-gradient(circle, #171717 0 1px, #262626 1px 2px);
+  -webkit-mask: radial-gradient(circle closest-side, transparent 0 34%, #000 35%);
+  mask: radial-gradient(circle closest-side, transparent 0 34%, #000 35%);
+}
+
+.theme-bside .inv-swatches li::after {
+  content: '';
+  position: absolute;
+  inset: 46%;
+  border-radius: 50%;
+  background: #0d0d0d;
+}
+
+/* -------------------------------------------------------------- gifts */
+.theme-bside .inv-gifts {
+  background: var(--bs-yellow);
+  --inv-accent: var(--bs-black);
+}
+
+.theme-bside .inv-iban code {
+  border: 2px solid var(--bs-black);
+  background: var(--bs-cream);
+  font-family: var(--bs-mono);
+}
+
+/* ---------------------------------------------- RSVP: a request card */
+.theme-bside .inv-rsvp-section {
+  background:
+    radial-gradient(60% 50% at 50% 0%, rgb(228 87 46 / 0.18), transparent 70%),
+    var(--bs-black);
+}
+
+.theme-bside .inv-rsvp-section .inv-narrow {
+  max-width: 34rem;
+  padding: clamp(1.4rem, 5vw, 2.2rem);
+  border-radius: 4px;
+  background:
+    linear-gradient(180deg, var(--bs-blue) 0 6px, var(--bs-yellow) 6px 12px, var(--bs-orange) 12px 18px, transparent 18px),
+    var(--bs-cream);
+  color: var(--bs-black);
+  box-shadow: 10px 10px 0 var(--bs-orange);
+  --inv-ink: var(--bs-black);
+  --inv-muted: rgb(26 26 26 / 0.7);
+  --inv-surface: #fffaf0;
+  --inv-line: rgb(26 26 26 / 0.22);
+  --inv-accent: var(--bs-black);
+  --inv-accent-ink: var(--bs-cream);
+}
+
+.theme-bside .inv-field,
+.theme-bside .inv-choice legend {
+  font-family: var(--bs-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.theme-bside .inv-field input,
+.theme-bside .inv-field select,
+.theme-bside .inv-field textarea {
+  border: 2px solid var(--bs-black);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.theme-bside .bs-song input {
+  background:
+    linear-gradient(90deg, var(--bs-yellow) 0 6px, transparent 6px),
+    #fffaf0;
+  padding-left: 1.1rem;
+}
+
+.theme-bside .bs-song small {
+  color: rgb(26 26 26 / 0.6);
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: none;
+}
+
+.theme-bside .inv-rsvp-thanks,
+.theme-bside .bs-song-note {
+  font-weight: 700;
+}
+
+.theme-bside .bs-song-note {
+  margin: 0.8rem 0 0;
+  font-family: var(--bs-mono);
+  font-size: 0.85rem;
+  color: var(--bs-orange);
+  text-align: center;
+}
+
+/* ------------------------------------------------------------- footer */
+.theme-bside .inv-footer {
+  background:
+    linear-gradient(180deg, var(--bs-blue) 0 6px, var(--bs-yellow) 6px 12px, var(--bs-orange) 12px 18px, transparent 18px),
+    var(--bs-black);
+}
+
+.theme-bside .inv-footer-names {
+  font-weight: 800;
+  color: var(--bs-cream) !important;
+  text-shadow: 0.04em 0.04em 0 var(--bs-orange);
+}
+
+.theme-bside .inv-footer-date {
+  font-family: var(--bs-mono);
+  color: var(--bs-yellow) !important;
+}
+
+@media (max-width: 520px) {
+  .theme-bside .inv-schedule-list li {
+    grid-template-columns: 2.2rem minmax(0, 1fr) auto;
+    gap: 0.6rem;
+  }
+
+  .theme-bside .inv-timeline li {
+    padding-left: 4rem;
+  }
+}

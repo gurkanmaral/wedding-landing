@@ -27,6 +27,8 @@ export default function InvitationIntro({ template, pageReady, onReveal, onDone 
   const hostRef = useRef(null)
   const sceneRef = useRef(null)
   const buttonRef = useRef(null)
+  // a tap that lands while the scene is still loading opens it as soon as it is ready
+  const pendingOpen = useRef(false)
   const [stage, setStage] = useState('loading') // loading → ready → opening → leaving
   const [sceneCopy, setSceneCopy] = useState(null)
   const [caption, setCaption] = useState({ value: null, placement: 'bottom' })
@@ -92,6 +94,12 @@ export default function InvitationIntro({ template, pageReady, onReveal, onDone 
   }, [template, intro, pageReady, loading, couple, dateText, lang])
 
   useEffect(() => {
+    if (stage === 'ready' && pendingOpen.current) {
+      pendingOpen.current = false
+      setStage('opening')
+      sceneRef.current?.open()
+      return undefined
+    }
     if (stage === 'ready') {
       // Enter or Space opens it without moving focus (no focus ring over the scene)
       const onKey = (event) => {
@@ -109,6 +117,10 @@ export default function InvitationIntro({ template, pageReady, onReveal, onDone 
   }, [stage])
 
   const open = () => {
+    if (stage === 'loading') {
+      pendingOpen.current = true
+      return
+    }
     if (stage !== 'ready') return
     setStage('opening')
     sceneRef.current?.open()
@@ -166,7 +178,7 @@ export default function InvitationIntro({ template, pageReady, onReveal, onDone 
       </button>
 
       <div className="invitation-intro__actions">
-        <button ref={buttonRef} type="button" className="invitation-intro__open" onClick={open} disabled={stage !== 'ready'}>
+        <button ref={buttonRef} type="button" className="invitation-intro__open" onClick={open} disabled={stage === 'opening' || stage === 'leaving'}>
           {sceneCopy?.prompt ?? ui.loading}
         </button>
       </div>

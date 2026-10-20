@@ -1,0 +1,303 @@
+.theme-iznik {
+  --inv-bg: #f7f3ea;
+  --inv-surface: #fffdf7;
+  --inv-alt: #eef2ee;
+  --inv-ink: #1b2540;
+  --inv-muted: #4d586e;
+  --inv-accent: #1f4e9c;
+  --inv-accent-ink: #f7f3ea;
+  --inv-line: rgb(31 78 156 / 0.18);
+  --inv-display: 'Cinzel', Georgia, serif;
+  --inv-script: 'EB Garamond', Georgia, serif;
+  --inv-body: 'EB Garamond', Georgia, serif;
+  --inv-radius: 3px;
+  --iz-red: #c8382e;
+  --iz-turq: #2ba6a4;
+  --iz-glazed: inset 0 0 18px rgb(80 62 30 / 0.12), inset 1px 1px 0 rgb(255 255 255 / 0.9), 0 1px 2px rgb(40 28 12 / 0.18), 0 10px 24px -14px rgb(31 50 90 / 0.35);
+
+  font-size: 1.125rem;
+}
+
+/* hero */
+.iz-hero {
+  position: relative;
+  height: 100svh;
+  min-height: 34rem;
+  overflow: hidden;
+  background: #cfc6b4;
+}
+
+.iz-hero-wall {
+  position: absolute;
+  inset: 0;
+}
+
+/* every section opens with a strip of border tiles */
+.theme-iznik .inv-section {
+  padding-top: clamp(5.5rem, 13vw, 8.5rem);
+}
+
+.theme-iznik .inv-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: clamp(24px, 4vw, 34px);
+  background: var(--iz-strip) 0 0 / auto 100% repeat-x;
+  box-shadow: 0 2px 6px rgb(31 50 90 / 0.25);
+}
+
+.theme-iznik .inv-section:nth-of-type(even) {
+  background:
+    linear-gradient(rgb(247 243 234 / 0.9), rgb(247 243 234 / 0.93)),
+    var(--iz-field) 0 0 / 190px 190px;
+}
+
+.theme-iznik .inv-kicker {
+  color: var(--iz-red);
+  font-style: italic;
+  font-size: 1.05rem;
+  letter-spacing: 0.06em;
+  text-transform: none;
+}
+
+.theme-iznik .inv-title {
+  color: var(--inv-accent);
+  font-weight: 500;
+  font-size: clamp(1.9rem, 6.4vw, 3.3rem);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.theme-iznik .inv-ornament svg {
+  width: min(240px, 64vw);
+}
+
+.theme-iznik .inv-lead {
+  font-size: clamp(1.35rem, 4vw, 1.85rem);
+  color: var(--inv-ink);
+}
+
+.theme-iznik .inv-welcome .inv-narrow::before {
+  content: '';
+  display: block;
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 1.6rem;
+  background: var(--iz-rosette) center / contain no-repeat;
+}
+
+/* buttons */
+.theme-iznik .inv-button {
+  font-family: 'Cinzel', Georgia, serif;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.25), 0 6px 16px -8px rgb(31 78 156 / 0.6);
+}
+
+/* countdown: four little tiles with quarter rosettes in the corners */
+.theme-iznik .inv-countdown-cell {
+  aspect-ratio: 1;
+  align-content: center;
+  border: 0;
+  border-radius: 4px;
+  background: var(--iz-corner) center / cover, #fbf8f0;
+  box-shadow: var(--iz-glazed);
+}
+
+.theme-iznik .inv-countdown-value {
+  color: var(--inv-accent);
+  font-weight: 500;
+}
+
+.theme-iznik .inv-countdown-label {
+  color: var(--iz-red);
+  font-size: 0.68rem;
+}
+
+/* story: rosettes along a cobalt line */
+.theme-iznik .inv-timeline li {
+  position: relative;
+  padding-left: 2.2rem;
+  border-left: 2px solid rgb(31 78 156 / 0.35);
+}
+
+.theme-iznik .inv-timeline li::before {
+  content: '';
+  position: absolute;
+  left: -15px;
+  top: 0.15rem;
+  width: 28px;
+  height: 28px;
+  background: var(--iz-rosette) center / contain no-repeat;
+}
+
+.theme-iznik .inv-timeline-when {
+  color: var(--iz-red);
+  font-family: 'Cinzel', Georgia, serif;
+}
+
+.theme-iznik .inv-timeline h3,
+.theme-iznik .inv-schedule-list h3 {
+  color: var(--inv-accent);
+  font-size: 1.45rem;
+  letter-spacing: 0.04em;
+}
+
+/* schedule: every moment is a framed tile */
+.theme-iznik .inv-schedule-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15.5rem), 1fr));
+  gap: 6px;
+  max-width: 62rem;
+  padding: 6px;
+  background: #c9c0ad;
+  box-shadow: inset 0 2px 6px rgb(40 28 12 / 0.25);
+}
+
+.theme-iznik .inv-schedule-list li {
+  display: grid;
+  grid-template-columns: none;
+  align-content: center;
+  justify-items: center;
+  gap: 0.35rem;
+  min-height: 15rem;
+  padding: 1.2rem 1rem;
+  border: 26px solid transparent;
+  border-image: var(--iz-frame) 96 round;
+  background:
+    radial-gradient(120% 80% at 30% 20%, rgb(255 255 255 / 0.7), rgb(255 255 255 / 0) 60%),
+    #fbf8f0;
+  background-clip: padding-box;
+  text-align: center;
+}
+
+.theme-iznik .inv-schedule-time {
+  padding: 0;
+  color: var(--iz-red);
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: 1.7rem;
+  font-weight: 500;
+}
+
+.theme-iznik .inv-schedule-list p {
+  max-width: 18rem;
+  font-size: 1.02rem;
+  line-height: 1.5;
+}
+
+/* venue */
+.theme-iznik .inv-venue-address {
+  color: var(--inv-accent);
+}
+
+.theme-iznik .inv-map {
+  border: 22px solid transparent;
+  border-image: var(--iz-frame) 96 round;
+  border-radius: 0;
+  aspect-ratio: 4 / 3.3;
+}
+
+/* dress code swatches as glazed tiles */
+.theme-iznik .inv-swatches li {
+  width: 48px;
+  height: 48px;
+  border-radius: 4px;
+  box-shadow:
+    inset 0 0 10px rgb(0 0 0 / 0.15),
+    inset 1px 1px 0 rgb(255 255 255 / 0.55),
+    0 2px 5px rgb(40 28 12 / 0.25);
+}
+
+/* gifts framed in a tile border */
+.theme-iznik .inv-gifts .inv-narrow {
+  padding: clamp(1.5rem, 5vw, 2.5rem) clamp(1rem, 4vw, 2rem);
+  border: clamp(28px, 7vw, 40px) solid transparent;
+  border-image: var(--iz-frame) 96 round;
+  background:
+    radial-gradient(120% 90% at 25% 15%, rgb(255 255 255 / 0.8), rgb(255 255 255 / 0) 60%),
+    #fbf8f0;
+  background-clip: padding-box;
+  box-shadow: 0 18px 40px -24px rgb(31 50 90 / 0.5);
+}
+
+.theme-iznik .inv-iban code {
+  border: 1px solid rgb(31 78 156 / 0.3);
+  background: #fff;
+  color: var(--inv-accent);
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: 0.85rem;
+}
+
+/* RSVP: a glazed panel under a cobalt inscription band */
+.theme-iznik .inv-rsvp-section .inv-narrow {
+  position: relative;
+  padding: clamp(3.8rem, 10vw, 4.5rem) clamp(1.2rem, 5vw, 2.4rem) clamp(1.6rem, 5vw, 2.4rem);
+  border-radius: 4px;
+  background: #fffdf7;
+  box-shadow: var(--iz-glazed);
+  overflow: hidden;
+}
+
+.theme-iznik .inv-rsvp-section .inv-narrow::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2.6rem;
+  background: var(--iz-band) center / 2.6rem 2.6rem repeat-x;
+}
+
+.theme-iznik .inv-field input,
+.theme-iznik .inv-field select,
+.theme-iznik .inv-field textarea {
+  border-color: rgb(31 78 156 / 0.28);
+  background: #fbf8f0;
+}
+
+.theme-iznik .inv-rsvp-thanks {
+  color: var(--inv-accent);
+}
+
+/* footer on the inscription band */
+.theme-iznik .inv-footer {
+  padding-top: 6rem;
+  background: radial-gradient(120% 100% at 50% 0%, #2a5db0 0%, #1f4e9c 45%, #173c7c 100%);
+  color: #f7f3ea;
+}
+
+.theme-iznik .inv-footer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 34px;
+  background: var(--iz-strip) 0 0 / auto 100% repeat-x;
+}
+
+.theme-iznik .inv-footer p,
+.theme-iznik .inv-footer-names {
+  color: #f7f3ea !important;
+}
+
+.theme-iznik .inv-footer-names {
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: clamp(1.8rem, 7vw, 3rem);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.theme-iznik .inv-footer-names span {
+  font-family: 'EB Garamond', Georgia, serif;
+  font-style: italic;
+  text-transform: none;
+}
+
+@media (max-width: 480px) {
+  .theme-iznik .inv-schedule-list li {
+    min-height: 12rem;
+  }
+}

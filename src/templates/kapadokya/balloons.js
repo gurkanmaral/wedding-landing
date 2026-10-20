@@ -155,7 +155,9 @@ export function buildBalloonSky(stage, { count = 22, seed = 19 } = {}) {
       const distance = camera.position.z - b.z
       const h = 2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * distance
       const w = h * camera.aspect
-      b.base = new THREE.Vector3((b.u - 0.5) * w * 1.05, h * (0.04 + b.v * 0.42), b.z)
+      // on tall screens keep the middle column clear for the names
+      const u = camera.aspect < 0.9 ? (b.u < 0.5 ? b.u * 0.56 : 0.44 + b.u * 0.56) : b.u
+      b.base = new THREE.Vector3((u - 0.5) * w * 1.05, h * (0.04 + b.v * 0.42), b.z)
     }
   }
 

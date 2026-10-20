@@ -1,0 +1,140 @@
+/* Illustrated kına scene — shared by the page hero and the intro, so the
+   intro's last frame and the hero have the same composition. */
+
+.kina-stage {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: #1c0508;
+  pointer-events: none;
+}
+
+.kina-velvet,
+.kina-motes {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.kina-embroidery {
+  position: absolute;
+  inset: -24px;
+  opacity: 0.55;
+  will-change: transform;
+  -webkit-mask-image: linear-gradient(180deg, rgb(0 0 0 / 0.95) 0%, rgb(0 0 0 / 0.7) 45%, transparent 78%);
+  mask-image: linear-gradient(180deg, rgb(0 0 0 / 0.95) 0%, rgb(0 0 0 / 0.7) 45%, transparent 78%);
+}
+
+.kina-embroidery svg {
+  display: block;
+  filter: drop-shadow(0 1px 1px rgb(0 0 0 / 0.55));
+}
+
+.kina-glow {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(42% 30% at var(--gx, 50%) var(--gy, 72%), rgb(255 176 92 / 0.34), rgb(255 120 50 / 0.1) 50%, transparent 72%);
+  mix-blend-mode: screen;
+}
+
+.kina-tray {
+  position: absolute;
+  left: 50%;
+  bottom: -4svh;
+  width: min(128vw, 56svh);
+  aspect-ratio: 1000 / 720;
+  translate: -50% 0;
+  will-change: transform;
+}
+
+.kina-tray svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.kina-vignette {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(130% 90% at 50% 45%, transparent 55%, rgb(10 1 3 / 0.55) 100%),
+    linear-gradient(180deg, rgb(10 1 3 / 0.35), transparent 22%);
+}
+
+/* the henna medallion that frames the names */
+.kina-medallion {
+  position: absolute;
+  left: 50%;
+  top: 38%;
+  width: min(94vw, 50svh);
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  container-type: inline-size;
+  color: #d4a24c;
+}
+
+.kina-medallion::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgb(24 4 7 / 0.82) 0%, rgb(24 4 7 / 0.7) 44%, rgb(24 4 7 / 0.25) 60%, transparent 72%);
+}
+
+.kina-mandala {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  filter: drop-shadow(0 0 3px rgb(255 190 100 / 0.45)) drop-shadow(0 1px 1px rgb(0 0 0 / 0.6));
+}
+
+.kina-names {
+  position: absolute;
+  inset: 24%;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  margin: 0;
+  color: #f3e1c7;
+  font-family: 'Yeseva One', Georgia, serif;
+  font-weight: 400;
+  font-size: var(--kina-name-size, 10cqi);
+  line-height: 1.02;
+  text-align: center;
+  text-shadow: 0 2px 18px rgb(0 0 0 / 0.65), 0 0 2px rgb(0 0 0 / 0.5);
+}
+
+.kina-names > span {
+  display: block;
+  white-space: nowrap;
+}
+
+.kina-names .kina-amp {
+  margin: 0.08em 0 0.02em;
+  color: #e7bd68;
+  font-family: 'Great Vibes', cursive;
+  font-size: 0.82em;
+  line-height: 1;
+}
+
+@media (min-aspect-ratio: 5/4) {
+  .kina-tray {
+    left: auto;
+    right: 2vw;
+    bottom: -10svh;
+    width: min(62vw, 125svh);
+    translate: none;
+  }
+
+  .kina-medallion {
+    left: 30%;
+    top: 50%;
+    width: min(40vw, 78svh);
+  }
+}

@@ -3,6 +3,7 @@ import { templates } from '../templates/registry.js'
 import { site } from '../app/site.js'
 import ContactSection from './ContactSection.jsx'
 import PhoneDemo from './PhoneDemo.jsx'
+import TemplatePreview from './TemplatePreview.jsx'
 import './landing.css'
 
 const INCLUDED = [
@@ -107,9 +108,7 @@ export default function DesignPage({ slug }) {
             {others.map((t) => (
               <li key={t.slug}>
                 <a className="lp-card" href={`/tasarim/${t.slug}`}>
-                  <div className="lp-card__media" style={{ background: t.intro.bg }}>
-                    <span className="lp-card__fallback">{t.name}</span>
-                  </div>
+                  <TemplatePreview template={t} />
                   <div className="lp-card__body">
                     <h3>{t.name}</h3>
                     <p>{t.mood}</p>

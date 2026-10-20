@@ -1,0 +1,200 @@
+/* Karaköy kinetic stage — used by the intro (outside the page theme) and
+   the page hero, so it carries its own colours and fonts. */
+
+.kk-stage {
+  --kk-ink: #111111;
+  --kk-paper: #f5f3ef;
+  --kk-stone: #d9d4cc;
+  --kk-signal: #ff5a36;
+  --kk-grey: #8a8a8a;
+  --kk-cols: 4;
+
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  color: var(--kk-ink);
+  font-family: 'Instrument Serif', 'Times New Roman', serif;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.kk-stage[data-layout='row'] {
+  --kk-cols: 12;
+}
+
+/* hairline column grid with a faint paper tooth */
+.kk-grid {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to right, rgb(17 17 17 / 0.075) 1px, transparent 1px),
+    radial-gradient(rgb(17 17 17 / 0.035) 0.6px, transparent 0.8px);
+  background-size: calc(100% / var(--kk-cols)) 100%, 5px 5px;
+  background-position: -0.5px 0, 0 0;
+}
+
+.kk-grid::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-right: 1px solid rgb(17 17 17 / 0.075);
+}
+
+.kk-horizon {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--kk-ink);
+  opacity: 0.5;
+  transform-origin: 0 50%;
+  transform: scaleX(0);
+}
+
+.kk-sky {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.kk-line {
+  stroke: var(--kk-ink);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+}
+
+.kk-sun {
+  fill: var(--kk-signal);
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+  opacity: 0;
+}
+
+/* baselines drawn under the lockup once the letters are home */
+.kk-rule {
+  position: absolute;
+  height: 1px;
+  background: var(--kk-ink);
+  opacity: 0.22;
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+  transition: transform 1.4s cubic-bezier(0.7, 0, 0.2, 1);
+  pointer-events: none;
+}
+
+.kk-rule:nth-of-type(2) {
+  transition-delay: 0.15s;
+  transform-origin: 100% 50%;
+}
+
+.kk-rule:nth-of-type(3) {
+  transition-delay: 0.3s;
+}
+
+.kk-stage.is-ruled .kk-rule {
+  transform: scaleX(1);
+}
+
+/* the lockup */
+.kk-lockup {
+  position: absolute;
+  left: var(--kk-pad, 16px);
+  right: var(--kk-pad, 16px);
+  top: 18%;
+  font-size: 100px;
+  font-weight: 400;
+  line-height: 0.86;
+  letter-spacing: -0.025em;
+  white-space: nowrap;
+}
+
+.kk-row {
+  display: block;
+  width: max-content;
+}
+
+.kk-row--b {
+  margin-left: auto;
+}
+
+.kk-row--amp {
+  margin: 0.04em auto 0.02em;
+  padding-left: 18%;
+  font-style: italic;
+  font-size: 0.62em;
+  line-height: 0.9;
+  color: var(--kk-signal);
+}
+
+.kk-stage[data-layout='row'] .kk-lockup {
+  left: 50%;
+  right: auto;
+  display: flex;
+  align-items: baseline;
+  gap: 0.18em;
+  width: max-content;
+  transform: translateX(-50%);
+}
+
+.kk-stage[data-layout='row'] .kk-row {
+  margin: 0;
+  padding: 0;
+}
+
+.kk-stage[data-layout='row'] .kk-row--amp {
+  font-size: 0.7em;
+}
+
+.kk-glyph {
+  display: inline-block;
+  transform-origin: 50% 62%;
+  will-change: transform;
+}
+
+.kk-stage[data-mode='scatter'] .kk-glyph {
+  cursor: grab;
+  touch-action: none;
+}
+
+.kk-glyph.is-held {
+  cursor: grabbing;
+  color: var(--kk-signal);
+}
+
+.kk-row--amp .kk-glyph.is-held {
+  color: var(--kk-ink);
+}
+
+.kk-glyph.is-snapped {
+  animation: kk-snap 0.75s ease-out;
+}
+
+.kk-row--amp .kk-glyph.is-snapped {
+  animation-name: kk-snap-amp;
+}
+
+@keyframes kk-snap {
+  0% { color: var(--kk-signal); }
+  100% { color: var(--kk-ink); }
+}
+
+@keyframes kk-snap-amp {
+  0% { color: var(--kk-ink); }
+  100% { color: var(--kk-signal); }
+}
+
+.kk-space {
+  display: inline-block;
+  width: 0.22em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kk-rule { transition: none; }
+  .kk-glyph.is-snapped { animation: none; }
+}
