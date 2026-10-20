@@ -323,22 +323,33 @@ export default function create(host, template, { onOpened }) {
     ctx.save()
     ctx.scale(fdpr, fdpr)
     ctx.textAlign = 'center'
-    ctx.textBaseline = 'middle'
+    // centred like the hero's HTML lines (line-height 1, translate -50%): the
+    // baseline sits half the ascent-descent difference below the centre
+    const centred = (text, y) => {
+      const m = ctx.measureText(text)
+      if (m.fontBoundingBoxAscent == null) {
+        ctx.textBaseline = 'middle'
+        ctx.fillText(text, L.cx, y)
+        return
+      }
+      ctx.textBaseline = 'alphabetic'
+      ctx.fillText(text, L.cx, y + (m.fontBoundingBoxAscent - m.fontBoundingBoxDescent) / 2)
+    }
     ctx.fillStyle = '#1d3557'
     ctx.font = `italic 500 ${L.name}px "Cormorant", Georgia, serif`
-    ctx.fillText(names[0], L.cx, L.y1)
-    ctx.fillText(names[1], L.cx, L.y2)
+    centred(names[0], L.y1)
+    centred(names[1], L.y2)
     ctx.fillStyle = '#e63946'
     ctx.font = `italic 500 ${L.name * 0.62}px "Cormorant", Georgia, serif`
-    ctx.fillText('&', L.cx, L.yAmp)
+    centred('&', L.yAmp)
     ctx.fillStyle = '#1d3557'
     ctx.font = `600 ${L.meta}px "Mulish", system-ui, sans-serif`
     if ('letterSpacing' in ctx) ctx.letterSpacing = `${(L.meta * 0.16).toFixed(1)}px`
-    ctx.fillText((template.dateLabel ?? '').toLocaleUpperCase(lang), L.cx, L.yDate)
+    centred((template.dateLabel ?? '').toLocaleUpperCase(lang), L.yDate)
     if ('letterSpacing' in ctx) ctx.letterSpacing = '0px'
     ctx.font = `italic 500 ${L.meta * 1.35}px "Cormorant", Georgia, serif`
     ctx.fillStyle = '#457b9d'
-    ctx.fillText(template.place ?? '', L.cx, L.yPlace)
+    centred(template.place ?? '', L.yPlace)
     ctx.restore()
     // back of the sheet, and the colour soaking through it
     const back = backCanvas.getContext('2d')

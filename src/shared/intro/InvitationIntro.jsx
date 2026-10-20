@@ -23,15 +23,17 @@ function formatDate(dateValue, lang) {
   return date.toLocaleDateString(lang === 'tr' ? 'tr-TR' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
 }
 
-export default function InvitationIntro({ template, pageReady, onReveal, onDone }) {
+export default function InvitationIntro({ template, pageReady, pagePainted, onReveal, onDone }) {
   const hostRef = useRef(null)
   const sceneRef = useRef(null)
   const buttonRef = useRef(null)
   // a tap that lands while the scene is still loading opens it as soon as it is ready
   const pendingOpen = useRef(false)
-  const [stage, setStage] = useState('loading') // loading → ready → opening → leaving
+  const [stage, setStage] = useState('loading') // loading → ready → opening; 'leaving' is derived below
   const [sceneCopy, setSceneCopy] = useState(null)
   const [caption, setCaption] = useState({ value: null, placement: 'bottom' })
+  // the scene has finished and the page is mounting underneath
+  const [revealed, setRevealed] = useState(false)
   const callbacks = useRef({ onReveal, onDone })
   useEffect(() => {
     callbacks.current = { onReveal, onDone }
@@ -60,14 +62,19 @@ export default function InvitationIntro({ template, pageReady, onReveal, onDone 
       await Promise.resolve(pageReady).catch(() => {})
       if (cancelled) return
       callbacks.current.onReveal()
-      // give the page a frame to paint underneath before fading
-      requestAnimationFrame(() => {
-        if (!cancelled) setStage('leaving')
-      })
+      setRevealed(true)
     }
 
     const load = sceneModules[`./scenes/${intro.scene ?? 'envelope'}.js`] ?? sceneModules['./scenes/envelope.js']
-    const personal = { ...template, couple, dateLabel: dateText }
+    // a real card's own place and date, so scenes print what the page shows
+    const eventDate = String(cardDetail(card, 'eventDate', cardDetail(card, 'date', ''))).slice(0, 10)
+    const personal = {
+      ...template,
+      couple,
+      dateLabel: dateText,
+      place: cardDetail(card, 'city', template.place),
+      date: /^\d{4}-\d{2}-\d{2}$/.test(eventDate) ? eventDate : template.date,
+    }
 
     load()
       .then(async (mod) => {
@@ -91,7 +98,18 @@ export default function InvitationIntro({ template, pageReady, onReveal, onDone 
       scene?.dispose()
       sceneRef.current = null
     }
-  }, [template, intro, pageReady, loading, couple, dateText, lang])
+  }, [template, intro, pageReady, loading, couple, dateText, lang, card])
+
+  // The last frame of every scene is the page's opening view, so the intro
+  // stays put until the page has painted beneath it and then dissolves into
+  // it. A slow device still gets there: after 4s it fades regardless.
+  const [timedOut, setTimedOut] = useState(false)
+  useEffect(() => {
+    if (!revealed) return undefined
+    const timer = setTimeout(() => setTimedOut(true), 4000)
+    return () => clearTimeout(timer)
+  }, [revealed])
+  const view = revealed && (pagePainted || timedOut) ? 'leaving' : stage
 
   useEffect(() => {
     if (stage === 'ready' && pendingOpen.current) {
@@ -110,11 +128,15 @@ export default function InvitationIntro({ template, pageReady, onReveal, onDone 
       window.addEventListener('keydown', onKey)
       return () => window.removeEventListener('keydown', onKey)
     }
-    if (stage !== 'leaving') return undefined
+    return undefined
+  }, [stage])
+
+  useEffect(() => {
+    if (view !== 'leaving') return undefined
     // fallback in case transitionend never fires (e.g. background tab)
     const timer = setTimeout(() => callbacks.current.onDone(), 1400)
     return () => clearTimeout(timer)
-  }, [stage])
+  }, [view])
 
   const open = () => {
     if (stage === 'loading') {
@@ -127,7 +149,7 @@ export default function InvitationIntro({ template, pageReady, onReveal, onDone 
   }
 
   const skip = () => {
-    if (stage === 'leaving') return
+    if (view === 'leaving') return
     if (sceneRef.current) {
       setStage('opening')
       sceneRef.current.skip()
@@ -146,7 +168,7 @@ export default function InvitationIntro({ template, pageReady, onReveal, onDone 
   return (
     <div
       className="invitation-intro"
-      data-stage={stage}
+      data-stage={view}
       style={{
         '--intro-bg': intro.bg,
         '--intro-text': intro.text,
@@ -155,7 +177,7 @@ export default function InvitationIntro({ template, pageReady, onReveal, onDone 
       }}
       onPointerMove={onPointerMove}
       onTransitionEnd={(event) => {
-        if (event.target === event.currentTarget && stage === 'leaving') callbacks.current.onDone()
+        if (event.target === event.currentTarget && view === 'leaving') callbacks.current.onDone()
       }}
       role="dialog"
       aria-modal="true"
@@ -178,7 +200,7 @@ export default function InvitationIntro({ template, pageReady, onReveal, onDone 
       </button>
 
       <div className="invitation-intro__actions">
-        <button ref={buttonRef} type="button" className="invitation-intro__open" onClick={open} disabled={stage === 'opening' || stage === 'leaving'}>
+        <button ref={buttonRef} type="button" className="invitation-intro__open" onClick={open} disabled={view === 'opening' || view === 'leaving'}>
           {sceneCopy?.prompt ?? ui.loading}
         </button>
       </div>

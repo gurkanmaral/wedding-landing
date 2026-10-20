@@ -1,7 +1,8 @@
 // Boğaz: a dark Bosphorus night. Running a finger along the shore switches the
 // yalı windows on one house at a time; a tap (or enough lit houses) sends the
 // bridge lights sweeping, the rest of the shore lights up and a vapur crosses —
-// its wake writes the couple's names on the water. The last frame is the page hero.
+// its wake writes the couple's names on the water, then settles. The last frame is
+// the page hero.
 import { gsap } from 'gsap'
 import { mountBosphorus } from '../../../templates/bogaz/bosphorusArt.js'
 
@@ -62,7 +63,8 @@ export default function create(host, template, { onOpened, setCaption }) {
       .to(state, { namesAlpha: 1, duration: 0.5 }, 0.6)
       .call(() => setCaption?.('date', 'top'), null, 3.1)
       .fromTo(state, { sweep: -0.2 }, { sweep: 1.25, duration: 1.7, ease: 'power1.inOut' }, 3.2)
-      .to(state, { namesAlpha: 0.55, duration: 0.9 }, 4.9)
+      // the wake settles before the hand-off; the hero's own title takes over
+      .to(state, { namesAlpha: 0, duration: 1.1, ease: 'power1.in' }, 4.9)
       .call(() => setCaption?.(null), null, 5.3)
   }
 

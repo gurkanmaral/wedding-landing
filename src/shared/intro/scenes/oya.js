@@ -40,7 +40,10 @@ export default function create(host, template, { onOpened, setCaption }) {
   const crochet = lace.crochet(reduce ? 1.2 : 3.2)
   crochet.delay(0.35)
 
-  const rig = { spin: 0, vel: 4, turn: 0, scale: 1, center: 0, boost: 0 }
+  const rig = { spin: 0, vel: 4, turn: 0, scale: 1, center: 0, boost: 0, lock: 0, wrap: 0 }
+  // the hero turns the medallion at 1.4°/s on the wall clock; the whirl eases
+  // onto exactly that angle so the hand-off does not rotate the lace
+  const heroSpin = () => (reduce ? 0 : (performance.now() / 1000) * 1.4)
   const light = createLight(
     (x, y) => {
       const k = 1 - rig.center
@@ -62,7 +65,8 @@ export default function create(host, template, { onOpened, setCaption }) {
       rig.vel += ((reduce ? 0 : 4) - rig.vel) * Math.min(1, dt * 1.6)
       rig.spin += rig.vel * dt
     }
-    lace.set({ spin: rig.spin + rig.turn, scale: rig.scale, boost: rig.boost })
+    const spin = rig.spin + rig.turn
+    lace.set({ spin: spin + (heroSpin() + rig.wrap - spin) * rig.lock, scale: rig.scale, boost: rig.boost })
   }
   raf = requestAnimationFrame(frame)
 
@@ -103,9 +107,13 @@ export default function create(host, template, { onOpened, setCaption }) {
     drag.on = false
     if (crochet.progress() < 1) crochet.timeScale(5)
     const direction = rig.vel < 0 ? -1 : 1
+    // the turn of the hero's angle nearest to where the whirl will come to rest
+    const rest = rig.spin + 540 * direction + (reduce ? 0 : 16)
+    rig.wrap = 360 * Math.round((rest - heroSpin() - (reduce ? 0 : 5.6)) / 360)
     timeline = gsap.timeline({ onComplete: () => onOpened?.() })
     timeline
       .to(rig, { turn: 540 * direction, duration: 2.8, ease: 'power3.out' }, 0)
+      .to(rig, { lock: 1, duration: 3, ease: 'power2.inOut' }, 0.6)
       .to(rig, { scale: 3.9, center: 1, boost: 1, duration: 1.4, ease: 'power2.in' }, 0.25)
       .fromTo(center, { opacity: 0, scale: 0.94 }, { opacity: 1, scale: 1, duration: 1.2, ease: 'power2.out' }, 0.9)
       .call(() => setCaption?.('date', 'bottom'), null, 1.8)

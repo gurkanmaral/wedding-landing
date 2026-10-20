@@ -1,7 +1,8 @@
 // Departures: an illustrated sky. A paper plane flies in through the clouds,
 // growing as it comes toward you, and loops lazily. Tap to catch it: it swoops
 // into your hands, flattens along its creases and unfolds panel by panel into
-// a boarding pass with the couple's names, destination, date, gate and seat.
+// a boarding pass with the couple's names, destination, date, gate and seat,
+// which is then put away: the last frame is the hero's sky.
 import { gsap } from 'gsap'
 import { createSky, createPlane, createPass, passInfo } from '../../../templates/departures/sky.js'
 
@@ -176,7 +177,12 @@ export default function create(host, template, { onOpened, setCaption }) {
       .to(pass.state, { fold2: 0, offset: 0, duration: 0.7, ease: 'power2.inOut', onUpdate: pass.apply }, 3.05)
       .fromTo(pass.wrap, { rotationX: 10, y: 8 }, { rotationX: 0, y: 0, duration: 1, ease: 'power2.out' }, 3.3)
       .call(() => setCaption?.('date', 'top'), null, 3.9)
-      .to({}, { duration: 0.01 }, 5.5)
+      // the pass is put away and the sky settles back to the hero's pace, so
+      // the last frame is the hero's sky with the departures board to come
+      .call(() => setCaption?.(null), null, 5.6)
+      .to(pass.wrap, { autoAlpha: 0, y: -24, scale: 0.94, duration: 0.7, ease: 'power2.in' }, 5.6)
+      .to(flow, { speed: 1, duration: 0.8, ease: 'power1.inOut', onUpdate: () => sky.setSpeed(flow.speed) }, 5.5)
+      .to({}, { duration: 0.01 }, 6.4)
   }
 
   return {
@@ -186,11 +192,9 @@ export default function create(host, template, { onOpened, setCaption }) {
         timeline.progress(1)
         return
       }
+      // straight to the last frame: the hero's empty sky
       state.mode = 'done'
-      gsap.set(planeSvg, { autoAlpha: 0 })
-      gsap.set(pass.wrap, { autoAlpha: 1 })
-      Object.assign(pass.state, { fold1: 0, fold2: 0, offset: 0 })
-      pass.apply()
+      gsap.set([planeSvg, pass.wrap], { autoAlpha: 0 })
       finish()
     },
     setPointer: (x, y) => {

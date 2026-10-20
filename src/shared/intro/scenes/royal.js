@@ -214,6 +214,10 @@ export default function create(host, template, { onOpened, setCaption }) {
   /* ---------------------------------------------------------------- names */
   const [first, second] = template.couple
   const names = el('div', 'name', world)
+  // the page's own night (its background under the hero photo, which fades in
+  // on the page): the bloom sinks into it at the very end
+  const backdrop = el('div', '', root)
+  backdrop.style.cssText = 'position:absolute;inset:0;background:#0b0f18;opacity:0;pointer-events:none'
   el('span', 'gold', names, first)
   el('span', 'gold amp', names, '&')
   el('span', 'gold', names, second)
@@ -354,6 +358,8 @@ export default function create(host, template, { onOpened, setCaption }) {
       .to(state, { sheen: 1, duration: 1.4, ease: 'sine.inOut' }, 2.3)
       .call(() => setCaption?.('date', 'top'), null, 2.9)
       .to(state, { rise: 1, duration: 1.5, ease: 'power2.inOut' }, 3.3)
+      .call(() => setCaption?.(null), null, 3.8)
+      .to(backdrop, { opacity: 1, duration: 1.0, ease: 'power1.in' }, 3.8)
   }
 
   return {

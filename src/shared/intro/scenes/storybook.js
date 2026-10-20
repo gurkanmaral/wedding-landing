@@ -862,6 +862,8 @@ export default function create(host, template, { onOpened, setCaption }) {
   const root = el('div', 'position:absolute;inset:0;overflow:hidden;', host)
   root.setAttribute('aria-hidden', 'true')
   const zoom = el('div', 'position:absolute;inset:0;will-change:transform;', root)
+  // the page's cream paper, laid over everything at the very end of the zoom
+  const backdrop = el('div', 'position:absolute;inset:0;opacity:0;pointer-events:none;background:oklch(0.978 0.012 80);z-index:5;', root)
   const view = el('div', 'position:absolute;inset:0;perspective-origin:50% 50%;', zoom)
   const world = el('div', 'position:absolute;transform-style:preserve-3d;will-change:transform;', view)
   const floorHost = el('div', 'position:absolute;inset:0;transform:translateZ(0);', world)
@@ -1161,6 +1163,8 @@ export default function create(host, template, { onOpened, setCaption }) {
         4.6,
       )
       .to(state, { zoom: 1, duration: 1.35, ease: 'power1.in' }, 4.6)
+      // through the doorway onto the page's own paper
+      .to(backdrop, { opacity: 1, duration: 0.6, ease: 'power1.in' }, 5.35)
   }
 
   return {

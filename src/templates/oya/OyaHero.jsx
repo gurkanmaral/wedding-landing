@@ -16,10 +16,10 @@ export function OyaHero({ partner1, partner2, dateLabel, timeLabel, place, c }) 
     if (!host) return undefined
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     const lace = mountLace(host)
-    const start = performance.now()
+    // the angle runs on the wall clock: the intro ends on exactly this angle
     const light = createLight(
       (x, y) => {
-        lace.set({ lx: x, ly: y, spin: reduce ? 0 : ((performance.now() - start) / 1000) * 1.4 })
+        lace.set({ lx: x, ly: y, spin: reduce ? 0 : (performance.now() / 1000) * 1.4 })
       },
       { reduce },
     )

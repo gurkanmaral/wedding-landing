@@ -7,6 +7,7 @@
 // Built from DOM, SVG and canvas only (no WebGL).
 import { gsap } from 'gsap'
 import { foilTile, grainTile, svgURL, el, sceneRoot, loop, seeded, textWidth } from '../foil.js'
+import decoHero from '../../../templates/art-deco/assets/deco-hero.jpg'
 
 export const fonts = () => [
   { family: 'Playfair Display', weight: 500, google: 'Playfair+Display:ital,wght@0,400;0,500;1,400;1,500' },
@@ -80,6 +81,11 @@ ${s} .beams b{position:absolute;bottom:0;transform-origin:50% 100%;mix-blend-mod
   clip-path:polygon(47% 100%,53% 100%,100% 0,0 0)}
 ${s} .gem{position:absolute;left:0;top:0;will-change:transform;filter:drop-shadow(0 .6vmin 1.4vmin rgba(0,0,0,.6))}
 ${s} .gem svg{display:block;width:100%;height:100%;overflow:visible}
+/* the page hero's own backdrop (same photo, tint and gradient): the last frame */
+${s} .backdrop{position:absolute;left:0;top:0;bottom:0;width:100%;opacity:0;background:oklch(0.105 0.04 210);pointer-events:none}
+${s} .backdrop i{position:absolute;inset:0;background:var(--${id}-hero) center/cover no-repeat;opacity:.2}
+${s} .backdrop b{position:absolute;inset:0;background:radial-gradient(circle at 50% 35%,oklch(0.34 0.08 80/0.36),transparent 32%),
+  linear-gradient(180deg,oklch(0.12 0.04 205/0.92),oklch(0.16 0.05 172/0.72) 42%,oklch(0.09 0.025 220) 100%)}
 ${s} .flash{position:absolute;left:50%;top:50%;width:300%;height:300%;transform:translate(-50%,-50%);border-radius:50%;opacity:0;
   background:radial-gradient(circle,rgba(255,255,245,1) 0%,rgba(200,255,230,.55) 14%,rgba(255,214,140,.18) 38%,rgba(255,214,140,0) 66%);mix-blend-mode:screen;pointer-events:none}
 `
@@ -299,6 +305,7 @@ export default function create(host, template, { onOpened, setCaption }) {
   root.style.setProperty(`--${id}-grain`, `url(${grain})`)
   root.style.setProperty(`--${id}-foil`, `url(${foil})`)
   root.style.setProperty('--rx', '40%')
+  root.style.setProperty(`--${id}-hero`, `url(${decoHero})`)
 
   const world = el('div', 'world', root)
   el('div', 'space', world)
@@ -346,6 +353,12 @@ export default function create(host, template, { onOpened, setCaption }) {
   const flash = el('div', 'flash', gemNode)
   const gem = buildGem(gemSvg, foil, `${id}gem`)
 
+  // the page hero's backdrop fades over everything at the end, so the page
+  // (which brings its own arch, stone and names in) opens on the same frame
+  const backdrop = el('div', 'backdrop', root)
+  el('i', '', backdrop)
+  el('b', '', backdrop)
+
   /* --------------------------------------------------------------- dust */
   const dustCount = small ? 90 : 220
   const random = seeded(31)
@@ -377,6 +390,8 @@ export default function create(host, template, { onOpened, setCaption }) {
     if (W === L.W && H === L.H) return
     L.W = W
     L.H = H
+    // the page's hero is as wide as the viewport minus its scrollbar gutter
+    backdrop.style.width = `${Math.min(W, document.documentElement.clientWidth || W)}px`
     const gateW = Math.min(W, H * 1.25)
     const w = gateW / 2
     const gw = Math.min(0.3 * gateW, 0.17 * H)
@@ -458,7 +473,7 @@ export default function create(host, template, { onOpened, setCaption }) {
   layout()
 
   /* --------------------------------------------------------------- loop */
-  const state = { px: 0, py: 0, spin: 0, flash: 0, beams: 0, beamLen: 0, open: 0, lift: 0, names: 0, push: 0, rush: 0, sheen: -1 }
+  const state = { px: 0, py: 0, spin: 0, flash: 0, beams: 0, beamLen: 0, open: 0, lift: 0, names: 0, push: 0, rush: 0, sheen: -1, end: 0 }
   const lerp = (a, b, t) => a + (b - a) * t
 
   const stop = loop((dt, t) => {
@@ -504,6 +519,7 @@ export default function create(host, template, { onOpened, setCaption }) {
     names.style.transform = `translate(-50%,calc(-50% + ${((1 - state.names) * H * 0.05).toFixed(1)}px))`
     names.style.setProperty('--sheen', `${(state.sheen < 0 ? 130 : lerp(130, -30, state.sheen)).toFixed(1)}%`)
 
+    backdrop.style.opacity = state.end.toFixed(3)
     world.style.transform = state.push > 0 ? `scale(${(1 + state.push * 0.32).toFixed(4)})` : ''
 
     // gold dust in the emerald space (only once it can be seen)
@@ -560,6 +576,9 @@ export default function create(host, template, { onOpened, setCaption }) {
       // push through the gates into the dust
       .to(state, { push: 1, duration: 1.4, ease: 'power2.inOut' }, 3.8)
       .to(state, { rush: 1.6, duration: 1.4, ease: 'power2.in' }, 3.8)
+      // ...and out into the page's own dark hero
+      .call(() => setCaption?.(null), null, 4.0)
+      .to(state, { end: 1, duration: 1.1, ease: 'power1.inOut' }, 4.1)
   }
 
   return {

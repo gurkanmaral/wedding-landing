@@ -280,7 +280,7 @@ const allTemplates = [
     slug: 'kapadokya',
     path: '/kapadokya',
     name: 'Kapadokya',
-    mood: 'Şafakta balonlar',
+    mood: 'Peri bacaları üstünde balonlar',
     couple: ['Jane', 'Joe'],
     date: '2027-05-22',
     dateLabel: '22 May 2027',
@@ -293,8 +293,8 @@ const allTemplates = [
     load: page('kapadokya/KapadokyaPage'),
     intro: {
       scene: 'kapadokya',
-      bg: 'linear-gradient(180deg, #2b2d48 0%, #6e5878 35%, #e39a7c 70%, #f6cfa8 100%)',
-      text: '#fff6ea',
+      bg: 'linear-gradient(180deg, #62cfe6 0%, #a9e2e4 50%, #f8dfc0 100%)',
+      text: '#2d4356',
       paper: '#f2e8dc',
       liner: '#e07a5f',
       linerPattern: 'stripes',
@@ -486,7 +486,7 @@ const allTemplates = [
     price: 99,
     lang: 'en',
     title: 'Jane & Joe — Cinéma',
-    blurb: 'A projector clatters to life, the leader counts down and the title card reads “starring” you two.',
+    blurb: 'The house lights fall, the curtains part, the leader counts down and the title card reads “starring” you two.',
     features: ['Film leader intro', 'Credits schedule', 'Ticket RSVP', 'TR/EN'],
     load: page('cinema/CinemaPage'),
     intro: {

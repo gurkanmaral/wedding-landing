@@ -75,12 +75,16 @@ function useVuMeters() {
   }, [])
 }
 
-function Hero({ partner1, partner2, dateLabel, place, c, lang }) {
-  const { eventDate } = useWeddingCardFields(defaults, lang === 'tr' ? 'tr-TR' : 'en-GB')
+function Hero({ partner1, partner2, dateLabel, city, place, c, lang }) {
+  const locale = lang === 'tr' ? 'tr-TR' : 'en-GB'
+  const { eventDate } = useWeddingCardFields(defaults, locale)
+  // the sleeve and label print what the intro's record printed, so nothing
+  // changes on them at the hand-off
+  const printedDate = eventDate.toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' })
   useVuMeters()
   return (
     <header className="bs-hero">
-      <TurntableHero partner1={partner1} partner2={partner2} dateText={dateLabel} place={place} date={eventDate} lang={lang} />
+      <TurntableHero partner1={partner1} partner2={partner2} dateText={printedDate} place={city || place} date={eventDate} lang={lang} />
       <div className="bs-hero-copy">
         <p className="bs-eyebrow">{c.tagline}</p>
         <h1 className="bs-names">

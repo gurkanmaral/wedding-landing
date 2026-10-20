@@ -51,6 +51,22 @@
   justify-items: center;
   gap: 0.3rem;
   text-shadow: 0 0 22px rgb(255 248 232 / 0.75), 0 1px 2px rgb(255 248 232 / 0.6);
+  /* the shore dissolves in from the intro first; the words follow */
+  animation: bd-copy-in 1.3s cubic-bezier(0.22, 0.7, 0.3, 1) 0.35s both;
+}
+
+@keyframes bd-copy-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+    filter: blur(4px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bd-hero-copy {
+    animation-duration: 0.01s;
+  }
 }
 
 .bd-eyebrow {

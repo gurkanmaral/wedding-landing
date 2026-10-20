@@ -411,6 +411,9 @@ const css = String.raw`
   .aegean-page .arch-frame .names{ animation:heroRise .7s cubic-bezier(.16,1,.3,1) .22s backwards; }
   .aegean-page .arch-frame .hero-meta{ animation:heroRise .7s cubic-bezier(.16,1,.3,1) .34s backwards; }
   .aegean-page .hero-actions{ animation:heroRise .7s cubic-bezier(.16,1,.3,1) .45s backwards; }
+  /* the intro ends on the bare wall, so the vines and the shore fade in over it */
+  @keyframes wallIn{ from{ opacity:0; } }
+  .aegean-page .hero .vinehost, #sea{ animation:wallIn 1.2s ease backwards; }
 
   .aegean-page.rv .washline.reveal{ opacity:1; transform:none; }
   .aegean-page.rv .washline.reveal .pin{ opacity:0; translate:0 30px;
@@ -446,7 +449,8 @@ const css = String.raw`
     .aegean-page.rv .reveal, .aegean-page.rv .washline.reveal .pin, .aegean-page.rv .count.reveal .cd-unit{ opacity:1; transform:none; translate:0 0; }
     .aegean-page.rv .washline.reveal .polar img{ filter:none; }
     .aegean-page .arch-frame, .aegean-page .arch-frame .label, .aegean-page .arch-frame .names,
-    .aegean-page .arch-frame .hero-meta, .aegean-page .hero-actions{ animation:none; }
+    .aegean-page .arch-frame .hero-meta, .aegean-page .hero-actions,
+    .aegean-page .hero .vinehost, #sea{ animation:none; }
     .aegean-page .scroll-cue::after, .aegean-page .vinner, .aegean-page .polar, .aegean-page .pin:hover .polar{ animation:none; }
     #sea .tide, #sea .foam.f2, #sparkle, #boat, #boat .bob{ animation:none; }
     .aegean-page .cd-unit .n .roll.out, .aegean-page .cd-unit .n .roll.in{ animation:none; }

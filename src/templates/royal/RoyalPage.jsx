@@ -292,6 +292,8 @@ export default function RoyalWeddingPage() {
           .from('.hero-cta', { y: 14, opacity: 0, duration: 0.65 }, '-=0.6')
           .from('.hero-meta', { y: 16, opacity: 0, duration: 0.6, stagger: 0.08 }, '-=0.5')
           .from('.crest', { y: 18, opacity: 0, scale: 0.96, duration: 0.9 }, '-=0.8')
+          // the intro ends on the page's bare night, so the photo, glows and header fade in over it
+          .from('.hero-img, .hero .floaty, [data-header-bar]', { opacity: 0, duration: 1.3, ease: 'power2.out' }, 0)
 
         gsap.utils.toArray('.crest-path').forEach((p) => {
           const len = p.getTotalLength ? p.getTotalLength() : 0

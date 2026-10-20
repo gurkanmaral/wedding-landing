@@ -1,59 +1,72 @@
 // 3D hot-air balloons (the only 3D in the Kapadokya template): lathe envelopes
-// with painted gores, wicker baskets and burners that flare.
+// with patchwork, stripes or gores, wicker baskets and burners that flare.
 import * as THREE from 'three'
 import { makeCanvas, canvasTexture, seeded } from '../../shared/intro/core.js'
 
 /* ---------------------------------------------------------- balloons */
 
+// Palettes taken from real Göreme balloons: hot reds and yellows, rainbow
+// stripes, purple and teal patchwork, a few pale ones for rhythm.
 const SCHEMES = [
-  ['#d9483b', '#f3d36b', '#2f5d8a'],
-  ['#2e3a6e', '#f2e8dc', '#e07a5f'],
-  ['#f2a541', '#c0392b', '#f7efe2'],
-  ['#3d8b6e', '#f3d36b', '#c0392b'],
-  ['#8e44ad', '#f39c12', '#f7efe2'],
-  ['#e9e1d0', '#c0392b', '#1f3a5f'],
-  ['#1f6fb2', '#f7efe2', '#f3d36b'],
+  ['#d7262e', '#f6b21b', '#f08a24', '#8c1d2a'],
+  ['#e8433f', '#f7d046', '#3fa6d8', '#6c3d91', '#2fae66'],
+  ['#f3c234', '#e2482f', '#f7efe2', '#2b6cb0'],
+  ['#7a3c96', '#e8433f', '#f5a623', '#2a9d8f'],
+  ['#ececec', '#b9bcc4', '#7d8594'],
+  ['#ef6c7a', '#f9c784', '#fbe9d0', '#d9455f'],
+  ['#1f6fb2', '#f2c14e', '#e85d3f', '#f7efe2'],
+  ['#2a9d8f', '#e9c46a', '#f4a261', '#e76f51', '#264653'],
 ]
+const PATTERNS = ['zigzag', 'stripes', 'checker', 'gores', 'zigzag', 'stripes', 'plain', 'checker']
 
 function envelopeTexture(renderer, scheme, pattern) {
   const [canvas, ctx] = makeCanvas(1024, 512)
   const gores = 16
-  for (let g = 0; g < gores; g += 1) {
-    ctx.fillStyle = scheme[g % (pattern === 'pair' ? 2 : 3)]
-    ctx.fillRect((g * 1024) / gores, 0, 1024 / gores + 1, 512)
-  }
-  if (pattern === 'band') {
-    ctx.fillStyle = scheme[2]
-    ctx.fillRect(0, 300, 1024, 46)
-    ctx.fillStyle = scheme[1]
-    ctx.fillRect(0, 346, 1024, 14)
-  }
-  if (pattern === 'chevron') {
-    ctx.fillStyle = scheme[1]
+  const gw = 1024 / gores
+  const n = scheme.length
+  if (pattern === 'stripes') {
+    // horizontal bands of every colour, a broad one around the equator
+    const rows = [0, 70, 120, 165, 205, 250, 300, 360, 420, 512]
+    for (let i = 0; i < rows.length - 1; i += 1) {
+      ctx.fillStyle = scheme[i % n]
+      ctx.fillRect(0, rows[i], 1024, rows[i + 1] - rows[i] + 1)
+    }
+  } else if (pattern === 'zigzag' || pattern === 'checker') {
+    // pixel patchwork: flame-stitch zigzags or a diamond checker
+    const cell = 32
+    for (let y = 0; y < 512; y += cell) {
+      for (let x = 0; x < 1024; x += cell) {
+        const i = x / cell
+        const j = y / cell
+        const k = pattern === 'zigzag' ? Math.floor((j + Math.abs((i % 8) - 4)) / 2) : (i + j + Math.floor(j / 3)) % 3
+        ctx.fillStyle = scheme[((k % n) + n) % n]
+        ctx.fillRect(x, y, cell + 1, cell + 1)
+      }
+    }
+  } else {
     for (let g = 0; g < gores; g += 1) {
-      const x = (g * 1024) / gores
-      ctx.beginPath()
-      ctx.moveTo(x, 240)
-      ctx.lineTo(x + 32, 200)
-      ctx.lineTo(x + 64, 240)
-      ctx.lineTo(x + 64, 270)
-      ctx.lineTo(x + 32, 230)
-      ctx.lineTo(x, 270)
-      ctx.fill()
+      ctx.fillStyle = pattern === 'plain' ? scheme[g % 2] : scheme[g % n]
+      ctx.fillRect(g * gw, 0, gw + 1, 512)
+    }
+    if (pattern === 'plain') {
+      ctx.fillStyle = scheme[2 % n]
+      ctx.fillRect(0, 300, 1024, 40)
     }
   }
-  // seams and a soft fabric shading toward the mouth
-  ctx.strokeStyle = 'rgba(0,0,0,0.18)'
+  // the mouth skirt is darker, then seams and gentle fabric shading
+  ctx.fillStyle = 'rgba(30,20,20,0.35)'
+  ctx.fillRect(0, 0, 1024, 26)
+  ctx.strokeStyle = 'rgba(0,0,0,0.14)'
   ctx.lineWidth = 2
   for (let g = 0; g <= gores; g += 1) {
     ctx.beginPath()
-    ctx.moveTo((g * 1024) / gores, 0)
-    ctx.lineTo((g * 1024) / gores, 512)
+    ctx.moveTo(g * gw, 0)
+    ctx.lineTo(g * gw, 512)
     ctx.stroke()
   }
   const shade = ctx.createLinearGradient(0, 0, 0, 512)
-  shade.addColorStop(0, 'rgba(0,0,0,0.35)')
-  shade.addColorStop(0.18, 'rgba(0,0,0,0)')
+  shade.addColorStop(0, 'rgba(0,0,0,0.3)')
+  shade.addColorStop(0.15, 'rgba(0,0,0,0)')
   shade.addColorStop(1, 'rgba(255,255,255,0)')
   ctx.fillStyle = shade
   ctx.fillRect(0, 0, 1024, 512)
@@ -86,7 +99,7 @@ export function buildBalloon(renderer, scheme, pattern, flameMap) {
     new THREE.LatheGeometry(SMOOTH_PROFILE, 64),
     new THREE.MeshStandardMaterial({
       map: envelopeTexture(renderer, scheme, pattern),
-      roughness: 0.6,
+      roughness: 0.55,
       side: THREE.DoubleSide,
       emissive: new THREE.Color('#ff9a40'),
       emissiveIntensity: 0,
@@ -124,29 +137,30 @@ export function buildBalloon(renderer, scheme, pattern, flameMap) {
 }
 
 
-export { SCHEMES, flameTexture }
+export { SCHEMES, PATTERNS, flameTexture }
 
 // A sky full of balloons for a transparent stage laid over the illustration.
 export function buildBalloonSky(stage, { count = 22, seed = 19 } = {}) {
   const { scene, renderer, camera } = stage
   renderer.toneMapping = THREE.ACESFilmicToneMapping
-  renderer.toneMappingExposure = 1.15
-  scene.add(new THREE.HemisphereLight('#ffe9dc', '#b98c70', 1.25))
-  const sun = new THREE.DirectionalLight('#ffd6ab', 2.4)
-  sun.position.set(-30, 8, 10)
+  renderer.toneMappingExposure = 1.05
+  scene.add(new THREE.HemisphereLight('#e4f0ff', '#c9b39a', 1.5))
+  const sun = new THREE.DirectionalLight('#fff4e2', 2.6)
+  sun.position.set(-20, 18, 14)
   scene.add(sun)
 
   const flameMap = flameTexture(renderer)
   const random = seeded(seed)
   const balloons = []
   for (let i = 0; i < count; i += 1) {
-    const b = buildBalloon(renderer, SCHEMES[i % SCHEMES.length], ['plain', 'band', 'chevron', 'pair'][i % 4], flameMap)
+    const b = buildBalloon(renderer, SCHEMES[i % SCHEMES.length], PATTERNS[(i * 3) % PATTERNS.length], flameMap)
     const z = -10 - random() * 70
     b.group.position.set(0, 0, z)
     b.group.rotation.y = random() * Math.PI * 2
-    b.group.scale.setScalar(1.2 + random() * 0.8)
+    const size = 1.2 + random() * 0.8
+    b.group.scale.setScalar(size)
     scene.add(b.group)
-    balloons.push({ ...b, u: random(), v: random(), z, phase: random() * 10 })
+    balloons.push({ ...b, u: random(), v: random(), z, size, phase: random() * 10 })
   }
 
   // keep balloons spread over the upper part of the frame at any aspect ratio
@@ -156,20 +170,26 @@ export function buildBalloonSky(stage, { count = 22, seed = 19 } = {}) {
       const h = 2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * distance
       const w = h * camera.aspect
       // on tall screens keep the middle column clear for the names
-      const u = camera.aspect < 0.9 ? (b.u < 0.5 ? b.u * 0.56 : 0.44 + b.u * 0.56) : b.u
+      const u = camera.aspect < 0.9 ? (b.u < 0.5 ? b.u * 0.28 : 0.86 + (b.u - 0.5) * 0.28) : b.u
       b.base = new THREE.Vector3((u - 0.5) * w * 1.05, h * (0.04 + b.v * 0.42), b.z)
+      // a phone frame is narrow: smaller balloons keep the names readable
+      b.group.scale.setScalar(camera.aspect < 0.9 ? b.size * 0.5 : b.size)
     }
   }
 
-  const update = (dt, t) => {
-    for (const b of balloons) {
-      if (!b.base) continue
+  // Motion follows the wall clock, not the stage's own timer, so the intro and
+  // the page hero show every balloon in the same place at the same moment.
+  const spin = balloons.map((b) => b.group.rotation.y)
+  const update = (dt, stageTime, frozen = false) => {
+    const t = frozen ? 0 : performance.now() / 1000
+    balloons.forEach((b, i) => {
+      if (!b.base) return
       b.group.position.set(b.base.x + Math.sin(t * 0.07 + b.phase) * 0.8, b.base.y + Math.sin(t * 0.3 + b.phase) * 0.35, b.base.z)
-      b.group.rotation.y += dt * 0.04
+      b.group.rotation.y = spin[i] + t * 0.04
       const fire = Math.max(0, Math.sin(t * 0.6 + b.phase * 3) - 0.86) * 6
       b.flame.material.opacity = Math.min(1, fire)
       b.envelope.material.emissiveIntensity = fire * 0.12
-    }
+    })
   }
 
   return { balloons, place, update, flameMap }

@@ -81,8 +81,10 @@ const NIGHT = '#0b1630'
  * Mounts the illustration into `host` (which must be positioned).
  * mode 'hero': windows mostly lit, ferries pass, the bridge lights sweep now and then.
  * mode 'intro': windows mostly dark until lit by the guest; the intro drives the ferry and the names.
+ * afterIntro: the hero mounts under the intro's last frame, where the vapur has
+ * just sailed off to the right, so the next one only comes in a little later.
  */
-export function mountBosphorus(host, { mode = 'hero', reduce = false } = {}) {
+export function mountBosphorus(host, { mode = 'hero', reduce = false, afterIntro = false } = {}) {
   const intro = mode === 'intro'
   mounts += 1
   const uid = `bz${mounts}`
@@ -125,6 +127,11 @@ export function mountBosphorus(host, { mode = 'hero', reduce = false } = {}) {
   let waterGradient = null
   let names = null
   let litTarget = intro ? 0.14 : 0.82
+  // the intro ends with every window lit and the bridge sweep just finished
+  let sweepClock = afterIntro ? 4 : 0
+  // Twinkles, blinks and the water shimmer run on the wall clock, so the intro
+  // and the hero mounted under it are in step during the cross-fade.
+  const wallPhase = () => performance.now() / 1000
   const dpr = Math.min(window.devicePixelRatio || 1, 1.5)
 
   /* ------------------------------------------------------------ back */
@@ -185,7 +192,7 @@ export function mountBosphorus(host, { mode = 'hero', reduce = false } = {}) {
       const star = el('circle', { cx: x.toFixed(1), cy: y.toFixed(1), r: (big ? 1.5 + random() : 0.5 + random() * 0.8).toFixed(2), fill: random() < 0.2 ? '#f6e7c8' : '#e9eef5', opacity: (0.35 + random() * 0.6).toFixed(2) }, stars)
       if (random() < 0.3) {
         star.setAttribute('class', 'bz-twinkle')
-        star.style.animationDelay = `${(-random() * 4).toFixed(2)}s`
+        star.style.animationDelay = `${(-random() * 4 - wallPhase()).toFixed(2)}s`
       }
     }
 
@@ -248,7 +255,7 @@ export function mountBosphorus(host, { mode = 'hero', reduce = false } = {}) {
       const light = el('circle', { cx: x.toFixed(1), cy: y.toFixed(1), r: (0.7 + random() * 1.1).toFixed(2), fill: random() < 0.7 ? '#f6c667' : '#fff1d6', opacity: (0.45 + random() * 0.5).toFixed(2) }, lights)
       if (random() < 0.35) {
         light.setAttribute('class', 'bz-twinkle')
-        light.style.animationDelay = `${(-random() * 4).toFixed(2)}s`
+        light.style.animationDelay = `${(-random() * 4 - wallPhase()).toFixed(2)}s`
       }
     }
 
@@ -287,8 +294,9 @@ export function mountBosphorus(host, { mode = 'hero', reduce = false } = {}) {
       const w1 = w0 * 0.68
       el('path', { d: `M${x - w0 / 2} ${Y1} L${x - w1 / 2} ${towerTop - 4} L${x + w1 / 2} ${towerTop - 4} L${x + w0 / 2} ${Y1} Z`, fill: url('tower') }, g)
       el('rect', { x: x - w1 * 0.7, y: towerTop - 7, width: w1 * 1.4, height: 4, fill: '#d8bd83' }, g)
-      el('circle', { cx: x, cy: towerTop - 10, r: 5, fill: '#ff4b4b', opacity: 0.35, filter: url('lampGlow'), class: 'bz-blink' }, g)
-      el('circle', { cx: x, cy: towerTop - 10, r: 1.6, fill: '#ff6b6b', class: 'bz-blink' }, g)
+      const blinkDelay = `${(-wallPhase()).toFixed(2)}s`
+      el('circle', { cx: x, cy: towerTop - 10, r: 5, fill: '#ff4b4b', opacity: 0.35, filter: url('lampGlow'), class: 'bz-blink', style: `animation-delay:${blinkDelay}` }, g)
+      el('circle', { cx: x, cy: towerTop - 10, r: 1.6, fill: '#ff6b6b', class: 'bz-blink', style: `animation-delay:${blinkDelay}` }, g)
     })
 
     // deck (continuous viaduct) with the LED strip underneath
@@ -383,7 +391,7 @@ export function mountBosphorus(host, { mode = 'hero', reduce = false } = {}) {
     el('rect', { x: 0, y: Y1 - 1.2, width: W, height: 2.4, fill: '#5f6f8c', opacity: 0.7 }, front)
 
     // restore the lit fraction across a re-layout
-    const litFraction = previous.length ? previous.filter((w) => w.on).length / previous.length : litTarget
+    const litFraction = previous.length ? previous.filter((w) => w.on).length / previous.length : afterIntro ? 1 : litTarget
     windows.forEach((w) => {
       if (random() < litFraction) setWindow(w, true, true)
     })
@@ -875,7 +883,7 @@ export function mountBosphorus(host, { mode = 'hero', reduce = false } = {}) {
     buildBack()
     buildFront()
     prepareWater()
-    if (!intro && state.ferryX < -1e4) state.ferryX = W * 0.18
+    if (!intro && state.ferryX < -1e4) state.ferryX = afterIntro && !reduce ? -(ferry?.length ?? 200) - W * 0.35 : W * 0.18
     render()
   }
 
@@ -893,7 +901,8 @@ export function mountBosphorus(host, { mode = 'hero', reduce = false } = {}) {
     if (!intro && ferry) {
       state.ferryX += dt * (W / 28)
       if (state.ferryX > W + 60) state.ferryX = -ferry.length - Math.random() * W * 0.9
-      const cycle = clock % 13
+      sweepClock += dt
+      const cycle = sweepClock % 13
       state.sweep = cycle < 3.6 ? (cycle / 3.6) * 1.4 - 0.2 : -1
     }
 
@@ -930,7 +939,7 @@ export function mountBosphorus(host, { mode = 'hero', reduce = false } = {}) {
       ferry.node.style.display = visible ? '' : 'none'
       if (visible) ferry.node.setAttribute('transform', `translate(${state.ferryX.toFixed(2)} ${L.Yf}) scale(${ferry.scale})`)
     }
-    drawWater(clock)
+    drawWater(wallPhase())
   }
 
   let raf = 0

@@ -321,6 +321,8 @@ const css = String.raw`
   .autumn-page .hero-tree{ animation:treeIn 1.1s cubic-bezier(.16,1,.3,1) backwards; }
   @keyframes cueIn{ from{ opacity:0; } }
   .autumn-page .scroll-cue{ animation:cueIn .8s ease .7s backwards; }
+  /* the intro ends on the bare ground, so the falling leaves and the leaf pile fade in over it */
+  #leaves, .autumn-page .hero .leaf-band{ animation:cueIn 1.2s ease backwards; }
 
   /* hero names: letters drift up one by one */
   .autumn-page .names .hl{ display:inline-block; animation:letterIn .65s cubic-bezier(.16,1,.3,1) calc(.08s + var(--i)*.035s) backwards; }
@@ -380,7 +382,7 @@ const css = String.raw`
     .autumn-page.rv .eyrow.reveal .label{ letter-spacing:.42em; }
     .autumn-page.rv .gallery.reveal .frame .arch{ clip-path:none; }
     .autumn-page .hero-block > *, .autumn-page .hero-tree, .autumn-page .scroll-cue,
-    .autumn-page .names .hl{ animation:none; }
+    .autumn-page .names .hl, #leaves, .autumn-page .hero .leaf-band{ animation:none; }
     .autumn-page .scroll-cue::after{ animation:none; }
     .autumn-page .cd-unit .n .roll.out, .autumn-page .cd-unit .n .roll.in{ animation:none; }
     .autumn-page .cd-unit .n .roll.out{ display:none; }

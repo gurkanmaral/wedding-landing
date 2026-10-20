@@ -1,8 +1,6 @@
 /* İznik tile wall: shared by the hero and the intro. */
 
 .izw {
-  --lx: 30%;
-  --ly: 25%;
   position: absolute;
   inset: 0;
   overflow: hidden;
@@ -68,29 +66,28 @@
   background-image: linear-gradient(135deg, #fbf9f3 0%, #f3eee3 55%, #ece5d6 100%);
 }
 
-/* specular highlight of the glaze, following the light */
+/* specular highlight of the glaze: its own layer, moved by transform from
+   wall.js, so it never repaints the face beneath (white over normal blending
+   is the same as the screen blend it replaces) */
 .izw-sheen {
   position: absolute;
-  inset: 0;
+  top: 0;
+  left: 0;
+  width: calc(var(--s) * 0.84);
+  height: calc(var(--s) * 0.84);
   pointer-events: none;
-  mix-blend-mode: screen;
-  background:
-    radial-gradient(circle at calc(var(--lx) - var(--tx)) calc(var(--ly) - var(--ty)),
-      rgb(255 255 255 / 0.85) 0,
-      rgb(255 255 255 / 0.3) calc(var(--s) * 0.09),
-      rgb(255 255 255 / 0) calc(var(--s) * 0.42)),
-    radial-gradient(circle at calc(var(--lx) - var(--tx)) calc(var(--ly) - var(--ty)),
-      rgb(255 246 228 / 0.24) 0,
-      rgb(255 246 228 / 0) calc(var(--s) * 2.8));
+  visibility: hidden;
+  will-change: transform;
+  background: radial-gradient(closest-side, rgb(255 255 255 / 0.85) 0, rgb(255 255 255 / 0.3) 21.4%, rgb(255 255 255 / 0) 100%);
 }
 
-/* raking light across the whole wall */
+/* raking light and warm glow across the whole wall (canvas, drawn by wall.js) */
 .izw-shade {
   position: absolute;
   inset: 0;
+  width: 100%;
+  height: 100%;
   pointer-events: none;
-  mix-blend-mode: multiply;
-  background: radial-gradient(circle at var(--lx) var(--ly), rgb(255 255 255 / 0) 0, rgb(255 255 255 / 0) 18%, rgb(70 55 35 / 0.2) 95%);
 }
 
 /* the couple's names in the medallion, date and place on the inscription band */

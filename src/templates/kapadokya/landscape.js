@@ -1,12 +1,13 @@
-// Paints the Cappadocia valley as a layered gouache illustration onto two
-// canvases: `back` sits behind the 3D balloons, `front` in front of them.
-// The signature forms: tuff ridges folded like curtains (vertical erosion
-// flutes), irregular cones rising out of the crests, Uçhisar castle, green
-// orchards and poplars in the valley pockets, a flat plateau on the horizon.
-// Light comes from a low dawn sun on the left.
+// Paints the Cappadocia valley as a flat, layered vector illustration: a
+// turquoise-to-peach dawn sky with wisps of cloud, soft green mountains and
+// striped fields, a sandy road winding out of the valley, clusters of
+// rounded fairy chimneys with basalt caps, and a carved rock massif with cave
+// dwellings in the foreground. Three canvases: `sky` (optional, opaque),
+// `back` behind the 3D balloons and `front` in front of them, which only
+// holds rock hugging the frame edges.
 import { seeded } from '../../shared/intro/core.js'
 
-const HAZE = [247, 208, 182]
+const HAZE = [226, 236, 226]
 
 const mix = (a, b, t) => a.map((v, i) => Math.round(v + (b[i] - v) * t))
 const rgb = ([r, g, b], a = 1) => `rgba(${r},${g},${b},${a})`
@@ -15,320 +16,357 @@ const hex = (value) => {
   return [n >> 16, (n >> 8) & 255, n & 255]
 }
 
-function noise1(seed) {
-  const random = seeded(seed)
-  const values = Array.from({ length: 512 }, () => random())
-  return (x) => {
-    const i = Math.floor(x)
-    const f = x - i
-    const t = f * f * (3 - 2 * f)
-    return values[i & 511] + (values[(i + 1) & 511] - values[i & 511]) * t
-  }
+function prepare(canvas, W, H, dpr) {
+  canvas.width = Math.round(W * dpr)
+  canvas.height = Math.round(H * dpr)
+  const ctx = canvas.getContext('2d')
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+  ctx.clearRect(0, 0, W, H)
+  return ctx
 }
 
-/* ------------------------------------------------------------ pieces */
+/* ---------------------------------------------------------------- sky */
 
-// Irregular tuff cone: broad shoulders, slight bulge, leaning softened tip.
-function conePath(ctx, { x, base, h, w, lean, bulge }) {
-  const tipX = x + lean
-  const tipY = base - h
+// A flat wisp of cloud: a long rounded bar with a couple of bumps on top.
+function wisp(ctx, x, y, w, random) {
+  const h = w * 0.07
+  ctx.fillStyle = 'rgba(255,255,255,0.92)'
   ctx.beginPath()
-  ctx.moveTo(x - w / 2, base)
-  ctx.bezierCurveTo(x - w * (0.42 + bulge), base - h * 0.35, tipX - w * 0.2, tipY + h * 0.3, tipX - w * 0.06, tipY + h * 0.06)
-  ctx.quadraticCurveTo(tipX, tipY - h * 0.02, tipX + w * 0.07, tipY + h * 0.07)
-  ctx.bezierCurveTo(tipX + w * 0.24, tipY + h * 0.34, x + w * (0.4 + bulge * 0.6), base - h * 0.3, x + w / 2, base)
-  ctx.closePath()
-}
-
-function paintCone(ctx, cone, palette, random) {
-  const { x, base, h, w } = cone
-  conePath(ctx, cone)
-  ctx.fillStyle = rgb(palette.mid)
+  ctx.roundRect(x - w / 2, y - h / 2, w, h, h / 2)
   ctx.fill()
-  ctx.save()
-  conePath(ctx, cone)
-  ctx.clip()
-  const side = ctx.createLinearGradient(x - w / 2, 0, x + w / 2, 0)
-  side.addColorStop(0, rgb(palette.light, 0.9))
-  side.addColorStop(0.45, rgb(palette.light, 0))
-  side.addColorStop(0.62, rgb(palette.dark, 0.15))
-  side.addColorStop(1, rgb(palette.dark, 0.75))
-  ctx.fillStyle = side
-  ctx.fillRect(x - w, base - h * 1.1, w * 2, h * 1.2)
-  // flutes radiate down from the tip
-  const flutes = Math.max(5, Math.round(w / 6))
-  for (let i = 0; i < flutes; i += 1) {
-    const u = (i + 0.5) / flutes
-    const fx = x - w / 2 + u * w
-    ctx.strokeStyle = u < 0.45 ? rgb(palette.light, 0.35) : rgb(palette.dark, 0.25)
-    ctx.lineWidth = Math.max(0.7, w / flutes / 2.6)
+  const bumps = 1 + Math.floor(random() * 3)
+  for (let i = 0; i < bumps; i += 1) {
+    const r = h * (0.9 + random() * 0.9)
     ctx.beginPath()
-    ctx.moveTo(x + cone.lean + (fx - x) * 0.1, base - h * 0.9)
-    ctx.quadraticCurveTo(fx + (random() - 0.5) * 3, base - h * 0.4, fx + (random() - 0.5) * 5, base + 2)
-    ctx.stroke()
-  }
-  if (cone.cap) {
-    // darker basalt crown on the tip
-    ctx.fillStyle = rgb(palette.cap, 0.75)
-    ctx.beginPath()
-    ctx.ellipse(x + cone.lean, base - h * 0.95, w * 0.16, h * 0.08, 0, 0, Math.PI * 2)
+    ctx.arc(x - w * 0.25 + random() * w * 0.4, y - h * 0.2, r, Math.PI, 0)
     ctx.fill()
   }
-  if (cone.doors) {
-    for (let i = 0; i < cone.doors; i += 1) {
-      const dw = Math.max(2.2, w * 0.05)
-      const dx = x - w * 0.15 + random() * w * 0.3
-      const dy = base - h * (0.2 + random() * 0.4)
-      ctx.fillStyle = rgb(palette.hole, 0.8)
-      ctx.beginPath()
-      ctx.moveTo(dx, dy + dw * 1.5)
-      ctx.lineTo(dx, dy + dw / 2)
-      ctx.arc(dx + dw / 2, dy + dw / 2, dw / 2, Math.PI, 0)
-      ctx.lineTo(dx + dw, dy + dw * 1.5)
-      ctx.fill()
-    }
+}
+
+/** Opaque sky: a soft turquoise-to-peach dawn with flat wisps of cloud. */
+export function paintSky(canvas, { width: W, height: H, dpr = 1, horizon = H * 0.6 }) {
+  const ctx = prepare(canvas, W, H, dpr)
+  const g = ctx.createLinearGradient(0, 0, 0, horizon)
+  g.addColorStop(0, '#62cfe6')
+  g.addColorStop(0.5, '#a9e2e4')
+  g.addColorStop(0.85, '#f1e6cc')
+  g.addColorStop(1, '#f8dfc0')
+  ctx.fillStyle = g
+  ctx.fillRect(0, 0, W, H)
+  const s = Math.min(W, H * 1.4) / 1000
+  const random = seeded(12)
+  // wisps sit low in the sky and leave the column behind the names open
+  for (let i = 0; i < 9; i += 1) {
+    const x = random() * W
+    if (Math.abs(x / W - 0.5) < 0.14) continue
+    wisp(ctx, x, horizon * (0.45 + random() * 0.45), (90 + random() * 120) * s, random)
   }
-  ctx.restore()
+}
+
+/* ----------------------------------------------------------- terrain */
+
+// Flat illustration palette: pale tuff in three tones, valley greens and the
+// sandy road. Distant pieces are pulled towards the sky haze.
+const ROCK = { lit: hex('#ece3d8'), mid: hex('#d6c9bb'), shade: hex('#b3a396'), cave: hex('#7f6e65'), cap: hex('#9c8576') }
+const GREENS = [hex('#a8cf9c'), hex('#86bb7e'), hex('#6fa86b'), hex('#5b955d'), hex('#4c8752')]
+const ROAD = hex('#ecd8ad')
+const ROAD_EDGE = hex('#d2b787')
+
+const tone = (c, haze) => rgb(mix(c, HAZE, haze))
+
+// A wobbly line between two points, for hand-drawn edges.
+function wobble(points, amount, random) {
+  return points.map(([x, y], i) => (i === 0 || i === points.length - 1 ? [x, y] : [x + (random() - 0.5) * amount, y + (random() - 0.5) * amount * 0.5]))
+}
+
+function poly(ctx, points) {
+  ctx.beginPath()
+  points.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)))
+  ctx.closePath()
 }
 
 /**
- * A ridge wall folded like a curtain: a wavy crest, cones growing out of it,
- * and dense vertical flutes with alternating light and shadow.
+ * One fairy chimney: a broad cone with a rounded tip, its right flank in a
+ * flat shadow with a jagged edge, faint vertical grooves, sometimes a darker
+ * basalt cap and a few carved windows.
  */
-function curtainRidge(ctx, opts) {
-  const { W, H, base, amp, palette, seed, cones = 0, coneH = [0, 0], dip = null, doors = 0 } = opts
-  const random = seeded(seed)
-  const n = noise1(seed)
-  const n2 = noise1(seed + 5)
-  const crest = (x) => {
-    let y = base - amp * (0.6 * n(x / 140) + 0.4 * n2(x / 46))
-    if (dip) y += dip.depth * Math.exp(-(((x - dip.x) / dip.width) ** 2))
-    return y
+function chimney(ctx, { x, base, h, w, lean = 0, cap = false, caves = 0, haze = 0 }, random) {
+  const tipX = x + lean
+  const tipY = base - h
+  const steps = 18
+  const left = []
+  const right = []
+  for (let i = 0; i <= steps; i += 1) {
+    const t = i / steps
+    // broad body that tapers into a blunt, rounded tip
+    const half = (w / 2) * Math.sqrt(Math.max(0, 1 - Math.pow(t, 1.8))) * (1 - 0.5 * t)
+    const y = base - h * t
+    const cx = x + lean * t
+    left.push([cx - half, y])
+    right.unshift([cx + half, y])
   }
+  // cast shadow: the sun is up and to the left, so it falls to the right
+  // across the ground as a long, soft, flattened shape
+  ctx.save()
+  ctx.translate(x + w * 0.25 + h * 0.28, base - h * 0.01)
+  ctx.rotate(0.06)
+  const shade = ctx.createRadialGradient(0, 0, 0, 0, 0, w * 0.5 + h * 0.42)
+  shade.addColorStop(0, `rgba(38,66,44,${0.42 * (1 - haze)})`)
+  shade.addColorStop(1, 'rgba(38,66,44,0)')
+  ctx.fillStyle = shade
+  ctx.scale(1, 0.16)
+  ctx.beginPath()
+  ctx.arc(0, 0, w * 0.5 + h * 0.42, 0, Math.PI * 2)
+  ctx.fill()
+  ctx.restore()
 
-  // cones first, so the ridge body covers their feet
-  const list = []
-  for (let i = 0; i < cones; i += 1) {
-    const x = random() * W
-    const h = coneH[0] + random() * (coneH[1] - coneH[0])
-    list.push({
-      x,
-      base: crest(x) + h * 0.25,
-      h,
-      w: h * (0.6 + random() * 0.8),
-      lean: (random() - 0.5) * h * 0.22,
-      bulge: random() * 0.14,
-      cap: random() < 0.18,
-      doors: random() < 0.5 ? Math.floor(random() * doors) : 0,
+  // keep the rounded tip clean: wobble only the flanks
+  const outline = [...left, ...right].map(([px, py], i, all) => {
+    const t = (base - py) / h
+    return i === 0 || i === all.length - 1 || t > 0.8 ? [px, py] : [px + (random() - 0.5) * w * 0.04, py]
+  })
+  poly(ctx, outline)
+  ctx.fillStyle = tone(ROCK.lit, haze)
+  ctx.fill()
+
+  // flat shadow on the right flank
+  ctx.save()
+  poly(ctx, outline)
+  ctx.clip()
+  const shadow = [[tipX + w * 0.02, tipY]]
+  for (let i = 1; i <= 5; i += 1) {
+    const t = i / 5
+    shadow.push([x + lean * (1 - t) + w * (0.08 + random() * 0.08) * t, tipY + h * t])
+  }
+  shadow.push([x + w, base + 2], [x + w, tipY])
+  poly(ctx, shadow)
+  ctx.fillStyle = tone(ROCK.shade, haze)
+  ctx.fill()
+  // a mid tone band between light and shadow
+  ctx.fillStyle = tone(ROCK.mid, haze)
+  ctx.globalAlpha = 0.8
+  poly(ctx, [[tipX - w * 0.04, tipY + h * 0.1], ...shadow.slice(1, 6).map(([sx, sy]) => [sx - w * 0.1, sy]), ...shadow.slice(1, 6).reverse()])
+  ctx.fill()
+  ctx.globalAlpha = 1
+  // grooves
+  ctx.strokeStyle = tone(ROCK.shade, haze)
+  ctx.lineWidth = Math.max(1, w * 0.012)
+  for (let i = 0; i < 3; i += 1) {
+    const gx = x - w * (0.1 + random() * 0.25)
+    ctx.beginPath()
+    ctx.moveTo(gx + lean * 0.4, base - h * (0.35 + random() * 0.3))
+    ctx.lineTo(gx - w * 0.03, base - h * 0.05)
+    ctx.stroke()
+  }
+  for (let i = 0; i < caves; i += 1) {
+    const cw = Math.max(3, w * (0.09 + random() * 0.05))
+    const ch = cw * (1.2 + random() * 0.5)
+    const cx = x - w * 0.15 + random() * w * 0.25
+    const cy = base - h * (0.18 + random() * 0.4)
+    ctx.fillStyle = tone(ROCK.cave, haze)
+    ctx.beginPath()
+    ctx.roundRect(cx - cw / 2, cy - ch / 2, cw, ch, cw * 0.4)
+    ctx.fill()
+  }
+  ctx.restore()
+
+  if (cap) {
+    // the darker hard-rock cap the chimney was eroded under
+    const cw = w * 0.42
+    const ch = h * 0.07
+    const cy = tipY + h * 0.02
+    ctx.fillStyle = tone(ROCK.cap, haze)
+    poly(ctx, wobble([[tipX - cw / 2, cy + ch * 0.4], [tipX - cw * 0.35, cy - ch * 0.5], [tipX + cw * 0.3, cy - ch * 0.6], [tipX + cw / 2, cy + ch * 0.2], [tipX + cw * 0.1, cy + ch * 0.7]], cw * 0.08, random))
+    ctx.fill()
+  }
+}
+
+// A cluster of chimneys, tallest in the middle, drawn back to front.
+function cluster(ctx, { x, base, h, count, spread, haze = 0, caps = 0.3, caves = 0 }, random) {
+  const items = []
+  for (let i = 0; i < count; i += 1) {
+    const u = count === 1 ? 0.5 : i / (count - 1)
+    const hh = h * (0.45 + 0.55 * Math.sin(u * Math.PI) ** 0.7) * (0.8 + random() * 0.35)
+    items.push({
+      x: x + (u - 0.5) * spread + (random() - 0.5) * spread * 0.15,
+      base: base + random() * h * 0.06,
+      h: hh,
+      w: hh * (0.58 + random() * 0.2),
+      lean: (random() - 0.5) * hh * 0.08,
+      cap: random() < caps,
+      caves: caves ? Math.floor(random() * (caves + 1)) : 0,
+      haze,
     })
   }
-  list.sort((a, b) => a.h - b.h).forEach((c) => paintCone(ctx, c, palette, random))
-
-  ctx.beginPath()
-  ctx.moveTo(-10, H + 10)
-  for (let x = -10; x <= W + 10; x += 4) ctx.lineTo(x, crest(x))
-  ctx.lineTo(W + 10, H + 10)
-  ctx.closePath()
-  ctx.fillStyle = rgb(palette.mid)
-  ctx.fill()
-
-  ctx.save()
-  ctx.clip()
-  // curtain folds: each column lit by a slowly varying fold angle
-  const fold = noise1(seed + 11)
-  const step = Math.max(2, amp / 18)
-  for (let x = -10; x <= W + 10; x += step) {
-    const f = Math.sin(x / (step * 2.2) + fold(x / 30) * 6)
-    const top = crest(x)
-    const colour = f > 0 ? palette.light : palette.dark
-    const alpha = Math.abs(f) * (f > 0 ? 0.42 : 0.3)
-    const g = ctx.createLinearGradient(0, top, 0, top + amp * 2.2)
-    g.addColorStop(0, rgb(colour, alpha))
-    g.addColorStop(1, rgb(colour, alpha * 0.25))
-    ctx.fillStyle = g
-    ctx.fillRect(x, top, step + 0.5, amp * 2.4 + H)
-  }
-  // crest highlight and a warm shadow at the foot
-  ctx.strokeStyle = rgb(palette.light, 0.7)
-  ctx.lineWidth = 1.5
-  ctx.beginPath()
-  for (let x = -10; x <= W + 10; x += 4) {
-    const y = crest(x) + 1
-    if (x === -10) ctx.moveTo(x, y)
-    else ctx.lineTo(x, y)
-  }
-  ctx.stroke()
-  const foot = ctx.createLinearGradient(0, base, 0, base + amp * 2)
-  foot.addColorStop(0, rgb(palette.dark, 0))
-  foot.addColorStop(1, rgb(palette.dark, 0.35))
-  ctx.fillStyle = foot
-  ctx.fillRect(0, base, W, H)
-  ctx.restore()
-  return crest
+  items.sort((a, b) => a.base - b.base).forEach((c) => chimney(ctx, c, random))
 }
 
-function poplarCluster(ctx, cx, cy, count, scale, random) {
-  for (let i = 0; i < count; i += 1) {
-    const x = cx + (random() - 0.5) * 60 * scale
-    const y = cy + (random() - 0.5) * 10 * scale
-    const h = (14 + random() * 20) * scale
-    const w = h * 0.24
-    const g = ctx.createLinearGradient(x - w / 2, 0, x + w / 2, 0)
-    g.addColorStop(0, '#93a35b')
-    g.addColorStop(0.5, '#62733a')
-    g.addColorStop(1, '#3a4626')
-    ctx.fillStyle = g
-    ctx.beginPath()
-    ctx.moveTo(x, y - h)
-    ctx.bezierCurveTo(x + w * 0.75, y - h * 0.7, x + w * 0.5, y - h * 0.1, x, y)
-    ctx.bezierCurveTo(x - w * 0.5, y - h * 0.1, x - w * 0.75, y - h * 0.7, x, y - h)
-    ctx.fill()
-  }
-}
-
-function orchard(ctx, cx, cy, rx, ry, random) {
-  ctx.fillStyle = 'rgba(104,122,62,0.55)'
-  ctx.beginPath()
-  ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2)
-  ctx.fill()
-  // tree dots
-  for (let i = 0; i < (rx * ry) / 40; i += 1) {
-    const a = random() * Math.PI * 2
-    const r = Math.sqrt(random())
-    ctx.fillStyle = random() > 0.5 ? 'rgba(70,88,44,0.8)' : 'rgba(132,150,84,0.75)'
-    ctx.beginPath()
-    ctx.arc(cx + Math.cos(a) * rx * r, cy + Math.sin(a) * ry * r, 1.6 + random() * 1.6, 0, Math.PI * 2)
-    ctx.fill()
-  }
-}
-
-function uchisar(ctx, x, base, h, w, palette) {
-  const random = seeded(71)
-  const path = () => {
-    ctx.beginPath()
-    ctx.moveTo(x - w / 2, base)
-    ctx.bezierCurveTo(x - w * 0.46, base - h * 0.42, x - w * 0.34, base - h * 0.74, x - w * 0.18, base - h * 0.84)
-    for (let i = 0; i <= 10; i += 1) {
-      ctx.lineTo(x - w * 0.18 + (i / 10) * w * 0.36, base - h * (0.86 + (i % 2 ? 0.1 : 0.02) + Math.sin(i * 1.9) * 0.035))
+/**
+ * A big carved rock massif rising from a frame edge: several merged rounded
+ * peaks with flat shadow facets, horizontal strata and cave dwellings with
+ * windows and arched doors.
+ */
+function massif(ctx, { x0, x1, base, top, side, haze = 0 }, random) {
+  const w = x1 - x0
+  const peaks = 3
+  for (let p = 0; p < peaks; p += 1) {
+    // outer peak is tallest, the others step down towards the valley
+    const k = side === 'left' ? p : peaks - 1 - p
+    const cx = x0 + w * (0.2 + (p / (peaks - 1)) * 0.6)
+    const ph = (base - top) * (1 - k * 0.24) * (0.9 + random() * 0.15)
+    const pw = w * (0.55 - k * 0.06)
+    chimney(ctx, { x: cx, base: base + 4, h: ph, w: pw, lean: (side === 'left' ? 1 : -1) * pw * 0.05, caves: 0, haze }, random)
+    // carved dwellings on the lit face
+    ctx.fillStyle = tone(ROCK.cave, haze)
+    const rows = 2 + Math.floor(random() * 2)
+    for (let r = 0; r < rows; r += 1) {
+      const y = base - ph * (0.18 + r * 0.2)
+      const n = 1 + Math.floor(random() * 3)
+      for (let i = 0; i < n; i += 1) {
+        const ww = pw * (0.06 + random() * 0.04)
+        const wh = ww * (1.1 + random() * 0.5)
+        const wx = cx - pw * 0.28 + i * pw * 0.14 + (random() - 0.5) * pw * 0.04
+        ctx.beginPath()
+        ctx.roundRect(wx, y - wh, ww, wh, ww * 0.35)
+        ctx.fill()
+      }
     }
-    ctx.bezierCurveTo(x + w * 0.3, base - h * 0.74, x + w * 0.44, base - h * 0.42, x + w / 2, base)
+    // an arched door at the foot
+    const dw = pw * 0.09
+    const dx = cx - pw * 0.12
+    ctx.beginPath()
+    ctx.moveTo(dx, base)
+    ctx.lineTo(dx, base - dw * 1.2)
+    ctx.arc(dx + dw / 2, base - dw * 1.2, dw / 2, Math.PI, 0)
+    ctx.lineTo(dx + dw, base)
+    ctx.fill()
+  }
+}
+
+// Rolling green fields in bands, each with faint furrow lines.
+function fields(ctx, W, H, top, random) {
+  const bands = 7
+  for (let i = 0; i < bands; i += 1) {
+    const t = i / bands
+    const y = top + (H - top) * t * t * 1.1
+    const amp = (H - top) * 0.03 * (0.4 + t)
+    const color = GREENS[Math.min(GREENS.length - 1, Math.floor(t * GREENS.length + (i % 2) * 0.6))]
+    const pts = [[-10, H + 10]]
+    const phase = random() * 6
+    for (let x = -10; x <= W + 10; x += 24) pts.push([x, y - amp * Math.sin(x / (W * 0.18) + phase) - amp * 0.5 * Math.sin(x / (W * 0.07) + phase * 2)])
+    pts.push([W + 10, H + 10])
+    poly(ctx, pts)
+    ctx.fillStyle = tone(color, Math.max(0, 0.35 - t * 0.5))
+    ctx.fill()
+    // furrows follow the band's top edge
+    ctx.save()
+    poly(ctx, pts)
+    ctx.clip()
+    ctx.strokeStyle = rgb(mix(color, [255, 255, 255], 0.22), 0.5)
+    ctx.lineWidth = 1 + t
+    for (let k = 1; k < 4; k += 1) {
+      ctx.beginPath()
+      for (let x = -10; x <= W + 10; x += 24) {
+        const yy = y + k * (6 + t * 14) - amp * Math.sin(x / (W * 0.18) + phase) - amp * 0.5 * Math.sin(x / (W * 0.07) + phase * 2)
+        if (x === -10) ctx.moveTo(x, yy)
+        else ctx.lineTo(x, yy)
+      }
+      ctx.stroke()
+    }
+    ctx.restore()
+  }
+}
+
+// The sandy road winding from the horizon to the bottom of the frame.
+function road(ctx, W, H, top, portrait) {
+  const x0 = W * (portrait ? 0.56 : 0.54)
+  const path = (widen) => {
+    ctx.beginPath()
+    ctx.moveTo(x0 - 3 - widen, top)
+    ctx.bezierCurveTo(W * 0.3 - widen * 3, top + (H - top) * 0.35, W * 0.62 - widen * 6, top + (H - top) * 0.6, W * (portrait ? 0.2 : 0.38) - widen * 20, H + 2)
+    ctx.lineTo(W * (portrait ? 0.46 : 0.5) + widen * 20, H + 2)
+    ctx.bezierCurveTo(W * 0.7 + widen * 6, top + (H - top) * 0.6, W * 0.33 + widen * 3, top + (H - top) * 0.35, x0 + 3 + widen, top)
     ctx.closePath()
   }
-  path()
-  ctx.fillStyle = rgb(palette.mid)
+  path(1.5)
+  ctx.fillStyle = rgb(ROAD_EDGE)
   ctx.fill()
-  ctx.save()
-  path()
-  ctx.clip()
-  const side = ctx.createLinearGradient(x - w / 2, 0, x + w / 2, 0)
-  side.addColorStop(0, rgb(palette.light, 0.85))
-  side.addColorStop(0.5, rgb(palette.light, 0))
-  side.addColorStop(1, rgb(palette.dark, 0.6))
-  ctx.fillStyle = side
-  ctx.fillRect(x - w, base - h * 1.2, w * 2, h * 1.3)
-  for (let i = 0; i < 70; i += 1) {
-    const dx = x - w * 0.34 + random() * w * 0.68
-    const dy = base - h * (0.08 + random() * 0.74)
-    const dw = Math.max(1.8, w * 0.018 + random() * w * 0.012)
-    ctx.fillStyle = rgb(palette.hole, 0.55 + random() * 0.3)
-    ctx.beginPath()
-    ctx.moveTo(dx, dy + dw * 1.4)
-    ctx.lineTo(dx, dy + dw / 2)
-    ctx.arc(dx + dw / 2, dy + dw / 2, dw / 2, Math.PI, 0)
-    ctx.lineTo(dx + dw, dy + dw * 1.4)
-    ctx.fill()
-  }
-  ctx.restore()
+  path(0)
+  ctx.fillStyle = rgb(ROAD)
+  ctx.fill()
 }
 
-function grain(ctx, W, H, seed, amount) {
-  const random = seeded(seed)
-  ctx.save()
-  ctx.globalCompositeOperation = 'source-atop'
-  for (let i = 0; i < (W * H) / 70; i += 1) {
-    ctx.fillStyle = random() > 0.5 ? `rgba(255,248,240,${amount})` : `rgba(70,36,26,${amount})`
-    ctx.fillRect(random() * W, random() * H, 1, 1)
-  }
-  ctx.restore()
+function poplar(ctx, x, y, h) {
+  const w = h * 0.24
+  ctx.fillStyle = rgb(GREENS[4])
+  ctx.beginPath()
+  ctx.moveTo(x, y - h)
+  ctx.bezierCurveTo(x + w * 0.8, y - h * 0.7, x + w * 0.5, y - h * 0.05, x, y)
+  ctx.bezierCurveTo(x - w * 0.5, y - h * 0.05, x - w * 0.8, y - h * 0.7, x, y - h)
+  ctx.fill()
+  ctx.fillStyle = rgb(GREENS[1], 0.7)
+  ctx.beginPath()
+  ctx.moveTo(x, y - h)
+  ctx.bezierCurveTo(x - w * 0.8, y - h * 0.7, x - w * 0.5, y - h * 0.05, x, y)
+  ctx.closePath()
+  ctx.fill()
 }
 
-// Palettes from far (hazy, pale) to near (warm, contrasty).
-function palette(depth) {
-  const haze = 1 - depth
-  const at = (c) => mix(hex(c), HAZE, haze * 0.7)
-  return {
-    light: at('#fff3e6'),
-    mid: at(depth > 0.7 ? '#e5b497' : '#ecc6ad'),
-    dark: at('#9a5d47'),
-    cap: at('#6d5248'),
-    hole: at('#5e3326'),
-  }
-}
-
-/** Paints both layers; returns the horizon y. */
-export function paintLandscape(back, front, { width: W, height: H, dpr = 1 }) {
+/** Paints the terrain layers (and the sky when a canvas is given); returns the horizon y. */
+export function paintLandscape(back, front, { width: W, height: H, dpr = 1, sky = null }) {
   const portrait = W / H < 0.9
-  const s = Math.min(1.5, Math.max(0.7, Math.min(W, H * 1.6) / 1100))
-  for (const canvas of [back, front]) {
-    canvas.width = Math.round(W * dpr)
-    canvas.height = Math.round(H * dpr)
-  }
-  const b = back.getContext('2d')
-  const f = front.getContext('2d')
-  b.setTransform(dpr, 0, 0, dpr, 0, 0)
-  f.setTransform(dpr, 0, 0, dpr, 0, 0)
-  b.clearRect(0, 0, W, H)
-  f.clearRect(0, 0, W, H)
+  const s = Math.min(1.5, Math.max(0.55, Math.min(W, H * 1.6) / 1100))
+  const horizon = H * (portrait ? 0.62 : 0.6)
+  if (sky) paintSky(sky, { width: W, height: H, dpr, horizon })
   const random = seeded(3)
-  const horizon = H * (portrait ? 0.6 : 0.57)
 
-  // far plateau: a long flat mesa
-  b.fillStyle = rgb(mix(hex('#efcdb9'), HAZE, 0.55))
-  b.beginPath()
-  b.moveTo(0, H)
-  for (let x = 0; x <= W; x += 16) b.lineTo(x, horizon - 3 - Math.sin(x * 0.003) * 3)
-  b.lineTo(W, H)
-  b.fill()
-
-  curtainRidge(b, { W, H, base: horizon + H * 0.035, amp: H * 0.03, palette: palette(0.15), seed: 4, cones: Math.round(26 * s), coneH: [10 * s, 24 * s] })
-  uchisar(b, W * (portrait ? 0.18 : 0.14), horizon + H * 0.085, H * (portrait ? 0.15 : 0.19), Math.max(W * 0.16, 150 * s), palette(0.35))
-  curtainRidge(b, { W, H, base: horizon + H * 0.09, amp: H * 0.045, palette: palette(0.35), seed: 9, cones: Math.round(18 * s), coneH: [18 * s, 40 * s], doors: 2 })
-
-  // valley pocket: orchards and poplars
-  const floorY = horizon + H * 0.15
-  b.fillStyle = rgb(mix(hex('#c9b27e'), HAZE, 0.3))
-  b.fillRect(0, floorY - 4, W, H)
-  for (let i = 0; i < 7; i += 1) orchard(b, random() * W, floorY + 8 + random() * H * 0.05, (40 + random() * 70) * s, (6 + random() * 8) * s, random)
-  for (let i = 0; i < 9; i += 1) poplarCluster(b, random() * W, floorY + 6 + random() * H * 0.05, 3 + Math.floor(random() * 6), s * 0.85, random)
-
-  // FRONT: near ridges frame the valley, lower in the middle so the names breathe
-  curtainRidge(f, {
-    W,
-    H,
-    base: horizon + H * 0.2,
-    amp: H * 0.08,
-    palette: palette(0.62),
-    seed: 15,
-    cones: Math.round(10 * s),
-    coneH: [40 * s, 80 * s],
-    doors: 3,
-    dip: { x: W / 2, width: W * 0.18, depth: H * 0.05 },
+  // BACK: distant mountains, the valley, the road and the chimney clusters
+  const b = prepare(back, W, H, dpr)
+  ;[
+    { y: horizon - H * 0.07, c: hex('#9fb8c9'), haze: 0.2, f: 0.0045 },
+    { y: horizon - H * 0.035, c: hex('#8dbf92'), haze: 0.35, f: 0.008 },
+  ].forEach((m, i) => {
+    const pts = [[-10, horizon + 4]]
+    for (let x = -10; x <= W + 10; x += 16) {
+      const ridge = Math.abs(Math.sin(x * m.f + i * 2)) * 0.6 + Math.abs(Math.sin(x * m.f * 2.3 + i)) * 0.4
+      pts.push([x, m.y + (1 - ridge) * H * 0.035])
+    }
+    pts.push([W + 10, horizon + 4])
+    poly(b, pts)
+    b.fillStyle = tone(m.c, m.haze)
+    b.fill()
   })
-  for (let i = 0; i < 5; i += 1) poplarCluster(f, random() * W, horizon + H * 0.3 + random() * H * 0.04, 3 + Math.floor(random() * 5), s * 1.15, random)
-  curtainRidge(f, {
-    W,
-    H,
-    base: H * 0.9,
-    amp: H * 0.09,
-    palette: palette(1),
-    seed: 21,
-    cones: portrait ? 3 : 5,
-    coneH: [110 * s, 190 * s],
-    doors: 4,
-    dip: { x: W / 2, width: W * 0.24, depth: H * 0.09 },
-  })
+  fields(b, W, H, horizon, random)
+  road(b, W, H, horizon + H * 0.01, portrait)
 
-  grain(b, W, H, 7, 0.05)
-  grain(f, W, H, 8, 0.06)
+  // chimney clusters walking towards us, kept clear of the column behind the names
+  const clusters = portrait
+    ? [
+        { x: 0.12, at: 0.05, h: 0.08, n: 4 },
+        { x: 0.86, at: 0.06, h: 0.09, n: 5 },
+        { x: 0.28, at: 0.12, h: 0.12, n: 3 },
+        { x: 0.82, at: 0.2, h: 0.17, n: 4, caves: 2 },
+      ]
+    : [
+        { x: 0.1, at: 0.04, h: 0.07, n: 5 },
+        { x: 0.33, at: 0.05, h: 0.08, n: 4 },
+        { x: 0.68, at: 0.045, h: 0.075, n: 6 },
+        { x: 0.88, at: 0.06, h: 0.09, n: 4 },
+        { x: 0.38, at: 0.13, h: 0.13, n: 3 },
+        { x: 0.75, at: 0.18, h: 0.19, n: 5, caves: 2 },
+      ]
+  clusters.forEach((c) =>
+    cluster(b, { x: W * c.x, base: horizon + H * c.at, h: H * c.h, count: c.n, spread: H * c.h * (0.45 + c.n * 0.12), haze: Math.max(0, 0.3 - c.at * 1.5), caves: c.caves ?? 0 }, random),
+  )
+  for (let i = 0; i < 14; i += 1) {
+    const x = random() * W
+    if (Math.abs(x / W - 0.5) < 0.12) continue
+    poplar(b, x, horizon + H * (0.08 + random() * 0.14), (10 + random() * 12) * s)
+  }
+
+  // FRONT (in front of the balloons): carved massifs hugging both frame edges
+  const f = prepare(front, W, H, dpr)
+  massif(f, { x0: -W * 0.04, x1: W * (portrait ? 0.34 : 0.22), base: H + 4, top: horizon + H * (portrait ? 0.14 : -0.1), side: 'left' }, random)
+  massif(f, { x0: W * (portrait ? 0.72 : 0.8), x1: W * 1.04, base: H + 4, top: horizon + H * (portrait ? 0.2 : 0.06), side: 'right' }, random)
   return horizon
 }

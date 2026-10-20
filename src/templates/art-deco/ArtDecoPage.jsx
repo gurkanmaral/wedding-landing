@@ -240,6 +240,8 @@ export default function MedDreamSparkArtDecoTemplatePage() {
         .from('.hero-frame-line', { scaleX: 0, transformOrigin: 'center', duration: 1.3, stagger: 0.08, ease: 'expo.out' }, 0.15)
         .from('.hero-letter', { yPercent: 120, opacity: 0, stagger: 0.05, duration: 1.1 }, 0.1)
         .from('.hero-sub', { opacity: 0, y: 20, duration: 0.9, ease: 'power2.out' }, 0.55)
+        // the intro ends on the bare backdrop, so everything laid over it fades in
+        .from('.hero-jewel, #top .parallax-leaf, .deco-header', { opacity: 0, duration: 1.4, ease: 'power2.out' }, 0.2)
 
       gsap.utils.toArray('.parallax-leaf').forEach((el, i) => {
         gsap.to(el, {
@@ -746,7 +748,7 @@ export default function MedDreamSparkArtDecoTemplatePage() {
     <div ref={root} className="theme-artdeco relative min-h-screen overflow-x-clip text-foreground">
       <style>{STYLES}</style>
 
-      <header className="fixed top-0 left-0 right-0 z-40 backdrop-blur-md bg-[oklch(0.15_0.045_185/0.72)] border-b border-primary/20">
+      <header className="deco-header fixed top-0 left-0 right-0 z-40 backdrop-blur-md bg-[oklch(0.15_0.045_185/0.72)] border-b border-primary/20">
         <div className="container-x flex items-center justify-between py-1.5">
           <a href="#top" className="inline-flex min-h-11 items-center font-display text-lg tracking-[0.3em] gold-text" aria-label={`${coupleAlt} — back to top`}>
             {initial(partner1)} &amp; {initial(partner2)}
@@ -782,7 +784,7 @@ export default function MedDreamSparkArtDecoTemplatePage() {
           <div
             ref={jewelCanvas}
             aria-hidden="true"
-            className="pointer-events-none absolute left-1/2 top-[47%] z-[1] h-[min(560px,78svh)] w-[min(94vw,680px)] -translate-x-1/2 -translate-y-1/2 opacity-80 mix-blend-screen"
+            className="hero-jewel pointer-events-none absolute left-1/2 top-[47%] z-[1] h-[min(560px,78svh)] w-[min(94vw,680px)] -translate-x-1/2 -translate-y-1/2 opacity-80 mix-blend-screen"
           />
 
           <img

@@ -3,8 +3,11 @@
 // The guest shakes the phone (DeviceMotion; on iOS the first tap asks for
 // permission) or swipes: the globe rocks, the snow inside swirls into a vortex
 // and slowly settles, the gold base turns to bring the couple's engraved names
-// round to the front, then the view dives through the glass into the chalet
-// scene — the same illustration as the page hero. DOM, SVG and canvas only.
+// round to the front, then the view dives through the glass toward the chalet
+// door until a gust of snow, led by one great crystal flake, sweeps across and
+// whites out the screen; it blows clear on the page hero's own opening view
+// (the same illustration, same snowfall clock), so the hand-over is seamless.
+// DOM, SVG and canvas only.
 import { gsap } from 'gsap'
 import { paintWinter, winterLayout, chaletDoor, mountWinter } from '../../../templates/snow-globe/winterArt.js'
 import { foilTile, loop, seeded } from '../foil.js'
@@ -31,7 +34,8 @@ ${s} .glass{position:absolute;left:0;top:0;pointer-events:none}
 ${s} .base{position:absolute;pointer-events:none}
 ${s} .base canvas{position:absolute}
 ${s} .hero{position:absolute;inset:0;opacity:0;will-change:transform,opacity}
-${s} .flash{position:absolute;inset:0;opacity:0;pointer-events:none;background:radial-gradient(60% 50% at 50% 55%,rgba(244,248,252,.95),rgba(221,231,240,.75) 60%,rgba(159,184,204,.4))}
+${s} .veil{position:absolute;inset:0 0 auto;height:55%;background:radial-gradient(70% 60% at 50% 25%,rgb(6 17 31 / .55),rgb(6 17 31 / 0) 75%);pointer-events:none}
+${s} canvas.gust{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 @keyframes ${s.slice(1)}-tw{from{opacity:.45;transform:scale(.92)}to{opacity:1;transform:scale(1.05)}}
 `
 
@@ -68,16 +72,16 @@ function paintRoom(canvas, W, H, dpr, tableY, globe) {
   // out-of-focus fairy lights and a window far behind
   const rand = seeded(8)
   const colors = ['255,214,140', '212,175,55', '192,57,43', '255,240,214', '159,184,204']
-  const count = Math.round((W * H) / 9000) + 14
+  const count = Math.round((W * H) / 24000) + 10
   for (let i = 0; i < count; i += 1) {
     const x = rand() * W
     const y = rand() * tableY * 0.95
-    const r = (0.02 + rand() * 0.07) * Math.max(W, H) * (0.6 + (y / H) * 0.6)
+    const r = (0.015 + rand() * 0.05) * Math.max(W, H) * (0.6 + (y / H) * 0.6)
     const c = colors[Math.floor(rand() * colors.length)]
-    const a = 0.08 + rand() * 0.22
+    const a = 0.05 + rand() * 0.15
     const g = ctx.createRadialGradient(x, y, r * 0.55, x, y, r)
-    g.addColorStop(0, `rgba(${c},${a * 0.7})`)
-    g.addColorStop(0.85, `rgba(${c},${a})`)
+    g.addColorStop(0, `rgba(${c},${a * 0.75})`)
+    g.addColorStop(0.8, `rgba(${c},${a})`)
     g.addColorStop(1, `rgba(${c},0)`)
     ctx.fillStyle = g
     ctx.beginPath()
@@ -314,6 +318,182 @@ function drawBand(canvas, band, strip, rot, dpr) {
   ctx.fillRect(0, 0, w, h)
 }
 
+/* -------------------------------------------------------------- gust */
+
+// A crystal snowflake sprite: six feathered arms round a hexagonal heart.
+function crystal(size, seed) {
+  const c = document.createElement('canvas')
+  c.width = c.height = size
+  const ctx = c.getContext('2d')
+  const rand = seeded(seed)
+  const r = size * 0.4
+  ctx.translate(size / 2, size / 2)
+  ctx.lineCap = 'round'
+  ctx.lineJoin = 'round'
+  ctx.strokeStyle = '#fff'
+  ctx.fillStyle = '#fff'
+  ctx.shadowColor = 'rgba(170,200,232,0.95)'
+  ctx.shadowBlur = size * 0.05
+  const branches = [0.3 + rand() * 0.08, 0.52 + rand() * 0.08, 0.74 + rand() * 0.06]
+  const lens = branches.map((b) => r * (0.16 + rand() * 0.12) * (1.15 - b))
+  for (let i = 0; i < 6; i += 1) {
+    ctx.save()
+    ctx.rotate((i * Math.PI) / 3)
+    ctx.lineWidth = size * 0.026
+    ctx.beginPath()
+    ctx.moveTo(0, 0)
+    ctx.lineTo(0, -r)
+    branches.forEach((b, k) => {
+      const y = -r * b
+      ctx.moveTo(0, y)
+      ctx.lineTo(-lens[k] * 0.75, y - lens[k])
+      ctx.moveTo(0, y)
+      ctx.lineTo(lens[k] * 0.75, y - lens[k])
+    })
+    ctx.stroke()
+    ctx.beginPath()
+    ctx.moveTo(0, -r * 1.06)
+    ctx.lineTo(r * 0.05, -r * 0.96)
+    ctx.lineTo(0, -r * 0.87)
+    ctx.lineTo(-r * 0.05, -r * 0.96)
+    ctx.closePath()
+    ctx.fill()
+    ctx.restore()
+  }
+  ctx.lineWidth = size * 0.02
+  ctx.beginPath()
+  for (let k = 0; k <= 6; k += 1) {
+    const a = (k * Math.PI) / 3 + Math.PI / 6
+    ctx[k ? 'lineTo' : 'moveTo'](Math.cos(a) * r * 0.15, Math.sin(a) * r * 0.15)
+  }
+  ctx.stroke()
+  return c
+}
+
+/**
+ * The gust that carries the guest from the globe to the page: a slanted wall
+ * of blown snow with billowing fronts, a scatter of crystal flakes in depth
+ * and one great flake riding just ahead of the wall. draw(p, dir): p 0…1, the
+ * screen is completely white around p = 0.5.
+ */
+function createGust(canvas) {
+  const ctx = canvas.getContext('2d')
+  const sprites = [crystal(128, 3), crystal(128, 8), crystal(128, 15)]
+  // out-of-focus copies for the flakes nearest the lens (no-op where canvas filters are unsupported)
+  const soft = sprites.map((sprite) => {
+    const c = document.createElement('canvas')
+    c.width = c.height = 128
+    const x = c.getContext('2d')
+    x.filter = 'blur(4px)'
+    x.drawImage(sprite, 0, 0)
+    return c
+  })
+  const hero = crystal(320, 21)
+  const rand = seeded(61)
+  const flakes = Array.from({ length: 64 }, (_, i) => ({ off: rand() * 2 - 1, y: rand(), z: rand(), spin: (rand() - 0.5) * 5, a0: rand() * 6, v: i % 3, wob: rand() * 6 }))
+  let W = 1
+  let H = 1
+  let dpr = 1
+  let F = 1
+  let core = 1
+  let skew = 0
+  let cloud = null
+  const resize = (w, h, ratio) => {
+    W = w
+    H = h
+    dpr = ratio
+    canvas.width = Math.round(w * ratio)
+    canvas.height = Math.round(h * ratio)
+    skew = H * 0.18
+    F = Math.max(W, H) * 0.45
+    core = W * 1.3 + skew
+    // the wall of snow is soft anyway: paint it once at quarter resolution
+    const S = core + F * 2
+    const q = 0.25
+    cloud = document.createElement('canvas')
+    cloud.width = Math.ceil(S * q)
+    cloud.height = Math.ceil(H * q)
+    const c = cloud.getContext('2d')
+    c.scale(q, q)
+    const g = c.createLinearGradient(0, 0, S, 0)
+    g.addColorStop(0, 'rgba(236,243,250,0)')
+    g.addColorStop((F * 0.55) / S, 'rgba(236,243,250,0.4)')
+    g.addColorStop(F / S, 'rgba(242,247,252,1)')
+    g.addColorStop((F + core) / S, 'rgba(242,247,252,1)')
+    g.addColorStop((F * 1.45 + core) / S, 'rgba(236,243,250,0.4)')
+    g.addColorStop(1, 'rgba(236,243,250,0)')
+    c.fillStyle = g
+    c.fillRect(0, 0, S, H)
+    const r2 = seeded(9)
+    const puff = (x, y, r, color) => {
+      const b = c.createRadialGradient(x, y, 0, x, y, r)
+      b.addColorStop(0, color)
+      b.addColorStop(1, color.replace(/[\d.]+\)$/, '0)'))
+      c.fillStyle = b
+      c.fillRect(x - r, y - r, r * 2, r * 2)
+    }
+    // billows along both fronts so the edges are clouds, not gradients
+    for (let i = 0; i < 70; i += 1) {
+      const lead = i % 2
+      const d = (r2() * 0.9 - 0.15) * F
+      puff(lead ? F + core + d : F - d, r2() * H, (0.05 + r2() * 0.14) * Math.max(W, H), `rgba(246,250,253,${(0.4 + r2() * 0.3).toFixed(2)})`)
+    }
+    // cool shading inside the wall, so the white-out has depth
+    for (let i = 0; i < 16; i += 1) {
+      puff(F + r2() * core, r2() * H, (0.1 + r2() * 0.2) * Math.max(W, H), 'rgba(196,214,232,0.28)')
+    }
+  }
+  const draw = (p, dir) => {
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+    ctx.clearRect(0, 0, W, H)
+    if (p <= 0 || p >= 1 || !cloud) return
+    if (dir < 0) ctx.setTransform(-dpr, 0, 0, dpr, W * dpr, 0)
+    const S = core + F * 2
+    const start = -S - skew / 2
+    const mid = -F - skew / 2 - W * 0.15
+    const end = W + skew / 2
+    const x = p < 0.5 ? start + (mid - start) * p * 2 : mid + (end - mid) * (p - 0.5) * 2
+    const u = p * 2 - 1
+    const fade = Math.min(1, (1 - Math.abs(u)) * 2.5)
+    // flakes behind the wall's leading edge
+    const m = Math.min(W, H)
+    const flake = (f, near) => {
+      const size = m * (0.022 + f.z * f.z * 0.12)
+      if (near !== f.z > 0.72) return
+      const spd = 0.8 + f.z * 1.5
+      const fx = W / 2 + f.off * W * 0.45 + u * (W * 0.7 + size) * spd
+      const fy = f.y * H + Math.sin(f.wob + p * 7) * H * 0.04 + u * H * 0.1
+      ctx.save()
+      ctx.translate(fx, fy)
+      ctx.rotate(f.a0 + f.spin * p)
+      ctx.globalAlpha = fade * (0.55 + 0.45 * f.z)
+      ctx.drawImage(near ? soft[f.v] : sprites[f.v], -size, -size, size * 2, size * 2)
+      ctx.restore()
+    }
+    flakes.forEach((f) => flake(f, false))
+    // the wall itself, slanted so its top leads
+    ctx.save()
+    ctx.transform(1, 0, -skew / H, 1, skew / 2, 0)
+    ctx.globalAlpha = 1
+    ctx.drawImage(cloud, x, 0, S, H)
+    ctx.restore()
+    // the great flake rides the leading front, growing as it nears the lens
+    const front = x + F + core + F * 0.3
+    if (p < 0.5) {
+      const size = m * (0.32 + p * 1.1)
+      ctx.save()
+      ctx.translate(front, H * (0.46 - p * 0.1))
+      ctx.rotate(p * 2.4 * dir)
+      ctx.globalAlpha = Math.min(1, p * 10)
+      ctx.drawImage(hero, -size, -size, size * 2, size * 2)
+      ctx.restore()
+    }
+    flakes.forEach((f) => flake(f, true))
+    ctx.globalAlpha = 1
+  }
+  return { resize, draw }
+}
+
 /* -------------------------------------------------------------- scene */
 
 export default function create(host, template, { onOpened, setCaption }) {
@@ -347,11 +527,16 @@ export default function create(host, template, { onOpened, setCaption }) {
   const baseBox = document.createElement('div')
   baseBox.className = 'base'
   globe.appendChild(baseBox)
-  const flash = document.createElement('div')
-  flash.className = 'flash'
-  root.appendChild(flash)
+  const gustC = document.createElement('canvas')
+  gustC.className = 'gust'
+  root.appendChild(gustC)
+  const gust = createGust(gustC)
 
+  // the page hero's opening view, veil and all; it is only shown once the gust has whited out the screen
   const hero = mountWinter(heroBox, { motion: true, frost: true })
+  const veil = document.createElement('div')
+  veil.className = 'veil'
+  heroBox.appendChild(veil)
   const foil = foilTile(160, 21)
   const names = `${template.couple[0]} & ${template.couple[1]}`.toUpperCase()
   const small = Math.min(window.innerWidth, window.innerHeight) < 640
@@ -359,7 +544,7 @@ export default function create(host, template, { onOpened, setCaption }) {
   const G = { W: 0, H: 0, D: 1, x: 0, y: 0, dpr: 1, door: { x: 0, y: 0 }, band: null, strip: null }
   let urls = []
   const bandCanvas = document.createElement('canvas')
-  const rig = { rot: Math.PI, energy: 0, dive: 0, tilt: 0, float: 1 }
+  const rig = { rot: Math.PI, energy: 0, dive: 0, tilt: 0, float: 1, gust: 0, settle: 0 }
 
   const layout = () => {
     const W = host.clientWidth || window.innerWidth
@@ -416,7 +601,7 @@ export default function create(host, template, { onOpened, setCaption }) {
     for (let i = 0; i < (small ? 7 : 12); i += 1) {
       const b = document.createElement('div')
       b.className = 'bokeh'
-      const r = (0.025 + rand() * 0.05) * Math.max(W, H)
+      const r = (0.02 + rand() * 0.035) * Math.max(W, H)
       const c = ['255,214,140', '212,175,55', '192,57,43', '255,240,214'][i % 4]
       Object.assign(b.style, {
         left: `${rand() * W - r}px`,
@@ -430,8 +615,7 @@ export default function create(host, template, { onOpened, setCaption }) {
       bokehBox.appendChild(b)
     }
     hero.layout()
-    const door = chaletDoor(winterLayout(W, H))
-    heroBox.style.transformOrigin = `${door.x}px ${door.y}px`
+    gust.resize(W, H, Math.min(dpr, 1.5))
   }
 
   /* -------------------------------------------------- snow in the glass */
@@ -555,11 +739,14 @@ export default function create(host, template, { onOpened, setCaption }) {
     glass.style.opacity = Math.max(0, 1 - k * 2.2).toFixed(3)
     baseBox.style.opacity = Math.max(0, 1 - k * 3).toFixed(3)
     room.style.opacity = bokehBox.style.opacity = Math.max(0, 1 - k * 1.8).toFixed(3)
-    const h = Math.min(1, Math.max(0, (k - 0.55) / 0.35))
-    heroBox.style.opacity = h.toFixed(3)
-    heroBox.style.transform = `scale(${(1.35 - 0.35 * (1 - (1 - h) ** 3)).toFixed(4)})`
-    flash.style.opacity = Math.max(0, 0.75 - Math.abs(k - 0.62) * 4).toFixed(3)
-    if (h > 0) hero.tick(dt, t, { burst: Math.max(0, 1 - h) })
+    // behind the white-out the globe gives way to the hero, which settles from a touch of zoom to
+    // exactly the page's opening framing before the hand-over
+    const swapped = rig.gust >= 0.5
+    globe.style.visibility = room.style.visibility = bokehBox.style.visibility = swapped ? 'hidden' : ''
+    heroBox.style.opacity = swapped ? '1' : '0'
+    heroBox.style.transform = rig.settle < 1 ? `scale(${(1.06 - 0.06 * rig.settle).toFixed(4)})` : ''
+    if (swapped) hero.tick(dt, t)
+    gust.draw(rig.gust, dir)
   })
 
   /* ------------------------------------------------------- opening */
@@ -578,9 +765,13 @@ export default function create(host, template, { onOpened, setCaption }) {
       }, null, 0.05)
       .to(rig, { rot: 0, duration: 2.3, ease: 'power2.inOut' }, 0.5)
       .call(() => setCaption?.('date', 'top'), null, 2.5)
-      .to(rig, { dive: 1, duration: 2.3, ease: 'power2.in' }, 3.0)
-      .call(() => setCaption?.(null), null, 4.6)
-      .to({}, { duration: 0.3 }, 5.3)
+      .to(rig, { dive: 1, duration: 2.2, ease: 'power2.in' }, 3.0)
+      .call(() => setCaption?.(null), null, 4.1)
+      // the gust: in fast as the view nears the door, a beat of white, then it blows clear of the hero
+      .to(rig, { gust: 0.5, duration: 0.95, ease: 'power2.out' }, 4.25)
+      .to(rig, { gust: 1, duration: 0.95, ease: 'power2.in' }, 5.2)
+      .to(rig, { settle: 1, duration: 1.4, ease: 'power2.out' }, 5.2)
+      .to({}, { duration: 0.15 }, 6.6)
   }
 
   /* --------------------------------------------- shake, swipe, motion */
@@ -652,9 +843,9 @@ export default function create(host, template, { onOpened, setCaption }) {
       timeline.progress(1)
     },
     setPointer: (x, y) => {
+      // the hero copy stays unparallaxed, as the page hero opens before the pointer moves
       px = x
       py = y
-      hero.setParallax(x, y)
     },
     dispose: () => {
       timeline?.kill()

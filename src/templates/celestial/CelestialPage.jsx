@@ -1597,7 +1597,10 @@ export default function CelestialWeddingPage() {
           z-index: 1;
         }
         .cw-starfield { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
-        .cw-starfield-canvas { display: block; width: 100%; height: 100%; }
+        /* the intro ends on the bare night gradient, so the stars fade in over it */
+        .cw-starfield-canvas { display: block; width: 100%; height: 100%; animation: cw-sky-in 1.4s ease-out both; }
+        @keyframes cw-sky-in { from { opacity: 0; } }
+        @media (prefers-reduced-motion: reduce) { .cw-starfield-canvas { animation: none; } }
         .cw-hero-inner {
           position: relative;
           z-index: 2;

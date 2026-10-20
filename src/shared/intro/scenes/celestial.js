@@ -303,6 +303,24 @@ export default function create(host, template, { onOpened, setCaption }) {
   }
   stage.onResize(layout)
 
+  /* -------------------------------------------------------- backdrop */
+  // The page hero's own night gradient (and its darker foot) settles over the
+  // warp at the end; the page then brings its own stars and moon in on top.
+  const backdrop = document.createElement('div')
+  backdrop.setAttribute('aria-hidden', 'true')
+  backdrop.style.cssText = [
+    'position:absolute;left:0;top:0;bottom:0;width:100%;opacity:0;pointer-events:none',
+    'background:linear-gradient(180deg,transparent 66%,oklch(0.10 0.03 268 / .56)),' +
+      'radial-gradient(70% 46% at 50% 8%,oklch(0.42 0.06 268 / .22),transparent 72%),' +
+      'radial-gradient(90% 60% at 50% 118%,oklch(0.30 0.06 300 / .32),transparent 64%),' +
+      'linear-gradient(180deg,oklch(0.16 0.045 266),oklch(0.13 0.035 268))',
+  ].join(';')
+  host.appendChild(backdrop)
+  // the page's hero is as wide as the viewport minus its scrollbar gutter
+  stage.onResize(({ width }) => {
+    backdrop.style.width = `${Math.min(width, document.documentElement.clientWidth || width)}px`
+  })
+
   /* ------------------------------------------------------------ loop */
   const state = { px: 0, py: 0, meteor: -1, sequence: -1, warp: 0 }
   const headPos = new THREE.Vector3()
@@ -352,6 +370,7 @@ export default function create(host, template, { onOpened, setCaption }) {
       .to(dustMat.uniforms.uScatter, { value: 1, duration: 1.2, ease: 'power2.in' }, METEOR_TIME + 2.7)
       .call(() => setCaption?.(null), null, METEOR_TIME + 2.7)
       .to(nebula.material, { opacity: 0, duration: 1.2 }, METEOR_TIME + 2.7)
+      .to(backdrop, { opacity: 1, duration: 1.2, ease: 'power1.in' }, METEOR_TIME + 3.0)
   }
 
   return {
@@ -364,6 +383,7 @@ export default function create(host, template, { onOpened, setCaption }) {
     dispose: () => {
       timeline?.kill()
       stage.dispose()
+      backdrop.remove()
     },
   }
 }

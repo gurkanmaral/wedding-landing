@@ -137,6 +137,17 @@
   box-shadow: 0 -1px 0 #c9a85c, 0 -2px 0 rgb(0 0 0 / 0.7);
 }
 
+/* the footlights' warmth pooling on the boards of the apron */
+.cn-stage::after {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: min(46vh, 100%);
+  background: radial-gradient(62% 100% at 50% 0, rgb(255 176 104 / 0.13), rgb(255 150 80 / 0.04) 55%, transparent);
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+
 .cn-stage::before {
   content: '';
   position: absolute;
@@ -181,49 +192,9 @@
   pointer-events: none;
 }
 
-/* projector (intro only) */
-.cn-projector {
-  position: absolute;
-  /* lens a little right of centre, so the beam rises almost straight */
-  left: calc(58vw - min(68vw, 420px) * 0.962);
-  bottom: 1svh;
-  width: min(68vw, 420px);
-  aspect-ratio: 420 / 300;
-  filter: drop-shadow(0 24px 30px rgb(0 0 0 / 0.8));
-  cursor: pointer;
-}
-
-.cn-projector svg {
-  display: block;
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-}
-
-@media (min-aspect-ratio: 9 / 10) {
-  .cn-projector {
-    left: calc(57vw - min(28vw, 420px) * 0.962);
-    width: min(28vw, 420px);
-  }
-}
-
-.cn-lamp {
-  opacity: 0.08;
-}
-
-.cn-pilot {
-  animation: cn-pilot 1.6s steps(2, jump-none) infinite;
-}
-
-@keyframes cn-pilot {
-  from { opacity: 1; }
-  to { opacity: 0.25; }
-}
-
 @media (prefers-reduced-motion: reduce) {
   .cn-drape-sheen,
-  .cn-footlights,
-  .cn-pilot {
+  .cn-footlights {
     animation: none;
   }
 }

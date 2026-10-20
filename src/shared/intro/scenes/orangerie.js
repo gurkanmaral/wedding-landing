@@ -308,8 +308,9 @@ export default function create(host, template, { onOpened, setCaption }) {
 
   let idleDrip = 1.2
   const fx = { evap: 0, fog: 1, water: 1, push: PUSH, blobs: 0 }
-  const stop = loop((dt, t) => {
-    gh.tick(t)
+  const stop = loop((dt) => {
+    // the wall clock, like the hero, so the motes carry on through the hand-off
+    gh.tick(performance.now() / 1000)
     // the odd drop slides down the pane on its own
     idleDrip -= dt
     if (idleDrip < 0 && !state.clearing) {

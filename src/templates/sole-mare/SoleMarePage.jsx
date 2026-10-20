@@ -262,6 +262,9 @@ export default function SoleMarePage() {
           .addLabel('meta', '-=0.3')
           .from('.hero-meta', { y: 24, opacity: 0, duration: 0.7, stagger: 0.08 }, 'meta')
           .from('.float-olive', { scale: 0, rotate: -40, opacity: 0, duration: 1.2, ease: 'back.out(1.7)' }, '-=0.8')
+        // the intro hands over on the bare painting, so the header bar and the
+        // stats card fade in over it too
+        gsap.from('.sm-header, .hero-stats', { opacity: 0, duration: 0.9, ease: 'power2.out' })
 
         // Count-up in the hero. The final value is already in the markup, so
         // the number is correct even if the tween is skipped or reverted.
@@ -412,7 +415,7 @@ export default function SoleMarePage() {
         .sm-root .hero-text-halo { text-shadow: 0 1px 12px color-mix(in oklab, var(--background) 85%, transparent); }
       `}</style>
 
-      <header className="fixed top-0 inset-x-0 z-50 backdrop-blur-md bg-background/75 border-b border-foreground/5">
+      <header className="sm-header fixed top-0 inset-x-0 z-50 backdrop-blur-md bg-background/75 border-b border-foreground/5">
         <div className="container-x flex items-center justify-between gap-4 py-2.5 md:py-4">
           <a href="#top" className="inline-flex min-h-11 items-center font-display text-lg md:text-xl tracking-wide">
             {partner1}
@@ -490,7 +493,7 @@ export default function SoleMarePage() {
               </a>
             </div>
 
-            <dl className="mt-8 md:mt-12 inline-flex flex-wrap gap-x-6 gap-y-3 md:gap-x-12 rounded-md bg-background/85 backdrop-blur-sm border border-foreground/10 px-4 py-3 md:px-6 md:py-4 shadow-sm">
+            <dl className="hero-stats mt-8 md:mt-12 inline-flex flex-wrap gap-x-6 gap-y-3 md:gap-x-12 rounded-md bg-background/85 backdrop-blur-sm border border-foreground/10 px-4 py-3 md:px-6 md:py-4 shadow-sm">
               <div className="hero-meta flex flex-col-reverse">
                 <dt className="text-[0.65rem] md:text-xs uppercase tracking-[0.12em] md:tracking-widest text-foreground/80 mt-1 whitespace-nowrap">
                   {statMonthYear}

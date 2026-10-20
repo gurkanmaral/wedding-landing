@@ -358,6 +358,10 @@ function glowSprite() {
 }
 
 let counter = 0
+// The pointer parallax, shared by every scene on the page: the hero mounted
+// under the intro starts from the intro's offset, so nothing slides at the
+// hand-off.
+const sway = { px: 0, py: 0, sx: 0, sy: 0 }
 
 /**
  * Builds the illustrated candle scene inside host.
@@ -393,6 +397,11 @@ export function mountKinaScene(host, { reduce = false } = {}) {
 
   const view = { w: 1, h: 1, dpr: 1, tx: 0.5, ty: 0.8, tw: 0.5, top: 0.6 }
   const random = seeded(41)
+  // a stable pseudo-random value per particle and per lap
+  const hash = (a, b) => {
+    const v = Math.sin(a * 127.1 + b * 311.7) * 43758.5453
+    return v - Math.floor(v)
+  }
   const DUST = small ? 26 : 46
   const dust = Array.from({ length: DUST }, () => ({ x: 0, y: 0, life: random(), speed: 0.4 + random() * 0.6, size: 1 + random() * 2.2, sway: random() * 6 }))
   const PETALS = small ? 4 : 7
@@ -420,25 +429,20 @@ export function mountKinaScene(host, { reduce = false } = {}) {
 
   let glow = 1
   let paused = false
-  let px = 0
-  let py = 0
-  let sx = 0
-  let sy = 0
+  let { px, py, sx, sy } = sway
   let raf = 0
-  let last = performance.now()
+  // Flames, dust and petals are a pure function of the wall clock, so the
+  // intro and the hero mounted under it flicker and drift in step through
+  // the cross-fade (no doubled petals).
   let time = 0
 
   const frame = (now) => {
     raf = requestAnimationFrame(frame)
-    if (paused || document.visibilityState !== 'visible') {
-      last = now
-      return
-    }
-    const dt = Math.min((now - last) / 1000, 0.05)
-    last = now
-    time += reduce ? 0 : dt
+    if (paused || document.visibilityState !== 'visible') return
+    time = reduce ? 0 : now / 1000
     sx += (px - sx) * 0.05
     sy += (py - sy) * 0.05
+    Object.assign(sway, { px, py, sx, sy })
     embroidery.style.transform = `translate3d(${(sx * -8).toFixed(2)}px, ${(sy * -6).toFixed(2)}px, 0)`
     tray.style.transform = `translate3d(${(sx * 12).toFixed(2)}px, ${(sy * 6).toFixed(2)}px, 0)`
 
@@ -466,15 +470,14 @@ export function mountKinaScene(host, { reduce = false } = {}) {
     mctx.globalCompositeOperation = 'lighter'
     for (let i = 0; i < DUST; i += 1) {
       const d = dust[i]
-      d.life += dt * d.speed * 0.22
-      if (d.life > 1) {
-        d.life = 0
-        d.x = view.tx + (random() - 0.5) * view.tw * 0.6
-        d.y = view.top + random() * 0.05
-      }
-      const y = (d.y - d.life * 0.45) * h + sy * 10
-      const x = d.x * w + Math.sin(time * 0.8 + d.sway) * 14 * d.life + sx * 16
-      const a = Math.sin(d.life * Math.PI) * glow * 0.8
+      const run = d.life + time * d.speed * 0.22
+      const lap = Math.floor(run)
+      const life = run - lap
+      const dx = view.tx + (hash(i, lap) - 0.5) * view.tw * 0.6
+      const dy = view.top + hash(i + 97, lap) * 0.05
+      const y = (dy - life * 0.45) * h + sy * 10
+      const x = dx * w + Math.sin(time * 0.8 + d.sway) * 14 * life + sx * 16
+      const a = Math.sin(life * Math.PI) * glow * 0.8
       if (a <= 0.01) continue
       const s = d.size * 6
       mctx.globalAlpha = a
@@ -483,18 +486,15 @@ export function mountKinaScene(host, { reduce = false } = {}) {
     mctx.globalCompositeOperation = 'source-over'
     for (let i = 0; i < PETALS; i += 1) {
       const p = falling[i]
-      p.y += dt * p.speed
-      p.rot += dt * p.spin
-      if (p.y > 1.08) {
-        p.y = -0.08
-        p.x = random()
-      }
-      const x = p.x * w + Math.sin(time * 0.6 + i) * 30 + sx * 20
-      const y = p.y * h
+      // top (-0.08) to bottom (1.08) and round again, a new column each lap
+      const run = p.y + 0.08 + time * p.speed
+      const lap = Math.floor(run / 1.16)
+      const x = hash(i + 31, lap) * w + Math.sin(time * 0.6 + i) * 30 + sx * 20
+      const y = (run - lap * 1.16 - 0.08) * h
       mctx.globalAlpha = 0.85
       mctx.save()
       mctx.translate(x, y)
-      mctx.rotate(p.rot)
+      mctx.rotate(p.rot + time * p.spin)
       mctx.scale(1, 0.55 + 0.45 * Math.abs(Math.sin(time * 1.3 + i)))
       mctx.fillStyle = i % 2 ? '#9e1b32' : '#b8243c'
       mctx.beginPath()

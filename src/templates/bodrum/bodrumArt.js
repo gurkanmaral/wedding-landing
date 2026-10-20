@@ -8,7 +8,15 @@ import './bodrumArt.css'
 
 const NS = 'http://www.w3.org/2000/svg'
 const H = 1000
+const SWASH = 6.5
 let mounts = 0
+// One clock and one wave phase for every mount, so the intro's shore and the
+// page hero's shore are in the same moment when one dissolves into the other.
+const EPOCH = performance.now()
+let swashOffset = 0
+// parallax is shared too, so the hero takes over the intro's offset instead of snapping to rest
+const parallax = { x: 0, y: 0, tx: 0, ty: 0 }
+const sceneTime = () => (performance.now() - EPOCH) / 1000
 
 export function seeded(seed = 1) {
   let s = seed >>> 0
@@ -84,12 +92,12 @@ export function mountShore(host, { reduce = false } = {}) {
   const base = document.createElement('canvas')
   const bctx = base.getContext('2d')
 
-  const state = { surge: 0, swashOffset: 0 }
-  const parallax = { x: 0, y: 0, tx: 0, ty: 0 }
+  const state = { surge: 0 }
+  const hooks = []
   let W = 1000
   let L = null
   let k = 1
-  let clock = 0
+  let clock = sceneTime()
   let gulet = null
   let mills = []
   let gulls = []
@@ -361,12 +369,17 @@ export function mountShore(host, { reduce = false } = {}) {
     sea.addColorStop(1, '#8bd8e6')
     c.fillStyle = sea
     c.fillRect(0, Yh, W, Ys - Yh + 2)
-    // warm sheen under the sun
-    const sheen = c.createRadialGradient(sun.x, Yh, 0, sun.x, Yh, W * 0.5)
+    // warm sheen under the sun: a flat ellipse that fades out well before the shore
+    c.save()
+    c.translate(sun.x, Yh)
+    c.scale(1, 0.2)
+    const sheen = c.createRadialGradient(0, 0, 0, 0, 0, W * 0.5)
     sheen.addColorStop(0, 'rgba(255,240,205,0.55)')
+    sheen.addColorStop(0.5, 'rgba(255,240,205,0.16)')
     sheen.addColorStop(1, 'rgba(255,240,205,0)')
     c.fillStyle = sheen
-    c.fillRect(0, Yh, W, (Ys - Yh) * 0.6)
+    c.fillRect(-W * 1.5, 0, W * 3, (Ys - Yh) / 0.2)
+    c.restore()
 
     // sand: wet near the water, pale and warm higher up, a deep golden foreground
     const sand = c.createLinearGradient(0, Ys, 0, H)
@@ -417,8 +430,8 @@ export function mountShore(host, { reduce = false } = {}) {
   }
 
   function swashRun(t) {
-    const T = 6.5
-    const p = (((t + state.swashOffset) % T) + T) % T / T
+    const T = SWASH
+    const p = (((t + swashOffset) % T) + T) % T / T
     if (p < 0.3) {
       const u = p / 0.3
       return { run: 1 - (1 - u) * (1 - u), p, rushing: true }
@@ -599,20 +612,15 @@ export function mountShore(host, { reduce = false } = {}) {
       g.node.setAttribute('transform', `translate(${x.toFixed(1)} ${y.toFixed(1)}) scale(${g.s.toFixed(2)} ${(g.s * flap).toFixed(2)})`)
     }
     drawSea(t)
+    for (let i = 0; i < hooks.length; i += 1) hooks[i]({ t, near })
   }
 
   let raf = 0
-  let last = performance.now()
   let paused = false
   const loop = (now) => {
     raf = requestAnimationFrame(loop)
-    if (paused || document.hidden) {
-      last = now
-      return
-    }
-    const dt = Math.min((now - last) / 1000, 0.05)
-    last = now
-    clock += dt
+    if (paused || document.hidden) return
+    clock = (now - EPOCH) / 1000
     parallax.x += (parallax.tx - parallax.x) * 0.05
     parallax.y += (parallax.ty - parallax.y) * 0.05
     render()
@@ -635,10 +643,23 @@ export function mountShore(host, { reduce = false } = {}) {
     get time() {
       return clock
     },
-    // where the running water reaches right now at x (scene units)
-    waterlineAt(x) {
+    // the painted sea and sand, for layers that refract it (the bottle)
+    canvas,
+    // the next wave starts now (for every mount, so the hero stays in step)
+    startWave() {
+      swashOffset = -clock
+    },
+    // the running water at x: how far up it runs now (`front`) and at its peak (`full`)
+    swash(x) {
       const reach = (L.portrait ? 62 : 58) * (1 + state.surge * 1.3)
-      return swashFront(x, clock, swashRun(clock).run, reach)
+      const { run } = swashRun(clock)
+      return { run, front: swashFront(x, clock, run, reach), full: swashFront(x, clock, 1, reach) }
+    },
+    // fn({ t, near }) runs after every painted frame; returns an unsubscribe
+    onRender(fn) {
+      hooks.push(fn)
+      if (L) fn({ t: clock, near: canvas.style.transform })
+      return () => hooks.splice(hooks.indexOf(fn), 1)
     },
     setPointer(x, y) {
       parallax.tx = x

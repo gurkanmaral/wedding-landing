@@ -13,7 +13,9 @@ export default function SkyHero() {
     const host = hostRef.current
     if (!host) return undefined
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    const sky = createSky(host, { seed: 23 })
+    // mounted underneath the fading intro: carry on from its last frame
+    const introSky = document.querySelector('.invitation-intro .dps-sky')
+    const sky = createSky(host, { seed: 23, follow: introSky })
     const layer = document.createElementNS(NS, 'svg')
     layer.setAttribute('class', 'dpp-sky-svg')
     layer.style.zIndex = '3'
@@ -93,7 +95,9 @@ export default function SkyHero() {
       place(0.55)
       sky.pause(true)
     } else {
-      offset = gsap.ticker.time - 2
+      // after the intro the sky is empty (the plane became the pass): the
+      // next flight starts a moment later instead of popping in mid-route
+      offset = gsap.ticker.time - (introSky ? FLIGHT + 2.6 : 2)
       gsap.ticker.add(tick)
     }
 

@@ -773,6 +773,21 @@ export default function create(host, template, { onOpened, setCaption }) {
   const vineCanvas = el('canvas', 'position:absolute;left:0;top:0;display:block;transform-origin:100% 0;will-change:transform;', world)
   const fx = el('canvas', 'position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none;', root)
   const flash = el('div', 'position:absolute;inset:0;background:#fffaf0;opacity:0;pointer-events:none;', root)
+  // The page's whitewashed wall (its ground gradient and dot grain): the light
+  // settles into it at the end, and the page brings its vines, shore and arch in.
+  const backdrop = el(
+    'div',
+    'position:absolute;left:0;top:0;bottom:0;width:100%;opacity:0;pointer-events:none;background:' +
+      'radial-gradient(120% 80% at 12% 6%,oklch(0.99 0.005 90) 0%,transparent 55%),' +
+      'radial-gradient(150% 90% at 90% 104%,oklch(0.9 0.045 240 / .5) 0%,transparent 62%),' +
+      'linear-gradient(180deg,oklch(0.977 0.008 85) 0%,oklch(0.977 0.008 85) 58%,oklch(0.947 0.016 80) 100%);',
+    root,
+  )
+  el(
+    'div',
+    'position:absolute;inset:0;opacity:.45;background-image:radial-gradient(oklch(0.55 0.03 250 / .05) 1px,transparent 1px);background-size:4px 4px;',
+    backdrop,
+  )
   const fxCtx = fx.getContext('2d')
   const glitterCtx = glitter.getContext('2d')
   const plaqueCtx = plaque.getContext('2d')
@@ -1033,6 +1048,8 @@ export default function create(host, template, { onOpened, setCaption }) {
   let plaqueDirty = true
   let laidOut = ''
   const layout = (first) => {
+    // the page's fixed wall stops at its scrollbar gutter
+    backdrop.style.width = `${Math.min(root.clientWidth || window.innerWidth, document.documentElement.clientWidth || window.innerWidth)}px`
     const key = `${host.clientWidth}x${host.clientHeight}`
     if (!first && key === laidOut) return
     laidOut = key
@@ -1259,7 +1276,9 @@ export default function create(host, template, { onOpened, setCaption }) {
       .to(state, { reveal: 1, duration: 1.2, ease: 'power1.inOut' }, 3.95)
       .call(() => setCaption?.('date'), null, 4.5)
       .fromTo(state, { glint: -0.4 }, { glint: 1.4, duration: 0.9, ease: 'sine.inOut', immediateRender: false }, 4.9)
-      .to({}, { duration: 0.1 }, 5.8)
+      // the sunlight settles into the page's whitewashed wall
+      .call(() => setCaption?.(null), null, 5.75)
+      .to(backdrop, { opacity: 1, duration: 0.9, ease: 'power1.inOut' }, 5.8)
   }
 
   return {

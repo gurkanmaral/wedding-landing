@@ -174,39 +174,38 @@ export function paintLinen(canvas, width, height) {
  * A soft light that follows the pointer or the phone's tilt and drifts on its
  * own when idle. onUpdate(x, y) gets smoothed values in -1..1 every frame.
  */
+// The last light position and input time, shared by every light on the page:
+// the hero's light starts where the intro's is and drifts on the same wall
+// clock, so the lace shadow does not jump at the hand-off.
+const lightMemory = { x: 0.35, y: -0.4, tx: 0.35, ty: -0.4, lastInput: -1e9 }
+
 export function createLight(onUpdate, { reduce = false } = {}) {
-  let tx = 0.35
-  let ty = -0.4
-  let x = tx
-  let y = ty
-  let lastInput = -1e9
+  let { tx, ty, x, y } = lightMemory
   let paused = false
   let raf = 0
-  let time = 0
-  let last = performance.now()
+  const clock = () => performance.now() / 1000
   const onMove = (event) => {
     tx = (event.clientX / window.innerWidth) * 2 - 1
     ty = (event.clientY / window.innerHeight) * 2 - 1
-    lastInput = time
+    lightMemory.lastInput = clock()
   }
   const onTilt = (event) => {
     if (event.gamma == null) return
     tx = Math.max(-1, Math.min(1, event.gamma / 30))
     ty = Math.max(-1, Math.min(1, (event.beta - 40) / 30))
-    lastInput = time
+    lightMemory.lastInput = clock()
   }
   const frame = (now) => {
     raf = requestAnimationFrame(frame)
-    const dt = Math.min((now - last) / 1000, 0.05)
-    last = now
     if (paused) return
-    time += dt
-    if (!reduce && time - lastInput > 3) {
+    const time = now / 1000
+    if (!reduce && time - lightMemory.lastInput > 3) {
       tx = Math.sin(time * 0.23) * 0.55
       ty = Math.cos(time * 0.17) * 0.45 - 0.15
     }
     x += (tx - x) * 0.04
     y += (ty - y) * 0.04
+    Object.assign(lightMemory, { x, y, tx, ty })
     onUpdate(x, y)
   }
   if (!reduce) {
@@ -218,7 +217,7 @@ export function createLight(onUpdate, { reduce = false } = {}) {
     set(nx, ny) {
       tx = nx
       ty = ny
-      lastInput = time
+      lightMemory.lastInput = clock()
     },
     setPaused(v) {
       paused = v

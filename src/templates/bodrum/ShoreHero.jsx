@@ -1,9 +1,11 @@
 import { useEffect, useRef } from 'react'
 import { mountShore } from './bodrumArt.js'
+import { createBottlePainter, mountBottleLayer, openPose, wetness } from './bottleArt.js'
 
 const clamp = (v) => Math.max(-1, Math.min(1, v))
 
-// The live Bodrum shore behind the hero, with pointer / tilt parallax.
+// The live Bodrum shore behind the hero, with pointer / tilt parallax, and the
+// opened bottle and its cork left on the sand where the intro ends.
 export default function ShoreHero() {
   const hostRef = useRef(null)
 
@@ -12,6 +14,11 @@ export default function ShoreHero() {
     if (!host) return undefined
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     const art = mountShore(host, { reduce })
+    const painter = createBottlePainter()
+    const bottle = mountBottleLayer(host, art, (ctx, k, t) => {
+      const pose = openPose(art.view)
+      painter.draw(ctx, k, pose, { src: art.canvas, t, wet: wetness(art, pose) })
+    })
     const onMove = (event) => {
       if (reduce) return
       art.setPointer(clamp((event.clientX / window.innerWidth) * 2 - 1), clamp((event.clientY / window.innerHeight) * 2 - 1))
@@ -28,6 +35,7 @@ export default function ShoreHero() {
       observer.disconnect()
       window.removeEventListener('pointermove', onMove)
       window.removeEventListener('deviceorientation', onTilt)
+      bottle.dispose()
       art.dispose()
     }
   }, [])

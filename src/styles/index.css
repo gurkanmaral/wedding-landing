@@ -86,14 +86,24 @@
   }
 }
 
+/* full page navigations cross-fade instead of blanking (Chromium) */
+@view-transition {
+  navigation: auto;
+}
+
 html {
   scroll-behavior: smooth;
+  /* the intro hides the scrollbar; keeping its gutter means the page under it
+     has exactly the intro's width, so the handover doesn't shift */
+  scrollbar-gutter: stable;
+  background-color: var(--boot-bg, var(--color-background));
 }
 
 body {
   margin: 0;
   min-width: 320px;
-  background-color: var(--color-background);
+  /* --boot-bg is set in index.html before the app loads (see vite.config.js) */
+  background-color: var(--boot-bg, var(--color-background));
   color: var(--color-foreground);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;

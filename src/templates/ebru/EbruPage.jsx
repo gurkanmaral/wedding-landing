@@ -1,9 +1,15 @@
 import Invitation from '../../engine/Invitation.jsx'
+import { useWeddingCardFields } from '../../api/weddingCardContext'
 import EbruHero from './EbruHero.jsx'
 import './ebru.css'
 
-function Hero({ partner1, partner2, dateLabel, place, c }) {
-  return <EbruHero partner1={partner1} partner2={partner2} dateLabel={dateLabel} place={place} tagline={c.tagline} />
+// The cartouche carries the same date and place the intro printed on the
+// sheet, so the lines do not change when the intro dissolves into the page.
+function Hero({ partner1, partner2, city, place, c, lang }) {
+  const locale = lang === 'tr' ? 'tr-TR' : 'en-GB'
+  const { eventDate } = useWeddingCardFields(defaults, locale)
+  const printedDate = eventDate.toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' })
+  return <EbruHero partner1={partner1} partner2={partner2} dateLabel={printedDate} place={city || place} tagline={c.tagline} />
 }
 
 // A lale ebru tulip between two combed lines.

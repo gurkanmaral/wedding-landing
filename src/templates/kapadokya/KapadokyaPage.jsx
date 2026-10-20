@@ -29,7 +29,7 @@ const ornament = (
 
 const content = {
   tr: {
-    tagline: 'Göreme’de gün doğarken',
+    tagline: 'Göreme semalarında',
     welcome: 'Balonlar havalanırken, peri bacalarının arasında hayatımızın en güzel sabahını sizinle paylaşmak istiyoruz.',
     story: [
       { when: '2019', title: 'İlk karşılaşma', text: '{partner1} ve {partner2} bir arkadaş yemeğinde tanıştı; sohbet sabaha kadar sürdü.' },
@@ -49,7 +49,7 @@ const content = {
     quote: 'Gökyüzü kadar geniş bir sevgiyle.',
   },
   en: {
-    tagline: 'As the sun rises over Göreme',
+    tagline: 'In the skies over Göreme',
     welcome: 'As the balloons lift off between the fairy chimneys, we would love to share the most beautiful morning of our lives with you.',
     story: [
       { when: '2019', title: 'We met', text: '{partner1} and {partner2} met at a friends’ dinner and talked until sunrise.' },

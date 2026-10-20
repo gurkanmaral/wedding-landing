@@ -32,8 +32,9 @@ export default function GlasshouseHero({ names, date }) {
     if (!reduce) {
       window.addEventListener('pointermove', onPointer, { passive: true })
       window.addEventListener('deviceorientation', onTilt, { passive: true })
-      stop = loop((dt, t) => {
-        if (visible) art.tick(t)
+      // the wall clock, like the intro, so the motes carry on where they were
+      stop = loop(() => {
+        if (visible) art.tick(performance.now() / 1000)
       })
     } else {
       art.tick(0)

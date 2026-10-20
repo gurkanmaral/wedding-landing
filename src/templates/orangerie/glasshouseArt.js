@@ -683,6 +683,10 @@ ${s} .plaque .rule{width:56%;height:.05em;background:linear-gradient(90deg,trans
 @media (prefers-reduced-motion: reduce){${s} *{animation:none!important}}
 `
 
+// seconds on the page's clock, shared by the intro and the hero
+const wall = () => performance.now() / 1000
+const wrap = (v) => v - Math.floor(v)
+
 const svgBlob = (svg) => URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml' }))
 
 function makeImg(parent, url) {
@@ -727,8 +731,11 @@ export function mountGlasshouse(host, { names = ['', ''], date = '', motion = tr
   raysSvg.setAttribute('class', 'rays')
   raysL.appendChild(raysSvg)
   const midL = layer(0.6)
+  // CSS loops are phase-locked to the wall clock (see wall()), so the intro's
+  // glasshouse and the hero's are in step during the cross-fade
   const mistB = document.createElement('div')
   mistB.className = 'mist b'
+  mistB.style.animationDelay = `${(-12 - wall()).toFixed(2)}s`
   world.appendChild(mistB)
   const nearL = layer(0.85)
   const plaque = document.createElement('div')
@@ -742,6 +749,7 @@ export function mountGlasshouse(host, { names = ['', ''], date = '', motion = tr
   face.querySelector('.date').textContent = date
   const mistA = document.createElement('div')
   mistA.className = 'mist a'
+  mistA.style.animationDelay = `${(-wall()).toFixed(2)}s`
   world.appendChild(mistA)
   const fgWrap = document.createElement('div')
   fgWrap.className = 'l'
@@ -788,7 +796,7 @@ export function mountGlasshouse(host, { names = ['', ''], date = '', motion = tr
     // foreground: positioned in the overscanned layer's coordinates
     const ox = W * 0.04
     const oy = H * 0.04
-    art.fg.forEach((item) => {
+    art.fg.forEach((item, i) => {
       const box = document.createElement('div')
       box.className = motion ? 'fg sway' : 'fg'
       const st = item.style
@@ -801,7 +809,7 @@ export function mountGlasshouse(host, { names = ['', ''], date = '', motion = tr
       fgWrap.appendChild(box)
       const img = add(box, item.svg)
       img.style.transformOrigin = item.origin
-      img.style.animationDelay = `${-Math.random() * 6}s`
+      img.style.animationDelay = `${(-((i * 2.37) % 6) - wall()).toFixed(2)}s`
     })
     // plaque
     const p = art.plaque
@@ -816,7 +824,7 @@ export function mountGlasshouse(host, { names = ['', ''], date = '', motion = tr
           const [dx, dy] = norm(r.x1 - r.x0, r.y1 - r.y0)
           const qx = -dy
           const qy = dx
-          return `<polygon filter="url(#${id}rb)" style="animation-delay:${-r.delay}s" fill="url(#${id}ray)" points="${n2(r.x0 - (qx * r.w0) / 2)},${n2(r.y0 - (qy * r.w0) / 2)} ${n2(r.x0 + (qx * r.w0) / 2)},${n2(r.y0 + (qy * r.w0) / 2)} ${n2(r.x1 + (qx * r.w1) / 2)},${n2(r.y1 + (qy * r.w1) / 2)} ${n2(r.x1 - (qx * r.w1) / 2)},${n2(r.y1 - (qy * r.w1) / 2)}"/>`
+          return `<polygon filter="url(#${id}rb)" style="animation-delay:${(-r.delay - wall()).toFixed(2)}s" fill="url(#${id}ray)" points="${n2(r.x0 - (qx * r.w0) / 2)},${n2(r.y0 - (qy * r.w0) / 2)} ${n2(r.x0 + (qx * r.w0) / 2)},${n2(r.y0 + (qy * r.w0) / 2)} ${n2(r.x1 + (qx * r.w1) / 2)},${n2(r.y1 + (qy * r.w1) / 2)} ${n2(r.x1 - (qx * r.w1) / 2)},${n2(r.y1 - (qy * r.w1) / 2)}"/>`
         })
         .join('')
     world.style.transformOrigin = `50% ${n2((art.cam.cy / H) * 100)}%`
@@ -840,8 +848,8 @@ export function mountGlasshouse(host, { names = ['', ''], date = '', motion = tr
     const k = w / (size.W || 1)
     for (let i = 0; i < motesList.length; i += 1) {
       const m = motesList[i]
-      const x = ((m.x + Math.sin(t * 0.05 * m.s + m.p) * 0.03 + t * 0.004 * m.s) % 1) * w
-      const y = ((m.y + Math.sin(t * 0.07 + m.p) * 0.02 - t * 0.003 * m.s + 10) % 1) * h
+      const x = wrap(m.x + Math.sin(t * 0.05 * m.s + m.p) * 0.03 + t * 0.004 * m.s) * w
+      const y = wrap(m.y + Math.sin(t * 0.07 + m.p) * 0.02 - t * 0.003 * m.s) * h
       const a = 0.25 + 0.35 * Math.sin(t * 0.8 * m.s + m.p) ** 2
       mctx.fillStyle = `rgba(255,248,226,${a.toFixed(3)})`
       mctx.beginPath()

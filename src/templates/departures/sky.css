@@ -44,6 +44,8 @@
   display: block;
   flex: none;
   height: 100%;
+  /* cloud crowns rise above the tile; SVG would clip them flat */
+  overflow: visible;
 }
 
 .dps-grain {

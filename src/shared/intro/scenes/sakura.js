@@ -561,12 +561,31 @@ export default function create(host, template, { onOpened, setCaption }) {
       'background:linear-gradient(90deg,rgba(255,236,210,0),rgba(255,246,232,0.95) 50%,rgba(255,236,210,0));',
   )
 
+  // The page's own paper (its top-of-scroll gradient, grain blobs and soft
+  // vignette) settles over the dusk at the end; the page then brings its tree,
+  // petals and names in on top. It sits under the petals' canvas.
+  const backdrop = layer(
+    'div',
+    'position:absolute;left:0;top:0;bottom:0;width:100%;opacity:0;pointer-events:none;' +
+      'background:linear-gradient(180deg,oklch(0.94 0.045 20) 0%,oklch(0.96 0.03 60) 100%);',
+  )
+  layer(
+    'div',
+    'position:absolute;inset:0;background-blend-mode:multiply;background-image:' +
+      'radial-gradient(circle at 20% 30%,oklch(0.88 0.04 60 / 0.35) 0,transparent 50%),' +
+      'radial-gradient(circle at 80% 70%,oklch(0.86 0.05 30 / 0.25) 0,transparent 55%);',
+    backdrop,
+  )
+  layer('div', 'position:absolute;inset:0;background:radial-gradient(ellipse at center,transparent 40%,oklch(0.2 0.03 40 / 0.25) 100%);', backdrop)
+
   const size = { W: 1, H: 1 }
   const paint = () => {
     const W = root.clientWidth || window.innerWidth
     const H = root.clientHeight || window.innerHeight
     size.W = W
     size.H = H
+    // the page's fixed layers stop at its scrollbar gutter
+    backdrop.style.width = `${Math.min(W, document.documentElement.clientWidth || W)}px`
 
     const gw = W * 1.06
     const gh = H * 1.06
@@ -760,6 +779,7 @@ export default function create(host, template, { onOpened, setCaption }) {
       .call(() => setCaption?.(null), null, 4.7)
       .to(petalMat.uniforms.uScatter, { value: 1, duration: 1.3, ease: 'power2.in' }, 4.7)
       .to(state, { dolly: 1, duration: 1.3, ease: 'power2.in' }, 4.7)
+      .to(backdrop, { opacity: 1, duration: 1.1, ease: 'power1.inOut' }, 4.9)
   }
 
   return {

@@ -327,6 +327,8 @@ export function createDeckStage(host, { texts }) {
   const frontX = front.map((layer) => gsap.quickTo(layer, 'x', { duration: 0.9, ease: 'power3' }))
   const frontY = front.map((layer) => gsap.quickTo(layer, 'y', { duration: 0.9, ease: 'power3' }))
   const setParallax = (px, py) => {
+    // remembered so a stage mounted under this one can aim for the same offset
+    root.dataset.parallax = `${px},${py}`
     movers.forEach(([qx, qy, ax, ay]) => {
       qx(px * ax)
       qy(py * ay)
@@ -353,6 +355,8 @@ export function createDeckStage(host, { texts }) {
     placeHero,
     setTexts,
     setSpin,
+    // put the label at a given angle; the spin carries on from there
+    setSpinAngle: (deg) => spinTween.progress((((deg % 360) + 360) % 360) / 360),
     setParallax,
     get layout() {
       return layout

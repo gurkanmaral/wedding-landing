@@ -3,19 +3,20 @@ import { createStage } from '../../shared/intro/core.js'
 import { buildBalloonSky } from './balloons.js'
 import { paintLandscape } from './landscape.js'
 
-// Illustrated valley in two painted layers with live 3D balloons between them.
+// Illustrated valley: a painted sky, two painted terrain layers with live 3D balloons between them.
 export default function KapadokyaHero({ children }) {
   const rootRef = useRef(null)
   const backRef = useRef(null)
   const frontRef = useRef(null)
   const skyRef = useRef(null)
+  const paintRef = useRef(null)
 
   useEffect(() => {
     const root = rootRef.current
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     const paint = () => {
       const { width, height } = root.getBoundingClientRect()
-      paintLandscape(backRef.current, frontRef.current, { width, height, dpr: Math.min(window.devicePixelRatio || 1, 2) })
+      paintLandscape(backRef.current, frontRef.current, { width, height, dpr: Math.min(window.devicePixelRatio || 1, 2), sky: paintRef.current })
     }
     paint()
     let lastWidth = root.clientWidth
@@ -34,7 +35,7 @@ export default function KapadokyaHero({ children }) {
       const small = Math.min(window.innerWidth, window.innerHeight) < 640
       const sky = buildBalloonSky(stage, { count: small ? 12 : 22 })
       stage.onResize(() => sky.place())
-      stage.onFrame((dt, t) => sky.update(reduce ? 0 : dt, reduce ? 0 : t))
+      stage.onFrame((dt, t) => sky.update(dt, t, reduce))
     } catch {
       // no WebGL: the painted valley still stands on its own
     }
@@ -62,7 +63,7 @@ export default function KapadokyaHero({ children }) {
 
   return (
     <header ref={rootRef} className="kap-hero">
-      <div className="kap-sun" aria-hidden="true" />
+      <canvas ref={paintRef} className="kap-layer kap-layer--sky" aria-hidden="true" />
       <canvas ref={backRef} className="kap-layer kap-layer--back" aria-hidden="true" />
       <div ref={skyRef} className="kap-layer kap-layer--balloons" aria-hidden="true" />
       <canvas ref={frontRef} className="kap-layer kap-layer--front" aria-hidden="true" />

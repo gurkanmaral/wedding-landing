@@ -1,12 +1,11 @@
 // The picture palace, in 2D layers: dark auditorium wall, the silver screen
 // (a film canvas), painted velvet traveller curtains, a swagged valance with
 // brass fringe, the stage lip with its footlights, the projector beam with
-// dust turning in it. Shared by the intro (with the projector in shot) and
-// the page hero, so the intro's last frame is the hero's first.
+// dust turning in it, thrown from the booth behind the audience. Shared by
+// the intro and the page hero, so the intro's last frame is the hero's first.
 import { gsap } from 'gsap'
 import { createFilm } from './film.js'
 import { paintCurtain, valanceSvg } from './drapery.js'
-import { LENS, PROJECTOR_SVG } from './projector.js'
 import './theatre.css'
 
 let instances = 0
@@ -21,12 +20,11 @@ const lerp = (a, b, t) => a + (b - a) * t
  *   flash  white frame 0..1
  *   beam   visible beam 0..1
  *   zoom   1 = hero framing; < 1 the hall seen from further back
- *   origin 0 = beam from the projector lens, 1 = from behind the audience
  */
-export function createTheatre(host, { names, lang = 'en', projector = false, reduce = false, state = {}, onLayout }) {
+export function createTheatre(host, { names, lang = 'en', reduce = false, state = {}, onLayout }) {
   instances += 1
   const uid = `cn${instances}`
-  const st = { open: 1, light: 1, card: 1, count: 5, flash: 0, beam: 1, zoom: 1, origin: 1, ...state }
+  const st = { open: 1, light: 1, card: 1, count: 5, flash: 0, beam: 1, zoom: 1, ...state }
 
   const root = document.createElement('div')
   root.className = 'cn-theatre'
@@ -53,7 +51,6 @@ export function createTheatre(host, { names, lang = 'en', projector = false, red
       <polygon fill="url(#${uid}-beam)" filter="url(#${uid}-soft)"/>
     </svg>
     <canvas class="cn-dust"></canvas>
-    ${projector ? `<div class="cn-projector">${PROJECTOR_SVG}</div>` : ''}
   `
   host.appendChild(root)
 
@@ -72,8 +69,6 @@ export function createTheatre(host, { names, lang = 'en', projector = false, red
   const beamGrad = beamSvg.querySelector('linearGradient')
   const dust = $('.cn-dust')
   const dctx = dust.getContext('2d')
-  const proj = projector ? $('.cn-projector') : null
-  const projSvg = proj?.querySelector('svg')
 
   const L = { W: 1, H: 1, portrait: true, sx: 0, sy: 0, sw: 1, sh: 1, scy: 0, closedW: 1, openW: 1, stageY: 1 }
   const small = Math.min(window.innerWidth, window.innerHeight) < 640
@@ -161,7 +156,6 @@ export function createTheatre(host, { names, lang = 'en', projector = false, red
   let filmClock = 0
   let flick = 1
   let lastBeam = ''
-  const origin = { x: 0, y: 0 }
 
   const beamGeometry = () => {
     const { W, H, sx, sy, sw, sh, scy } = L
@@ -172,18 +166,9 @@ export function createTheatre(host, { names, lang = 'en', projector = false, red
     const x1 = cx + (sx + sw - cx) * z
     const y0 = scy + (sy - scy) * z
     const y1 = scy + (sy + sh - scy) * z
-    let ox = W * 0.5
-    let oy = H * 1.14
-    if (projSvg && st.origin < 1) {
-      const r = projSvg.getBoundingClientRect()
-      const base = root.getBoundingClientRect()
-      const lx = r.left - base.left + r.width * LENS.x
-      const ly = r.top - base.top + r.height * LENS.y
-      ox = lerp(lx, ox, st.origin)
-      oy = lerp(ly, oy, st.origin)
-    }
-    origin.x = ox
-    origin.y = oy
+    // the booth port, out of shot behind and above the back row
+    const ox = W * 0.5
+    const oy = H * 1.14
     return { x0, x1, y0, y1, ox, oy }
   }
 
@@ -285,7 +270,6 @@ export function createTheatre(host, { names, lang = 'en', projector = false, red
   return {
     root,
     state: st,
-    projector: proj,
     layout: () => L,
     setPointer(nx, ny) {
       if (reduce) return

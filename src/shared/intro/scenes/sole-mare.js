@@ -192,10 +192,15 @@ const fragmentShader = /* glsl */ `
   uniform float uTP;
   uniform float uTextWet;
   uniform float uLift;
+  uniform float uHand;
+  uniform vec2 uPage;
+  uniform vec2 uWash;
   varying vec2 vUv;
 
   // tone of the hero painting's own paper, so painted == the page's image
   const vec3 PAPER = vec3(0.988, 0.961, 0.890);
+  // the page's --background, which its hero washes are made of
+  const vec3 PAGE_BG = vec3(252.0, 246.0, 238.0) / 255.0;
   const mat2 ROT = mat2(1.6, 1.2, -1.2, 1.6);
 
   float vn(vec2 x) {
@@ -403,6 +408,25 @@ const fragmentShader = /* glsl */ `
     col += spec;
     col += wet * pow(max(dot(nc, H), 0.0), 24.0) * 0.07;
     col += sparkle * vec3(1.0, 0.88, 0.55) * 0.55;
+
+    /* the page's opening view, exactly: its photo cropped to the hero (which stops
+       at the scrollbar gutter) under its two cream washes, with no names or sun */
+    if (uHand > 0.0) {
+      vec2 ps = vec2(px.x, uCss.y - px.y) / uPage;
+      float pa = uPage.x / uPage.y;
+      vec2 iuv = vec2(min(ps.x, 1.0), 1.0 - ps.y);
+      if (pa < uImgAspect) iuv.x = 0.5 + (iuv.x - 0.5) * pa / uImgAspect;
+      else iuv.y = 0.5 + (iuv.y - 0.5) * uImgAspect / pa;
+      vec3 page = texture2D(uImage, iuv).rgb;
+      // from-background/40 via-background/5 to-background, top to bottom
+      float a1 = ps.y < 0.5 ? mix(0.4, 0.05, ps.y * 2.0) : mix(0.05, 1.0, (ps.y - 0.5) * 2.0);
+      page = mix(page, PAGE_BG, a1);
+      // the extra wash behind the text, rising from the bottom
+      float u = (1.0 - ps.y) / uWash.x;
+      float a2 = u >= 1.0 ? 0.0 : u < 0.5 ? mix(1.0, uWash.y, u * 2.0) : mix(uWash.y, 0.0, (u - 0.5) * 2.0);
+      page = mix(page, PAGE_BG, a2);
+      col = mix(col, page, uHand);
+    }
     gl_FragColor = vec4(col, 1.0);
   }
 `
@@ -443,6 +467,9 @@ export default function create(host, template, { onOpened, setCaption }) {
     uTP: { value: 0 },
     uTextWet: { value: 1 },
     uLift: { value: 0 },
+    uHand: { value: 0 },
+    uPage: { value: new THREE.Vector2(1, 1) },
+    uWash: { value: new THREE.Vector2(0.6, 0.75) },
   }
 
   // a 1×1 paper-coloured stand-in until the painting arrives
@@ -479,6 +506,10 @@ export default function create(host, template, { onOpened, setCaption }) {
 
   const layout = (view) => {
     uniforms.uCss.value.set(view.width, view.height)
+    // the page hero: viewport minus the scrollbar gutter; its text wash is
+    // taller and stronger below the md breakpoint
+    uniforms.uPage.value.set(Math.min(view.width, document.documentElement.clientWidth || view.width), view.height)
+    uniforms.uWash.value.set(...(window.innerWidth >= 768 ? [0.6, 0.75] : [0.88, 0.85]))
     // the brush stroke spans ~27% of the screen width
     uniforms.uMarkLen.value = THREE.MathUtils.clamp(0.27 * view.aspect, 0.12, 0.42)
     // names: in the lower cream wash where the page hero sets its own title,
@@ -564,7 +595,10 @@ export default function create(host, template, { onOpened, setCaption }) {
       .to(u.uTP, { value: 1.12, duration: 1.6, ease: 'power1.inOut' }, 2.4)
       .to(u.uTextWet, { value: 0, duration: 1.0, ease: 'sine.inOut' }, 3.6)
       .call(() => setCaption?.('date'), null, 3.8)
-      .to({}, { duration: 0.01 }, 4.8)
+      // hand over: the painting settles into the page's own hero, where the
+      // names and date are set again (the sun and lettering wash away)
+      .call(() => setCaption?.(null), null, 4.7)
+      .to(u.uHand, { value: 1, duration: 1.0, ease: 'sine.inOut' }, 4.8)
     return timeline
   }
 

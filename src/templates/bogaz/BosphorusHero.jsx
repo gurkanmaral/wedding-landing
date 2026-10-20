@@ -12,7 +12,9 @@ export default function BosphorusHero() {
     const host = hostRef.current
     if (!host) return undefined
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    const art = mountBosphorus(host, { mode: 'hero', reduce })
+    // mounted underneath the fading intro: carry on from its final frame
+    const afterIntro = Boolean(document.querySelector('.invitation-intro'))
+    const art = mountBosphorus(host, { mode: 'hero', reduce, afterIntro })
 
     const onMove = (event) => {
       const rect = host.getBoundingClientRect()

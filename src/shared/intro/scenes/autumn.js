@@ -577,10 +577,23 @@ export default function create(host, template, { onOpened, setCaption }) {
   paint.style.cssText = 'position:absolute;left:-4%;top:-4%;width:108%;height:108%;display:block;will-change:transform;'
   const drift = document.createElement('canvas')
   drift.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block;'
+  // The page's own warm ground (and its dot grain), laid over the whole scene
+  // as the gust carries everything off: the last frame is the page's opening
+  // view without its tree, leaf pile and names, which the page brings in.
   const lift = document.createElement('div')
-  lift.style.cssText = 'position:absolute;inset:0;background:#f6eddc;opacity:0;'
-  bg.append(paint, drift, lift)
+  lift.setAttribute('aria-hidden', 'true')
+  lift.style.cssText =
+    'position:absolute;left:0;top:0;bottom:0;width:100%;opacity:0;pointer-events:none;background:' +
+    'radial-gradient(120% 80% at 15% 8%,oklch(0.97 0.02 85) 0%,transparent 55%),' +
+    'radial-gradient(140% 90% at 92% 100%,oklch(0.9 0.06 50 / .55) 0%,transparent 60%),' +
+    'linear-gradient(180deg,oklch(0.962 0.022 80) 0%,oklch(0.962 0.022 80) 60%,oklch(0.93 0.034 68) 100%);'
+  const grain = document.createElement('div')
+  grain.style.cssText =
+    'position:absolute;inset:0;opacity:.5;background-image:radial-gradient(oklch(0.6 0.05 50 / .05) 1px,transparent 1px);background-size:4px 4px;'
+  lift.append(grain)
+  bg.append(paint, drift)
   host.insertBefore(bg, renderer.domElement)
+  host.append(lift)
   const driftCtx = drift.getContext('2d')
   const paintRatio = Math.min(window.devicePixelRatio || 1, 1.5)
   let paintTimer = 0
@@ -857,6 +870,8 @@ export default function create(host, template, { onOpened, setCaption }) {
     L.caughtY = close.height * 0.07
     L.flyX = near.width * 0.85
     L.flyY = near.height * 0.55
+    // the page's fixed ground stops at its scrollbar gutter
+    lift.style.width = `${Math.min(view.width, document.documentElement.clientWidth || view.width)}px`
     drift.width = Math.round(view.width)
     drift.height = Math.round(view.height)
     // repaint the illustration once the size settles (address bars resize a lot)
@@ -1014,6 +1029,7 @@ export default function create(host, template, { onOpened, setCaption }) {
       clearTimeout(paintTimer)
       stage.dispose()
       bg.remove()
+      lift.remove()
     },
   }
 }

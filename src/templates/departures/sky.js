@@ -95,7 +95,9 @@ function cloudTile(width, height, layer, random) {
   return tile
 }
 
-export function createSky(container, { seed = 11 } = {}) {
+// follow: another sky's root (the intro's, when the hero mounts under it); the
+// clouds start exactly where that sky's clouds are, so the two drift as one.
+export function createSky(container, { seed = 11, follow = null } = {}) {
   const root = node('div', 'dps-sky', container)
   node('div', 'dps-sun', root)
   const layerEls = LAYERS.map((layer, i) => {
@@ -127,6 +129,18 @@ export function createSky(container, { seed = 11 } = {}) {
     })
   }
   build()
+  if (follow) {
+    const strips = follow.querySelectorAll('.dps-strip')
+    const wraps = follow.querySelectorAll('.dps-layer')
+    layerEls.forEach(({ wrap, strip, tween }, i) => {
+      // the parallax offset too, then it eases on from there
+      if (wraps[i]) gsap.set(wrap, { x: gsap.getProperty(wraps[i], 'x'), y: gsap.getProperty(wraps[i], 'y') })
+      const other = strips[i]
+      const tileW = parseFloat(strip.style.width) / 2
+      if (!other || !tileW || Math.abs(parseFloat(other.style.width) / 2 - tileW) > 1) return
+      tween.progress((-parseFloat(gsap.getProperty(other, 'x')) / tileW) % 1)
+    })
+  }
 
   return {
     root,
