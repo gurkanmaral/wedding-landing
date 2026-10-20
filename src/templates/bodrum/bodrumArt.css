@@ -1,0 +1,66 @@
+/* Bodrum shore illustration: layers and grain. Shared by the hero and the intro. */
+
+.bd-art {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: linear-gradient(180deg, #62b5de 0%, #a6dbeb 40%, #e6f1e8 50%, #0e6ba8 51%, #f6e7c8 75%, #e1b16a 100%);
+  contain: strict;
+}
+
+.bd-layer {
+  position: absolute;
+  left: -3%;
+  top: -3%;
+  width: 106%;
+  height: 106%;
+  display: block;
+  will-change: transform;
+}
+
+.bd-light {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(70% 45% at 82% 42%, rgb(255 236 196 / 0.35), transparent 70%),
+    radial-gradient(140% 90% at 50% 35%, transparent 60%, rgb(120 84 40 / 0.22) 100%);
+  mix-blend-mode: soft-light;
+}
+
+.bd-grain {
+  position: absolute;
+  inset: -50%;
+  pointer-events: none;
+  opacity: 0.14;
+  mix-blend-mode: overlay;
+  background-size: 180px 180px;
+  animation: bd-grain 0.9s steps(5) infinite;
+}
+
+@keyframes bd-grain {
+  0% {
+    transform: translate(0, 0);
+  }
+  20% {
+    transform: translate(-3%, 2%);
+  }
+  40% {
+    transform: translate(2%, -3%);
+  }
+  60% {
+    transform: translate(-2%, -1%);
+  }
+  80% {
+    transform: translate(3%, 3%);
+  }
+  100% {
+    transform: translate(0, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bd-grain {
+    animation: none;
+  }
+}

@@ -1,0 +1,487 @@
+/* Bodrum — sand, Aegean blue, turquoise and old gold. Schedule hoisted as
+   nautical signal flags, countdown as life rings, the venue on a sea chart
+   with a compass rose, RSVP as a letter for the bottle. */
+
+.theme-bodrum {
+  --inv-bg: #fbf4e4;
+  --inv-surface: #fffaf0;
+  --inv-alt: #f4e6c9;
+  --inv-ink: #2c3e50;
+  --inv-muted: #5d6c7b;
+  --inv-accent: #0e6ba8;
+  --inv-accent-ink: #fffaf0;
+  --inv-line: rgb(44 62 80 / 0.16);
+  --inv-display: 'DM Serif Display', Georgia, serif;
+  --inv-script: 'Allura', cursive;
+  --inv-body: 'Josefin Sans', system-ui, sans-serif;
+  --inv-radius: 4px;
+  --bd-gold: #e1b16a;
+  --bd-turq: #7fd1e8;
+  --bd-red: #c8282e;
+  --bd-paper:
+    radial-gradient(60% 40% at 20% 10%, rgb(225 177 106 / 0.16), transparent 70%),
+    radial-gradient(50% 50% at 90% 80%, rgb(176 128 62 / 0.12), transparent 70%),
+    #f6e7c8;
+}
+
+/* ------------------------------------------------------------- hero */
+
+.bd-hero {
+  position: relative;
+  display: grid;
+  align-content: start;
+  justify-items: center;
+  min-height: 100svh;
+  padding: clamp(4.8rem, 12svh, 8rem) 1.25rem 0;
+  overflow: hidden;
+  background: #9fd5e8;
+  color: #183a5a;
+  text-align: center;
+}
+
+.bd-hero-art {
+  position: absolute;
+  inset: 0;
+}
+
+.bd-hero-copy {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  justify-items: center;
+  gap: 0.3rem;
+  text-shadow: 0 0 22px rgb(255 248 232 / 0.75), 0 1px 2px rgb(255 248 232 / 0.6);
+}
+
+.bd-eyebrow {
+  margin: 0 0 0.8rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+}
+
+.bd-names {
+  display: grid;
+  margin: 0;
+  font-family: var(--inv-display);
+  font-weight: 400;
+  font-size: clamp(3.3rem, 13.5vw, 7rem);
+  line-height: 0.95;
+  color: #14324f;
+}
+
+.bd-amp {
+  font-family: var(--inv-script);
+  font-size: 0.7em;
+  line-height: 1.1;
+  color: #b8862f;
+}
+
+.bd-date {
+  margin: 1.2rem 0 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.bd-place {
+  margin: 0;
+  font-family: var(--inv-display);
+  font-style: italic;
+  font-size: 1.3rem;
+}
+
+/* portrait: keep the copy in clear sky above the village, on a soft sky wash */
+@media (max-aspect-ratio: 4 / 5) {
+  .bd-hero-copy::before {
+    content: '';
+    position: absolute;
+    inset: -2.5rem -3rem -2rem;
+    z-index: -1;
+    border-radius: 50%;
+    background: radial-gradient(closest-side, rgb(214 238 240 / 0.7), rgb(190 228 238 / 0.35) 60%, transparent 100%);
+    filter: blur(8px);
+  }
+}
+
+@media (max-aspect-ratio: 4 / 5) and (max-height: 720px) {
+  .bd-hero {
+    padding-top: max(3.6rem, 9svh);
+  }
+
+  .bd-eyebrow {
+    margin-bottom: 0.5rem;
+  }
+
+  .bd-names {
+    font-size: min(13.5vw, 7svh);
+  }
+
+  .bd-date {
+    margin-top: 0.8rem;
+  }
+}
+
+@media (min-aspect-ratio: 4 / 3) {
+  .bd-hero {
+    padding-top: clamp(3.5rem, 9svh, 6rem);
+  }
+
+  .bd-names {
+    font-size: clamp(3.2rem, 8vw, 6.2rem);
+  }
+}
+
+/* --------------------------------------------------------- sections */
+
+.theme-bodrum .inv-section:nth-of-type(even) {
+  background: var(--bd-paper);
+}
+
+.theme-bodrum .inv-section:nth-of-type(even)::before {
+  /* a soft wave line along the top edge */
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: 0;
+  right: 0;
+  height: 14px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 14'%3E%3Cpath d='M0 0 H80 V4 C70 12 60 12 50 7 C40 2 30 2 20 7 C10 12 4 10 0 6 Z' fill='%23fbf4e4'/%3E%3C/svg%3E") repeat-x 0 0 / 80px 14px;
+}
+
+.theme-bodrum .inv-kicker {
+  font-weight: 600;
+  letter-spacing: 0.28em;
+}
+
+.theme-bodrum .inv-title {
+  color: #1d3a56;
+}
+
+.theme-bodrum .inv-lead {
+  font-style: italic;
+}
+
+.theme-bodrum .inv-welcome .inv-narrow::after {
+  content: '';
+  display: block;
+  width: 64px;
+  height: 64px;
+  margin: 2rem auto 0;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cg transform='rotate(-30 32 32)'%3E%3Crect x='10' y='24' width='38' height='16' rx='7' fill='%237fd1e8' fill-opacity='.35' stroke='%230e6ba8' stroke-width='1.4'/%3E%3Crect x='48' y='28' width='7' height='8' fill='%23e1b16a'/%3E%3Crect x='18' y='29' width='24' height='6' rx='3' fill='%23f6e7c8' stroke='%23b8862f' stroke-width='.8'/%3E%3C/g%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+/* countdown — life rings */
+.theme-bodrum .inv-countdown {
+  max-width: 36rem;
+}
+
+.theme-bodrum .inv-countdown-cell {
+  aspect-ratio: 1;
+  align-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, var(--inv-surface) 0 58%, rgb(0 0 0 / 0.12) 58.5%, transparent 60%),
+    conic-gradient(from 22.5deg, var(--bd-red) 0 12.5%, #fff 0 25%, var(--bd-red) 0 37.5%, #fff 0 50%, var(--bd-red) 0 62.5%, #fff 0 75%, var(--bd-red) 0 87.5%, #fff 0 100%);
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.08), 0 8px 18px rgb(44 62 80 / 0.16);
+}
+
+.theme-bodrum .inv-countdown-value {
+  font-size: clamp(1.25rem, 5.4vw, 2.5rem);
+  color: var(--inv-accent);
+}
+
+.theme-bodrum .inv-countdown-label {
+  font-size: clamp(0.52rem, 1.8vw, 0.68rem);
+  font-weight: 600;
+  letter-spacing: 0.12em;
+}
+
+/* story — a ship's log along a rope */
+.theme-bodrum .inv-timeline li {
+  position: relative;
+  padding-left: 2.2rem;
+  border-left: 0;
+}
+
+.theme-bodrum .inv-timeline li::before {
+  content: '';
+  position: absolute;
+  left: 0.55rem;
+  top: 0;
+  bottom: -2.5rem;
+  width: 3px;
+  background: repeating-linear-gradient(160deg, #b8862f 0 3px, #e1b16a 3px 6px);
+}
+
+.theme-bodrum .inv-timeline li:last-child::before {
+  bottom: 0;
+}
+
+.theme-bodrum .inv-timeline li::after {
+  content: '';
+  position: absolute;
+  left: -0.05rem;
+  top: 0.1rem;
+  width: 1.3rem;
+  height: 1.3rem;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230e6ba8' stroke-width='1.6' stroke-linecap='round'%3E%3Ccircle cx='12' cy='4.5' r='2.2' fill='%23fbf4e4'/%3E%3Cpath d='M12 6.7 V21 M7 10 H17 M4 15 C5 19 8.5 21 12 21 C15.5 21 19 19 20 15'/%3E%3C/svg%3E") center / contain no-repeat;
+  background-color: var(--inv-bg);
+  border-radius: 50%;
+}
+
+.theme-bodrum .inv-section:nth-of-type(even) .inv-timeline li::after {
+  background-color: #f6e7c8;
+}
+
+.theme-bodrum .inv-timeline-when {
+  font-weight: 600;
+}
+
+/* schedule — signal flags on a halyard */
+.theme-bodrum .inv-schedule-list {
+  position: relative;
+  max-width: 42rem;
+}
+
+.theme-bodrum .inv-schedule-list::before {
+  content: '';
+  position: absolute;
+  left: 1.3rem;
+  top: 0.4rem;
+  bottom: 0.4rem;
+  width: 1px;
+  background: #6b5a44;
+}
+
+.theme-bodrum .inv-schedule-list li {
+  grid-template-columns: 2.6rem 4.8rem minmax(0, 1fr);
+  gap: 1rem;
+  align-items: start;
+  border-bottom: 1px dashed rgb(44 62 80 / 0.22);
+}
+
+.theme-bodrum .inv-schedule-list li::before {
+  content: '';
+  position: relative;
+  z-index: 1;
+  width: 2.6rem;
+  height: 1.75rem;
+  margin-top: 0.2rem;
+  background: center / 100% 100% no-repeat;
+  filter: drop-shadow(0 3px 4px rgb(44 62 80 / 0.25));
+  transform-origin: left center;
+  animation: bd-flutter 3.2s ease-in-out infinite;
+}
+
+.theme-bodrum .inv-schedule-list li:nth-child(6n + 1)::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 20' preserveAspectRatio='none'%3E%3Crect width='15' height='20' fill='%23fff'/%3E%3Cpath d='M15 0 H30 L22 10 L30 20 H15 Z' fill='%231d4e9e'/%3E%3C/svg%3E");
+}
+
+.theme-bodrum .inv-schedule-list li:nth-child(6n + 2)::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 20' preserveAspectRatio='none'%3E%3Crect width='30' height='4' fill='%231d4e9e'/%3E%3Crect y='4' width='30' height='4' fill='%23fff'/%3E%3Crect y='8' width='30' height='4' fill='%23c8282e'/%3E%3Crect y='12' width='30' height='4' fill='%23fff'/%3E%3Crect y='16' width='30' height='4' fill='%231d4e9e'/%3E%3C/svg%3E");
+}
+
+.theme-bodrum .inv-schedule-list li:nth-child(6n + 3)::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 20' preserveAspectRatio='none'%3E%3Crect width='30' height='20' fill='%23f2c230'/%3E%3Crect y='5' width='30' height='10' fill='%231d4e9e'/%3E%3C/svg%3E");
+}
+
+.theme-bodrum .inv-schedule-list li:nth-child(6n + 4)::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 20' preserveAspectRatio='none'%3E%3Crect width='30' height='10' fill='%231d4e9e'/%3E%3Crect y='10' width='30' height='10' fill='%23c8282e'/%3E%3C/svg%3E");
+}
+
+.theme-bodrum .inv-schedule-list li:nth-child(6n + 5)::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 20' preserveAspectRatio='none'%3E%3Crect width='30' height='20' fill='%23fff'/%3E%3Cpath d='M15 2 L26 10 L15 18 L4 10 Z' fill='%23c8282e'/%3E%3C/svg%3E");
+}
+
+.theme-bodrum .inv-schedule-list li:nth-child(6n)::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 20' preserveAspectRatio='none'%3E%3Cpath d='M0 0 H30 L22 10 L30 20 H0 Z' fill='%23c8282e'/%3E%3C/svg%3E");
+}
+
+.theme-bodrum .inv-schedule-list li:nth-child(2n)::before {
+  animation-delay: -1.4s;
+}
+
+.theme-bodrum .inv-schedule-time {
+  padding-top: 0.15rem;
+  font-family: var(--inv-display);
+  font-size: 1.4rem;
+}
+
+.theme-bodrum .inv-schedule-list h3 {
+  font-size: 1.45rem;
+}
+
+@keyframes bd-flutter {
+  0%,
+  100% {
+    transform: skewY(0deg) scaleX(1);
+  }
+  50% {
+    transform: skewY(-3deg) scaleX(0.94);
+  }
+}
+
+/* venue — a sea chart with a compass rose */
+.theme-bodrum .inv-section.inv-venue {
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-50 -50 100 100'%3E%3Cg fill='none' stroke='%232c3e50' stroke-opacity='.35' stroke-width='.4'%3E%3Ccircle r='46'/%3E%3Ccircle r='40' stroke-dasharray='1 1.5'/%3E%3Cpath d='M-48 0 H48 M0 -48 V48 M-34 -34 L34 34 M34 -34 L-34 34'/%3E%3C/g%3E%3Cpath d='M0 -44 L4 -4 L0 0 Z M0 44 L-4 4 L0 0 Z M-44 0 L-4 -4 L0 0 Z M44 0 L4 4 L0 0 Z' fill='%232c3e50' fill-opacity='.5'/%3E%3Cpath d='M0 -44 L-4 -4 L0 0 Z M0 44 L4 4 L0 0 Z M-44 0 L-4 4 L0 0 Z M44 0 L4 -4 L0 0 Z' fill='%23e1b16a' fill-opacity='.7'/%3E%3Cpath d='M0 -26 L2.5 -2.5 L26 0 L2.5 2.5 L0 26 L-2.5 2.5 L-26 0 L-2.5 -2.5 Z' transform='rotate(45)' fill='%230e6ba8' fill-opacity='.35'/%3E%3Ctext y='-47' font-size='6' text-anchor='middle' fill='%232c3e50' fill-opacity='.6' font-family='serif'%3EN%3C/text%3E%3C/svg%3E") right -60px top 40px / 260px 260px no-repeat,
+    repeating-radial-gradient(ellipse at 10% 110%, transparent 0 34px, rgb(14 107 168 / 0.12) 35px, transparent 36px),
+    linear-gradient(rgb(44 62 80 / 0.07) 1px, transparent 1px) 0 0 / 100% 80px,
+    linear-gradient(90deg, rgb(44 62 80 / 0.07) 1px, transparent 1px) 0 0 / 80px 100%,
+    var(--bd-paper);
+}
+
+.theme-bodrum .inv-venue-copy {
+  padding: 1.5rem;
+  border: 1px solid rgb(44 62 80 / 0.35);
+  outline: 4px double rgb(44 62 80 / 0.25);
+  outline-offset: 4px;
+  background: rgb(255 250 240 / 0.85);
+}
+
+.theme-bodrum .inv-venue-address {
+  font-style: italic;
+}
+
+.theme-bodrum .inv-map {
+  border: 0;
+  border-radius: 6px;
+  box-shadow: 0 0 0 6px #f6e7c8, 0 0 0 9px #b8862f, 0 18px 40px rgb(44 62 80 / 0.25);
+}
+
+.theme-bodrum .inv-map iframe {
+  filter: sepia(0.35) saturate(0.85) hue-rotate(-8deg);
+}
+
+/* dress code — sea-smoothed pebbles */
+.theme-bodrum .inv-swatches li {
+  width: 50px;
+  height: 40px;
+  border-radius: 55% 45% 50% 50% / 60% 55% 45% 40%;
+  box-shadow: inset -4px -5px 8px rgb(0 0 0 / 0.12), inset 3px 3px 6px rgb(255 255 255 / 0.4), 0 4px 8px rgb(44 62 80 / 0.15);
+}
+
+.theme-bodrum .inv-swatches li:nth-child(even) {
+  border-radius: 45% 55% 40% 60% / 50% 45% 55% 50%;
+  transform: rotate(-8deg);
+}
+
+/* gifts — a luggage tag */
+.theme-bodrum .inv-iban code {
+  position: relative;
+  padding: 0.8rem 1.4rem 0.8rem 2.6rem;
+  border: 1px dashed rgb(44 62 80 / 0.4);
+  border-radius: 4px 18px 18px 4px;
+  background: var(--inv-surface);
+}
+
+.theme-bodrum .inv-iban code::before {
+  content: '';
+  position: absolute;
+  left: 0.9rem;
+  top: 50%;
+  width: 0.7rem;
+  height: 0.7rem;
+  border: 2px solid var(--bd-gold);
+  border-radius: 50%;
+  transform: translateY(-50%);
+}
+
+/* rsvp — a letter for the bottle */
+.theme-bodrum .inv-rsvp {
+  position: relative;
+  padding: 3.6rem clamp(1.2rem, 5vw, 2.4rem) 2.2rem;
+  background:
+    radial-gradient(70% 50% at 15% 10%, rgb(176 128 62 / 0.14), transparent 70%),
+    radial-gradient(60% 60% at 90% 95%, rgb(176 128 62 / 0.16), transparent 70%),
+    #f8ecd2;
+  box-shadow: 0 1px 0 #e8d4a9, 0 24px 50px rgb(44 62 80 / 0.18);
+  clip-path: polygon(0 1%, 4% 0, 30% 1%, 55% 0, 80% 1%, 100% 0, 99% 30%, 100% 60%, 99% 100%, 70% 99%, 40% 100%, 10% 99%, 0 100%, 1% 60%, 0 30%);
+}
+
+.theme-bodrum .inv-rsvp::before {
+  position: absolute;
+  top: 1.4rem;
+  left: 0;
+  right: 0;
+  font-family: var(--inv-script);
+  font-size: 2rem;
+  line-height: 1;
+  text-align: center;
+  color: #b8862f;
+}
+
+.theme-bodrum[lang='tr'] .inv-rsvp::before {
+  content: 'Cevabınızı şişeye koyun';
+}
+
+.theme-bodrum[lang='en'] .inv-rsvp::before {
+  content: 'Put your reply in the bottle';
+}
+
+.theme-bodrum .inv-rsvp .inv-rsvp-deadline {
+  margin-top: 0.6rem;
+}
+
+.theme-bodrum .inv-rsvp .inv-field input,
+.theme-bodrum .inv-rsvp .inv-field select,
+.theme-bodrum .inv-rsvp .inv-field textarea {
+  border: 0;
+  border-bottom: 1px solid rgb(44 62 80 / 0.35);
+  border-radius: 0;
+  background: transparent;
+}
+
+.theme-bodrum .inv-rsvp .inv-button {
+  border-radius: 999px;
+  box-shadow: 0 6px 16px rgb(14 107 168 / 0.3);
+}
+
+.theme-bodrum .inv-button {
+  font-weight: 600;
+  letter-spacing: 0.16em;
+}
+
+.theme-bodrum .inv-rsvp-thanks {
+  font-family: var(--inv-script);
+  font-size: 2.4rem;
+  color: var(--inv-accent);
+}
+
+.theme-bodrum .inv-lang button {
+  font-weight: 600;
+}
+
+/* footer — sand going down into the sea */
+.theme-bodrum .inv-footer {
+  background: linear-gradient(180deg, transparent 0%, #f6e7c8 30%, #7fd1e8 100%);
+}
+
+.theme-bodrum .inv-footer-names {
+  color: #1d3a56 !important;
+}
+
+@media (max-width: 760px) {
+  .theme-bodrum .inv-schedule-list li {
+    grid-template-columns: 2.2rem 4rem minmax(0, 1fr);
+    gap: 0.75rem;
+  }
+
+  .theme-bodrum .inv-schedule-list li::before {
+    width: 2.2rem;
+    height: 1.5rem;
+  }
+
+  .theme-bodrum .inv-schedule-list::before {
+    left: 1.1rem;
+  }
+
+  .theme-bodrum .inv-section.inv-venue {
+    background-size: 180px 180px, auto, 100% 80px, 80px 100%, auto;
+  }
+}
