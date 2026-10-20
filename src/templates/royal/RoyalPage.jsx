@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import { useWeddingCardFields } from '../../api/weddingCardContext'
 
 import hero from './assets/door.jpg'
 import aperitivo from './assets/table.jpg'
@@ -9,27 +10,25 @@ import couple from '../sole-mare/assets/feature-3.jpg'
 
 gsap.registerPlugin(ScrollTrigger)
 
-const VENUE_QUERY = 'Villa Ephrussi de Rothschild, Saint-Jean-Cap-Ferrat'
+const DEFAULTS = {
+  partner1: 'Jane',
+  partner2: 'Joe',
+  eventDate: '2027-09-25T17:00:00+02:00',
+  dateLabel: 'Saturday, 25 September 2027',
+  venue: 'Villa Ephrussi de Rothschild',
+  city: 'Saint-Jean-Cap-Ferrat',
+  address: '1 Avenue Ephrussi de Rothschild, 06230 Saint-Jean-Cap-Ferrat, France',
+  rsvpDeadline: 'Saturday, 14 August 2027',
+}
+
+const fmtEn = (date, options) => new Intl.DateTimeFormat('en-GB', options).format(date)
+
+const toCalendarStamp = (date) => date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')
 
 const INVITE = {
-  couple: { one: 'Charlotte', two: 'Henry' },
   event: {
-    dateLong: 'Saturday, 25 September 2027',
-    dateShort: '25 · 09 · 2027',
     time: '17:00',
-    place: 'Saint-Jean-Cap-Ferrat',
-    rsvpBy: 'Saturday, 14 August 2027',
   },
-  details: [
-    { k: 'Date', v: 'Saturday, 25 September 2027' },
-    { k: 'Ceremony', v: '17:00 · The Rose Garden' },
-    { k: 'Dress code', v: 'Black tie' },
-    { k: 'Kindly reply by', v: '14 August 2027' },
-  ],
-  story: [
-    'We met on a rain-soaked evening in Paris, sharing the last dry corner beneath an awning on the Rue de Lille. Henry offered his umbrella; Charlotte offered directions he did not need.',
-    'Seven years, two cities and one very patient spaniel later, we would love nothing more than to celebrate the next chapter with the people who have shaped every one before it.',
-  ],
   schedule: [
     {
       n: '01',
@@ -57,16 +56,6 @@ const INVITE = {
     },
   ],
 }
-
-const CALENDAR_URL =
-  'https://calendar.google.com/calendar/render?action=TEMPLATE' +
-  '&text=' +
-  encodeURIComponent('Charlotte & Henry — Wedding') +
-  '&dates=20270925T150000Z/20270925T223000Z' +
-  '&details=' +
-  encodeURIComponent('Black tie. Ceremony at 17:00 in the Rose Garden.') +
-  '&location=' +
-  encodeURIComponent('Villa Ephrussi de Rothschild, 1 Avenue Ephrussi de Rothschild, 06230 Saint-Jean-Cap-Ferrat, France')
 
 const ACCENT = '#d6517f' // deep bougainvillea rose (decorative / large text)
 const ACCENT_SOFT = '#f2a9c1' // light rose for small text on dark
@@ -102,7 +91,7 @@ function Eyebrow({ children, className = '' }) {
   return <p className={`text-xs uppercase tracking-[0.4em] text-[#f2a9c1] ${className}`}>{children}</p>
 }
 
-function RsvpForm() {
+function RsvpForm({ dayMonth }) {
   const [status, setStatus] = useState('idle')
   const [attending, setAttending] = useState('yes')
   const ids = useId()
@@ -113,7 +102,7 @@ function RsvpForm() {
         <p className="font-display text-3xl text-white">Thank you.</p>
         <p className="mt-3 text-white/75">
           {attending === 'yes'
-            ? 'Your reply has been received — we cannot wait to celebrate with you on the 25th.'
+            ? `Your reply has been received — we cannot wait to celebrate with you on ${dayMonth}.`
             : 'Your reply has been received. You will be dearly missed, and we will raise a glass to you.'}
         </p>
         <button
@@ -211,7 +200,43 @@ function RsvpForm() {
 
 export default function RoyalWeddingPage() {
   const root = useRef(null)
-  const { one, two } = INVITE.couple
+  const { partner1, partner2, eventDate, dateLabel, venue, city, address, rsvpDeadline } =
+    useWeddingCardFields(DEFAULTS, 'en-GB')
+  const mapQuery = `${venue}, ${city}`
+  const calendarUrl =
+    'https://calendar.google.com/calendar/render?action=TEMPLATE' +
+    '&text=' +
+    encodeURIComponent(`${partner1} & ${partner2} — Wedding`) +
+    `&dates=${toCalendarStamp(eventDate)}/${toCalendarStamp(new Date(eventDate.getTime() + 7.5 * 60 * 60 * 1000))}` +
+    '&details=' +
+    encodeURIComponent('Black tie. Ceremony at 17:00 in the Rose Garden.') +
+    '&location=' +
+    encodeURIComponent(`${venue}, ${address}`)
+  const dayMonth = fmtEn(eventDate, { day: 'numeric', month: 'long' })
+  const statDayMonth = `${fmtEn(eventDate, { day: 'numeric' })} ${fmtEn(eventDate, { month: 'short' }).slice(0, 3)}`
+  const scheduleDay = fmtEn(eventDate, { weekday: 'long', day: 'numeric', month: 'long' })
+  const dateShort = [
+    fmtEn(eventDate, { day: '2-digit' }),
+    fmtEn(eventDate, { month: '2-digit' }),
+    fmtEn(eventDate, { year: 'numeric' }),
+  ].join(' · ')
+  const details = [
+    { k: 'Date', v: dateLabel },
+    { k: 'Ceremony', v: '17:00 · The Rose Garden' },
+    { k: 'Dress code', v: 'Black tie' },
+    { k: 'Kindly reply by', v: rsvpDeadline },
+  ]
+  const story = [
+    `We met on a rain-soaked evening in Paris, sharing the last dry corner beneath an awning on the Rue de Lille. ${partner2} offered an umbrella; ${partner1} offered directions that were not needed.`,
+    'Seven years, two cities and one very patient spaniel later, we would love nothing more than to celebrate the next chapter with the people who have shaped every one before it.',
+  ]
+  const venueWords = venue.split(/\s+/)
+  const venueSplit = Math.ceil(venueWords.length / 2)
+  const venueLead = venueWords.slice(0, venueSplit).join(' ')
+  const venueTail = venueWords.slice(venueSplit).join(' ')
+  const commaAt = address.indexOf(',')
+  const addressLine1 = commaAt === -1 ? address : address.slice(0, commaAt).trim()
+  const addressLine2 = commaAt === -1 ? '' : address.slice(commaAt + 1).trim()
 
   useEffect(() => {
     let mm
@@ -338,9 +363,9 @@ export default function RoyalWeddingPage() {
           className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 rounded-b-3xl bg-[rgba(10,12,20,0.6)] px-4 py-3 ring-1 ring-white/10 backdrop-blur-md sm:px-6 md:py-4 lg:px-10"
         >
           <a href="#top" className="inline-flex min-h-11 items-center font-display text-lg tracking-wide text-white sm:text-xl">
-            {one}
+            {partner1}
             <span className="px-1.5 text-[#d6517f]">&amp;</span>
-            {two}
+            {partner2}
           </a>
           <nav aria-label="Sections" className="hidden items-center gap-8 text-sm text-white/75 md:flex">
             {[
@@ -395,20 +420,19 @@ export default function RoyalWeddingPage() {
             </div>
 
             <h1
-              aria-label={`${one} and ${two}`}
+              aria-label={`${partner1} and ${partner2}`}
               className="mt-6 font-display text-[clamp(3.25rem,10vw,9.5rem)] leading-[1] text-white"
             >
               <span aria-hidden="true" className="flex flex-wrap items-baseline gap-x-[0.22em]">
-                <span className="hero-word inline-block">{one}</span>
+                <span className="hero-word inline-block">{partner1}</span>
                 <span className="hero-word inline-block italic text-[#d6517f]">&amp;</span>
-                <span className="hero-word inline-block text-[#f6efe4]">{two}</span>
+                <span className="hero-word inline-block text-[#f6efe4]">{partner2}</span>
               </span>
             </h1>
 
             <div className="mt-8 flex max-w-5xl flex-col gap-8 md:mt-10 md:flex-row md:items-end md:justify-between">
               <p className="hero-sub max-w-lg text-base leading-7 text-white/85 md:text-lg md:leading-8">
-                request the pleasure of your company at the celebration of their marriage, in the rose gardens of Villa
-                Ephrussi de Rothschild on the Côte d’Azur.
+                request the pleasure of your company at the celebration of their marriage, at {venue}, {city}.
               </p>
               <a
                 href="#invitation"
@@ -421,7 +445,7 @@ export default function RoyalWeddingPage() {
 
             <dl className="mt-12 grid max-w-3xl grid-cols-3 gap-3 sm:gap-6">
               {[
-                { v: '25 Sep', k: '2027' },
+                { v: statDayMonth, k: fmtEn(eventDate, { year: 'numeric' }) },
                 { v: INVITE.event.time, k: 'Ceremony' },
                 { v: 'Black', k: 'Tie' },
               ].map((s) => (
@@ -447,14 +471,13 @@ export default function RoyalWeddingPage() {
               An evening of <em className="text-[#f2a9c1]">grace &amp; celebration</em>.
             </h2>
             <p className="royal-reveal mt-8 max-w-2xl text-lg leading-relaxed text-white/80">
-              Mr &amp; Mrs Edward Ashford and Mr &amp; Mrs Thomas Whitmore joyfully invite you to the marriage of their
-              children, Charlotte Ashford and Henry Whitmore.
+              Together with their families, we joyfully invite you to the marriage of {partner1} and {partner2}.
             </p>
 
             <div className="royal-divider mt-10 h-px w-full bg-[linear-gradient(90deg,rgba(214,81,127,0),rgba(214,81,127,0.95),rgba(214,81,127,0))]" />
 
             <dl className="mt-12 grid gap-6 md:grid-cols-2 md:gap-8">
-              {INVITE.details.map((it) => (
+              {details.map((it) => (
                 <div key={it.k} className="royal-card rounded-3xl bg-white/5 px-6 py-6 ring-1 ring-white/10 sm:px-8 sm:py-7">
                   <dt className="text-xs uppercase tracking-[0.35em] text-white/70">{it.k}</dt>
                   <dd className="mt-2 font-display text-2xl text-white">{it.v}</dd>
@@ -463,7 +486,7 @@ export default function RoyalWeddingPage() {
             </dl>
 
             <a
-              href={CALENDAR_URL}
+              href={calendarUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="royal-reveal mt-10 inline-flex min-h-11 items-center gap-3 border-b border-[#f2a9c1]/70 text-sm uppercase tracking-widest text-white transition-[color,background-color,border-color,gap] hover:gap-5"
@@ -484,7 +507,7 @@ export default function RoyalWeddingPage() {
               </div>
               <div className="md:col-span-6 md:col-start-7">
                 <div className="space-y-7 text-lg leading-relaxed text-white/80">
-                  {INVITE.story.map((p) => (
+                  {story.map((p) => (
                     <p key={p} className="royal-reveal">
                       {p}
                     </p>
@@ -493,7 +516,7 @@ export default function RoyalWeddingPage() {
                 <div className="royal-reveal mt-10 inline-flex flex-wrap items-center gap-3 rounded-full bg-white/5 px-6 py-3 ring-1 ring-white/10">
                   <span className="text-xs uppercase tracking-[0.35em] text-white/70">With love</span>
                   <span className="font-display text-xl text-white">
-                    {one} &amp; {two}
+                    {partner1} &amp; {partner2}
                   </span>
                 </div>
               </div>
@@ -506,7 +529,7 @@ export default function RoyalWeddingPage() {
           className="relative bg-[linear-gradient(180deg,#0b0f18_0%,#141020_48%,#0b0f18_100%)] py-24 md:py-28"
         >
           <div className="mx-auto w-full max-w-7xl px-5 sm:px-6 lg:px-10">
-            <Eyebrow className="royal-reveal">Saturday, 25 September</Eyebrow>
+            <Eyebrow className="royal-reveal">{scheduleDay}</Eyebrow>
             <h2 className="royal-title mt-6 font-display text-balance text-4xl text-white sm:text-5xl md:text-6xl">
               The order <em className="text-[#f2a9c1]">of the evening</em>.
             </h2>
@@ -546,7 +569,14 @@ export default function RoyalWeddingPage() {
               <div className="md:col-span-5">
                 <Eyebrow className="royal-reveal">The venue</Eyebrow>
                 <h2 className="royal-title mt-6 font-display text-balance text-4xl leading-[1.08] text-white sm:text-5xl md:text-6xl">
-                  Villa Ephrussi <em className="text-[#d6517f]">de Rothschild</em>.
+                  {venueLead}
+                  {venueTail && (
+                    <>
+                      {' '}
+                      <em className="text-[#d6517f]">{venueTail}</em>
+                    </>
+                  )}
+                  .
                 </h2>
                 <p className="royal-reveal mt-8 leading-relaxed text-white/80">
                   A rose-pink Belle Époque palazzo on the Cap Ferrat peninsula, set among nine gardens with the sea on
@@ -555,9 +585,13 @@ export default function RoyalWeddingPage() {
                 <div className="royal-reveal mt-10 rounded-3xl bg-white/5 px-6 py-6 ring-1 ring-white/10 sm:px-8 sm:py-7">
                   <div className="text-xs uppercase tracking-[0.35em] text-white/70">Address</div>
                   <address className="mt-2 font-display text-2xl not-italic leading-snug text-white">
-                    1 Avenue Ephrussi de Rothschild
-                    <br />
-                    06230 Saint-Jean-Cap-Ferrat, France
+                    {addressLine1}
+                    {addressLine2 && (
+                      <>
+                        <br />
+                        {addressLine2}
+                      </>
+                    )}
                   </address>
                 </div>
                 <div className="royal-reveal mt-6 rounded-3xl bg-white/5 px-6 py-6 ring-1 ring-white/10 sm:px-8 sm:py-7">
@@ -571,13 +605,13 @@ export default function RoyalWeddingPage() {
               <div className="md:col-span-6 md:col-start-7">
                 <div className="royal-reveal overflow-hidden rounded-3xl bg-white/5 ring-1 ring-white/10">
                   <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 px-6 py-5 sm:px-8">
-                    <div className="text-xs uppercase tracking-[0.3em] text-white/75">{INVITE.event.place}</div>
-                    <div className="text-xs uppercase tracking-[0.3em] text-[#f2a9c1]">{INVITE.event.dateShort}</div>
+                    <div className="text-xs uppercase tracking-[0.3em] text-white/75">{city}</div>
+                    <div className="text-xs uppercase tracking-[0.3em] text-[#f2a9c1]">{dateShort}</div>
                   </div>
                   <div className="aspect-[4/3] w-full md:aspect-[4/5]">
                     <iframe
-                      title="Map showing Villa Ephrussi de Rothschild, Saint-Jean-Cap-Ferrat"
-                      src={`https://www.google.com/maps?q=${encodeURIComponent(VENUE_QUERY)}&output=embed`}
+                      title={`Map showing ${venue}, ${city}`}
+                      src={`https://www.google.com/maps?q=${encodeURIComponent(mapQuery)}&output=embed`}
                       loading="lazy"
                       referrerPolicy="no-referrer-when-downgrade"
                       className="h-full w-full border-0 [filter:grayscale(0.35)_contrast(1.05)]"
@@ -585,7 +619,7 @@ export default function RoyalWeddingPage() {
                   </div>
                   <div className="px-6 py-5 sm:px-8">
                     <a
-                      href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(VENUE_QUERY)}`}
+                      href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(mapQuery)}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex min-h-11 items-center gap-3 border-b border-[#f2a9c1]/70 text-sm uppercase tracking-widest text-white transition-[color,background-color,border-color,gap] hover:gap-5"
@@ -611,20 +645,20 @@ export default function RoyalWeddingPage() {
                 <em className="text-[#f2a9c1]">We hope you’ll join us.</em>
               </h2>
               <p className="royal-reveal mt-8 max-w-md text-white/80">
-                Please let us know by <strong className="font-medium text-white">{INVITE.event.rsvpBy}</strong>. We
+                Please let us know by <strong className="font-medium text-white">{rsvpDeadline}</strong>. We
                 have reserved one seat in your name unless your invitation says otherwise.
               </p>
             </div>
             <div className="royal-reveal md:col-span-5 md:col-start-8">
-              <RsvpForm />
+              <RsvpForm dayMonth={dayMonth} />
             </div>
           </div>
 
           <div className="mt-10 flex flex-col justify-between gap-6 text-sm text-white/70 md:flex-row md:items-center">
             <div className="font-display text-xl text-white">
-              {one}
+              {partner1}
               <span className="px-1.5 text-[#d6517f]">&amp;</span>
-              {two}
+              {partner2}
             </div>
             <nav aria-label="Footer" className="flex flex-wrap gap-x-8">
               {[
@@ -638,7 +672,7 @@ export default function RoyalWeddingPage() {
               ))}
             </nav>
             <div>
-              {INVITE.event.dateShort} · {INVITE.event.place}
+              {dateShort} · {city}
             </div>
           </div>
         </div>

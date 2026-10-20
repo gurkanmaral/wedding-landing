@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { cardDetail, useWeddingCardFields } from '../../api/weddingCardContext'
 
 const sakuraTree = '/assets/sakura/sakura-tree.png'
 const couple1 = '/assets/sakura/couple-1.png'
@@ -336,14 +337,36 @@ const css = String.raw`
     .sakura-page .detail{ padding-left:1.25rem; }
     .sakura-page .send-btn{ padding:1rem 1.5rem; letter-spacing:.25em; width:100%; }
   }
+  .sakura-page .data-status{ position:fixed; top:1rem; left:50%; z-index:80; translate:-50% 0; max-width:calc(100vw - 2rem); border:1px solid var(--gold); background:oklch(.97 .02 85 / .94); padding:.7rem 1rem; color:var(--ink); font-family:var(--font-serif); font-size:.9rem; box-shadow:0 12px 32px oklch(.2 .03 40 / .14); }
 `
 
-/* ===== Wedding facts — edit here ===== */
+/* ===== Demo wedding facts — the card API (useWeddingCardFields) overrides them ===== */
 // Saturday 3 April 2027, 4 pm JST — peak cherry-blossom season in Kyoto.
-const WEDDING_ISO = '2027-04-03T16:00:00+09:00'
-const HERO_DATE = '3 · APRIL · 2027'
-const LONG_DATE = 'Saturday, 3 April 2027'
-const RSVP_BY = 'Saturday, 20 February 2027'
+const DEFAULT_FIELDS = {
+  partner1: 'Jane',
+  partner2: 'Joe',
+  eventDate: '2027-04-03T16:00:00+09:00',
+  dateLabel: 'Saturday, 3 April 2027',
+  venue: 'Heian Shrine',
+  city: 'Kyoto',
+  address: 'Sakyō-ku, Kyoto',
+  rsvpDeadline: 'Saturday, 20 February 2027',
+  description: 'With the warmth of the season and the blessing of our families, we invite you to witness the joining of our lives. Come walk with us beneath the cherry trees, share in our vows, and stay for the sake, the laughter, and the long evening.',
+  receptionVenue: 'Murin-an Garden',
+}
+// Copy that only fits the demo date / venues; real cards get derived text.
+const DEFAULT_HERO_DATE = '3 · APRIL · 2027'
+const DEFAULT_TIME_TEXT = "Four o'clock in the afternoon"
+const JP_VENUE_NAMES = { 'Heian Shrine': '平安神宮', 'Murin-an Garden': '無鄰菴' }
+
+function formatHeroDate(date) {
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
+      .formatToParts(date)
+      .map((part) => [part.type, part.value]),
+  )
+  return `${parts.day} · ${parts.month.toUpperCase()} · ${parts.year}`
+}
 
 /* Heading whose characters rise one by one when its section reveals.
    Rendered by React (not by innerHTML) so StrictMode / re-renders stay safe. */
@@ -390,6 +413,44 @@ export default function SakuraWeddingPage() {
   const toastRef = useRef(null)
   const dRef = useRef(null), hRef = useRef(null), mRef = useRef(null), sRef = useRef(null)
   const cdSrRef = useRef(null)
+
+  const {
+    card,
+    loading: cardLoading,
+    error: cardError,
+    partner1,
+    partner2,
+    eventDate,
+    eventDateValue,
+    dateLabel,
+    venue,
+    city,
+    address,
+    rsvpDeadline,
+    description,
+    receptionVenue,
+    receptionAddress,
+  } = useWeddingCardFields(DEFAULT_FIELDS)
+  const eventTime = eventDate.getTime()
+  const eventIso = eventDate.toISOString()
+  // A card may change the date without sending a label: derive the copy from
+  // the date then, instead of showing the demo wording.
+  const isDemoDate = eventDateValue === DEFAULT_FIELDS.eventDate
+  const cardDateLabel = cardDetail(card, 'dateLabel', '')
+  const longDate = cardDateLabel || (isDemoDate
+    ? dateLabel
+    : new Intl.DateTimeFormat('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(eventDate))
+  const heroDate = cardDateLabel
+    ? cardDateLabel.toUpperCase()
+    : isDemoDate ? DEFAULT_HERO_DATE : formatHeroDate(eventDate)
+  const timeText = isDemoDate
+    ? DEFAULT_TIME_TEXT
+    : new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit' }).format(eventDate)
+  const ceremonyJp = venue === DEFAULT_FIELDS.venue ? JP_VENUE_NAMES[venue] : null
+  const receptionJp = receptionVenue === DEFAULT_FIELDS.receptionVenue ? JP_VENUE_NAMES[receptionVenue] : null
+  const nameChars1 = [...partner1]
+  const nameChars2 = [...partner2]
+  const couple = `${partner1} and ${partner2}`
 
   useEffect(() => {
     const root = rootRef.current
@@ -636,36 +697,6 @@ export default function SakuraWeddingPage() {
     timers.push(setTimeout(sweep, 1200))
 
     /* =====================================================================
-       Countdown (digits roll on change)
-       ===================================================================== */
-    const TARGET = new Date(WEDDING_ISO).getTime()
-    const d = dRef.current, h = hRef.current, m = mRef.current, s = sRef.current
-    const sr = cdSrRef.current
-    function pad(n) { return String(Math.max(0, n)).padStart(2, '0') }
-    function roll(el, v) {
-      if (el.dataset.v === v) return
-      const old = el.dataset.v
-      el.dataset.v = v
-      if (old === undefined || reduceMotion) { el.textContent = v; return }
-      el.innerHTML = `<span class="roll out">${old}</span><span class="roll in">${v}</span>`
-    }
-    let lastSrDay = ''
-    function tick() {
-      const diff = Math.max(0, TARGET - Date.now())
-      const days = pad(Math.floor(diff / 86400000))
-      roll(d, days)
-      roll(h, pad(Math.floor((diff % 86400000) / 3600000)))
-      roll(m, pad(Math.floor((diff % 3600000) / 60000)))
-      roll(s, pad(Math.floor((diff % 60000) / 1000)))
-      // Screen readers get a calm, once-a-day summary instead of ticking digits
-      if (days !== lastSrDay) {
-        lastSrDay = days
-        sr.textContent = diff > 0 ? `${Number(days)} days until the wedding on ${LONG_DATE}.` : 'Today is the day.'
-      }
-    }
-    tick(); timers.push(setInterval(tick, 1000))
-
-    /* =====================================================================
        RSVP form (demo — no backend)
        ===================================================================== */
     const form = formRef.current
@@ -702,9 +733,44 @@ export default function SakuraWeddingPage() {
     }
   }, [])
 
+  /* =====================================================================
+     Countdown (digits roll on change). Its own effect so a date arriving
+     from the card API only restarts the ticker, not the canvas / reveals.
+     ===================================================================== */
+  useEffect(() => {
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const d = dRef.current, h = hRef.current, m = mRef.current, s = sRef.current
+    const sr = cdSrRef.current
+    function pad(n) { return String(Math.max(0, n)).padStart(2, '0') }
+    function roll(el, v) {
+      if (el.dataset.v === v) return
+      const old = el.dataset.v
+      el.dataset.v = v
+      if (old === undefined || reduceMotion) { el.textContent = v; return }
+      el.innerHTML = `<span class="roll out">${old}</span><span class="roll in">${v}</span>`
+    }
+    let lastSrDay = ''
+    function tick() {
+      const diff = Math.max(0, eventTime - Date.now())
+      const days = pad(Math.floor(diff / 86400000))
+      roll(d, days)
+      roll(h, pad(Math.floor((diff % 86400000) / 3600000)))
+      roll(m, pad(Math.floor((diff % 3600000) / 60000)))
+      roll(s, pad(Math.floor((diff % 60000) / 1000)))
+      // Screen readers get a calm, once-a-day summary instead of ticking digits
+      if (days !== lastSrDay) {
+        lastSrDay = days
+        sr.textContent = diff > 0 ? `${Number(days)} days until the wedding on ${longDate}.` : 'Today is the day.'
+      }
+    }
+    tick()
+    const interval = setInterval(tick, 1000)
+    return () => clearInterval(interval)
+  }, [eventTime, longDate])
+
   return (
     <div ref={rootRef} className="sakura-page">
-      <meta name="description" content="Join us beneath the cherry blossoms — an invitation to the wedding of Hiro & Aiko, Saturday 3 April 2027, Kyoto." />
+      <meta name="description" content={`Join us beneath the cherry blossoms — an invitation to the wedding of ${partner1} & ${partner2}, ${longDate}, ${city}.`} />
       <link rel="preconnect" href="https://fonts.googleapis.com" />
       <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
       <link
@@ -718,27 +784,30 @@ export default function SakuraWeddingPage() {
       <div id="vignette" aria-hidden="true"></div>
       <canvas id="bg" ref={canvasRef} aria-hidden="true"></canvas>
 
+      {cardLoading && <div className="data-status" role="status">Loading your invitation…</div>}
+      {cardError && <div className="data-status" role="alert">This invitation could not be loaded.</div>}
+
       <main>
         {/* HERO */}
         <section className="hero" data-screen-label="01 Hero">
           <div className="hero-inner">
             <p className="eyebrow" lang="ja">· 結 婚 式 ·</p>
-            <h1 className="font-display" aria-label="Hiro & Aiko">
+            <h1 className="font-display" aria-label={`${partner1} & ${partner2}`}>
               <span className="nm" aria-hidden="true">
-                {'Hiro'.split('').map((c, i) => (
+                {nameChars1.map((c, i) => (
                   <span key={`h${i}`} className="hl" style={{ '--i': i }}>{c}</span>
                 ))}
               </span>
-              <span className="amp hl" aria-hidden="true" style={{ '--i': 4 }}>&amp;</span>
+              <span className="amp hl" aria-hidden="true" style={{ '--i': nameChars1.length }}>&amp;</span>
               <span className="nm" aria-hidden="true">
-                {'Aiko'.split('').map((c, i) => (
-                  <span key={`a${i}`} className="hl" style={{ '--i': i + 5 }}>{c}</span>
+                {nameChars2.map((c, i) => (
+                  <span key={`a${i}`} className="hl" style={{ '--i': i + nameChars1.length + 1 }}>{c}</span>
                 ))}
               </span>
             </h1>
             <div className="ink-divider" style={{ maxWidth: '18rem', margin: '0 auto' }}></div>
             <p className="poem">Beneath a thousand falling blossoms,<br />two paths become one.</p>
-            <p className="when"><time dateTime={WEDDING_ISO}>{HERO_DATE}</time> &nbsp;·&nbsp; KYOTO</p>
+            <p className="when"><time dateTime={eventIso}>{heroDate}</time> &nbsp;·&nbsp; {city.toUpperCase()}</p>
           </div>
           <div className="scroll-cue font-display" aria-hidden="true">scroll · 下へ</div>
         </section>
@@ -749,11 +818,7 @@ export default function SakuraWeddingPage() {
             <p className="kicker" lang="ja">ご 招 待</p>
             <SplitHeading text="An Invitation" />
             <div className="ink-divider divider-sm"></div>
-            <p className="lede">
-              With the warmth of the season and the blessing of our families, we invite you
-              to witness the joining of our lives. Come walk with us beneath the cherry trees,
-              share in our vows, and stay for the sake, the laughter, and the long evening.
-            </p>
+            <p className="lede">{description}</p>
           </div>
         </section>
 
@@ -781,9 +846,9 @@ export default function SakuraWeddingPage() {
             <div className="ink-divider divider-sm"></div>
             <div className="photo-grid">
               {/* Replace src="..." with the couple's own photos */}
-              <img className="photo" src={couple1} alt="Hiro and Aiko beneath the cherry blossoms" loading="lazy" decoding="async" width="600" height="760" />
-              <img className="photo mid" src={couple2} alt="Hiro and Aiko together in spring" loading="lazy" decoding="async" width="600" height="760" />
-              <img className="photo" src={couple3} alt="Hiro and Aiko smiling in Kyoto" loading="lazy" decoding="async" width="600" height="760" />
+              <img className="photo" src={couple1} alt={`${couple} beneath the cherry blossoms`} loading="lazy" decoding="async" width="600" height="760" />
+              <img className="photo mid" src={couple2} alt={`${couple} together in spring`} loading="lazy" decoding="async" width="600" height="760" />
+              <img className="photo" src={couple3} alt={`${couple} smiling in ${city}`} loading="lazy" decoding="async" width="600" height="760" />
             </div>
           </div>
         </section>
@@ -794,13 +859,15 @@ export default function SakuraWeddingPage() {
             <div className="details stag">
               <div className="detail">
                 <span className="kicker">式 · CEREMONY</span>
-                <h3>Heian Shrine</h3>
-                <p>平安神宮 · Sakyō-ku, Kyoto<br /><time dateTime={WEDDING_ISO}>{LONG_DATE}</time><br />Four o'clock in the afternoon<br /><span className="sub">arrive in soft colors</span></p>
+                <h3>{venue}</h3>
+                <p>{ceremonyJp && <span lang="ja">{ceremonyJp} · </span>}{address}<br /><time dateTime={eventIso}>{longDate}</time><br />{timeText}<br /><span className="sub">arrive in soft colors</span></p>
               </div>
               <div className="detail">
                 <span className="kicker">宴 · RECEPTION</span>
-                <h3>Murin-an Garden</h3>
-                <p>無鄰菴 · a lantern-lit kaiseki dinner<br />Following the ceremony<br /><span className="sub">dancing under the moon to follow</span></p>
+                <h3>{receptionVenue}</h3>
+                <p>{receptionJp
+                  ? <><span lang="ja">{receptionJp}</span> · a lantern-lit kaiseki dinner</>
+                  : <>{receptionAddress} · dinner and celebration</>}<br />Following the ceremony<br /><span className="sub">dancing under the moon to follow</span></p>
               </div>
             </div>
           </div>
@@ -811,7 +878,7 @@ export default function SakuraWeddingPage() {
           <div className="panel">
             <p className="kicker" lang="ja">お 返 事</p>
             <SplitHeading text="Reply by the First Bloom" />
-            <p className="lede" style={{ marginTop: '1rem', fontStyle: 'italic', color: 'var(--muted-foreground)' }}>kindly respond by {RSVP_BY}</p>
+            <p className="lede" style={{ marginTop: '1rem', fontStyle: 'italic', color: 'var(--muted-foreground)' }}>kindly respond by {rsvpDeadline}</p>
             <div className="ink-divider divider-sm"></div>
 
             <form className="rsvp stag" ref={formRef}>
@@ -853,7 +920,7 @@ export default function SakuraWeddingPage() {
         {/* FOOTER */}
         <footer>
           <div className="ink-divider" style={{ maxWidth: '4rem', margin: '0 auto' }}></div>
-          <p className="kicker" style={{ marginTop: '2rem' }}>H · &amp; · A</p>
+          <p className="kicker" style={{ marginTop: '2rem' }} aria-label={`${partner1} and ${partner2}`}>{nameChars1[0]} · &amp; · {nameChars2[0]}</p>
           <p className="lede" style={{ marginTop: '1rem', fontStyle: 'italic', color: 'var(--muted-foreground)', fontSize: '.95rem' }}>“The cherry blossoms remind us — beauty lives in the brief.”</p>
         </footer>
       </main>

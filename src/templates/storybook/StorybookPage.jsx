@@ -11,11 +11,52 @@ import illoWine from "./assets/illo-wine.png";
 import illoEnvelope from "./assets/illo-envelope.png";
 import illoMoon from "./assets/illo-moon.png";
 import branch from "./assets/story-branch.png";
+import { useWeddingCardFields } from "../../api/weddingCardContext";
 
 gsap.registerPlugin(ScrollTrigger);
 
+// Demo couple shown until the API supplies real card data.
 // Saturday 12 June 2027, ceremony at 17:00 Puglia time (CEST).
-const TARGET_DATE = new Date("2027-06-12T17:00:00+02:00").getTime();
+const DEFAULTS = {
+  partner1: "Jane",
+  partner2: "Joe",
+  eventDate: "2027-06-12T17:00:00+02:00",
+  venue: "Masseria del Sole",
+  city: "Puglia",
+  address: "Ostuni, Puglia, Italy",
+  rsvpDeadline: "Saturday 1 May 2027",
+};
+
+const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+// Calendar parts in the venue's own time: taken from the ISO string when possible,
+// so a guest in another time zone still sees the wedding's local date.
+function getEventParts(value, fallbackDate) {
+  const source = Number.isFinite(new Date(value).getTime()) ? value : DEFAULTS.eventDate;
+  const iso = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(source));
+  const year = iso ? Number(iso[1]) : fallbackDate.getFullYear();
+  const month = iso ? Number(iso[2]) : fallbackDate.getMonth() + 1;
+  const day = iso ? Number(iso[3]) : fallbackDate.getDate();
+  const utc = new Date(Date.UTC(year, month - 1, day));
+  const weekday = new Intl.DateTimeFormat("en-GB", { weekday: "long", timeZone: "UTC" }).format(utc);
+  const dd = String(day).padStart(2, "0");
+  const mm = String(month).padStart(2, "0");
+  return {
+    day: dd,
+    weekday,
+    weekdayShort: weekday.slice(0, 3),
+    monthName: MONTHS[month - 1],
+    year: String(year),
+    longDate: `${weekday} ${day} ${MONTHS[month - 1]} ${year}`,
+    dotDate: `${dd}.${mm}.${year}`,
+    spacedDate: `${dd} · ${mm} · ${year}`,
+    shortDate: `${dd}·${mm}·${String(year).slice(-2)}`,
+  };
+}
+
+function initial(name) {
+  return (Array.from(name.trim())[0] || "").toUpperCase();
+}
 
 const CHAPTERS = [
   { id: "01", label: "Hello" },
@@ -53,8 +94,9 @@ const STYLES = `
 }
 `;
 
-function getCountdown() {
-  const diff = Math.max(0, TARGET_DATE - Date.now());
+function getCountdown(targetDate, now) {
+  const targetMs = Number.isFinite(targetDate.getTime()) ? targetDate.getTime() : now;
+  const diff = Math.max(0, targetMs - now);
   return {
     dd: Math.floor(diff / 86400000),
     hh: Math.floor((diff % 86400000) / 3600000),
@@ -66,11 +108,31 @@ function getCountdown() {
 export default function GildedRomeTemplatePage() {
   const root = useRef(null);
   const [active, setActive] = useState(0);
-  const [d, setD] = useState(getCountdown);
+  const {
+    card,
+    partner1,
+    partner2,
+    eventDate,
+    eventDateValue,
+    dateLabel,
+    venue,
+    city,
+    address,
+    rsvpDeadline,
+  } = useWeddingCardFields(DEFAULTS);
+  const date = getEventParts(eventDateValue, eventDate);
+  // An explicit dateLabel from the card wins; otherwise use the venue-local long date.
+  const displayDate = card?.details?.dateLabel ? dateLabel : date.longDate;
+  const initials = [initial(partner1), initial(partner2)];
+  const mapQuery = encodeURIComponent([venue, address, city].filter(Boolean).join(", "));
+
+  // Only the clock ticks; the countdown itself is derived so a new target date applies at once.
+  const [now, setNow] = useState(() => Date.now());
+  const d = getCountdown(eventDate, now);
   const [sent, setSent] = useState(false);
 
   useEffect(() => {
-    const id = setInterval(() => setD(getCountdown()), 1000);
+    const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
   }, []);
 
@@ -196,10 +258,12 @@ export default function GildedRomeTemplatePage() {
           <a
             href="#c01"
             className="inline-flex min-h-11 items-center gap-2 font-display italic text-lg tracking-tight"
-            aria-label="Sofia and Luca — back to top"
+            aria-label={`${partner1} and ${partner2} — back to top`}
           >
             <img src={illoSun} alt="" aria-hidden="true" className="w-6 h-6 spin-sun" />
-            S<span className="text-tomato">&amp;</span>L
+            {initials[0]}
+            <span className="text-tomato">&amp;</span>
+            {initials[1]}
           </a>
           <div aria-hidden="true" className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted-foreground text-right">
             {String(active + 1).padStart(2, "0")} / {String(CHAPTERS.length).padStart(2, "0")} — {CHAPTERS[active].label}
@@ -272,17 +336,17 @@ export default function GildedRomeTemplatePage() {
                   the very sunny wedding of
                 </p>
                 <h1
-                  aria-label="Sofia & Luca"
+                  aria-label={`${partner1} & ${partner2}`}
                   className="font-display text-[clamp(3.5rem,22vw,9rem)] lg:text-[clamp(6rem,9vw,10.5rem)] leading-[0.85] tracking-tight"
                 >
                   <span aria-hidden="true" className="block overflow-hidden pb-[0.04em]">
-                    {"Sofia".split("").map((c, i) => (
-                      <span key={`s${i}`} className="hero-letter inline-block">{c}</span>
+                    {Array.from(partner1).map((c, i) => (
+                      <span key={`a${i}`} className="hero-letter inline-block">{c === " " ? "\u00A0" : c}</span>
                     ))}
                   </span>
                   <span aria-hidden="true" className="block overflow-hidden pb-[0.04em] pr-[0.08em] italic text-tomato font-light">
-                    {"& Luca".split("").map((c, i) => (
-                      <span key={`l${i}`} className="hero-letter inline-block">{c === " " ? " " : c}</span>
+                    {Array.from(`& ${partner2}`).map((c, i) => (
+                      <span key={`b${i}`} className="hero-letter inline-block">{c === " " ? "\u00A0" : c}</span>
                     ))}
                   </span>
                 </h1>
@@ -290,7 +354,7 @@ export default function GildedRomeTemplatePage() {
 
               <img
                 src={illoDance}
-                alt="Sofia and Luca dancing under olive branches"
+                alt={`${partner1} and ${partner2} dancing under olive branches`}
                 className="hero-illo mx-auto w-[min(78%,22rem)] md:w-[min(60%,26rem)] lg:col-start-2 lg:row-start-1 lg:row-span-2 lg:w-full lg:max-w-[36rem] lg:self-center"
                 width={1024}
                 height={1024}
@@ -299,11 +363,13 @@ export default function GildedRomeTemplatePage() {
               <dl className="hero-meta grid max-w-xl grid-cols-3 gap-3 font-mono text-[10px] md:text-[11px] uppercase tracking-[0.2em] lg:col-start-1 lg:row-start-2 lg:self-start">
                 <div>
                   <dt className="text-muted-foreground">Date</dt>
-                  <dd className="mt-1">Sat 12.06.2027</dd>
+                  <dd className="mt-1">
+                    {date.weekdayShort} {date.dotDate}
+                  </dd>
                 </div>
                 <div>
                   <dt className="text-muted-foreground">Place</dt>
-                  <dd className="mt-1">Puglia, IT</dd>
+                  <dd className="mt-1">{city}</dd>
                 </div>
                 <div>
                   <dt className="text-muted-foreground">Dress</dt>
@@ -326,11 +392,11 @@ export default function GildedRomeTemplatePage() {
               <div key={i} className="flex items-center gap-6 shrink-0">
                 <span>Save the date</span>
                 <img src={illoSun} alt="" className="w-8 h-8 shrink-0" />
-                <span>12 · 06 · 2027</span>
+                <span>{date.spacedDate}</span>
                 <img src={illoWine} alt="" className="w-8 h-8 shrink-0 invert" />
-                <span>Masseria del Sole</span>
+                <span>{venue}</span>
                 <img src={illoMoon} alt="" className="w-8 h-8 shrink-0 invert" />
-                <span>Puglia</span>
+                <span>{city}</span>
                 <span className="text-tomato">✦</span>
               </div>
             ))}
@@ -408,13 +474,15 @@ export default function GildedRomeTemplatePage() {
             <div className="font-mono text-[10px] uppercase tracking-[0.3em] text-tomato mb-8">Ch. 03 · The date</div>
 
             <div className="rise flex items-baseline gap-4 mb-2">
-              <span aria-hidden="true" className="font-display text-[clamp(6rem,28vw,14rem)] leading-[0.8] italic">12</span>
+              <span aria-hidden="true" className="font-display text-[clamp(6rem,28vw,14rem)] leading-[0.8] italic">
+                {date.day}
+              </span>
               <div aria-hidden="true" className="font-mono text-xs uppercase tracking-[0.3em] pb-4">
-                <div>Sat</div>
-                <div className="text-tomato">June</div>
-                <div>2027</div>
+                <div>{date.weekdayShort}</div>
+                <div className="text-tomato">{date.monthName}</div>
+                <div>{date.year}</div>
               </div>
-              <span className="sr-only">Saturday 12 June 2027</span>
+              <span className="sr-only">{displayDate}</span>
             </div>
 
             <p className="rise font-hand text-3xl md:text-5xl italic max-w-md text-cream/90 mb-10 leading-tight">
@@ -424,7 +492,7 @@ export default function GildedRomeTemplatePage() {
               what time it is.
             </p>
 
-            <div role="timer" aria-label="Countdown to Saturday 12 June 2027" className="rise grid grid-cols-4 gap-2 max-w-md">
+            <div role="timer" aria-label={`Countdown to ${displayDate}`} className="rise grid grid-cols-4 gap-2 max-w-md">
               {[
                 { v: d.dd, l: "Days" },
                 { v: d.hh, l: "Hrs" },
@@ -495,12 +563,12 @@ export default function GildedRomeTemplatePage() {
         <section id="c05" data-chapter className="relative py-20 md:py-28 bg-cream-2 overflow-hidden">
           <div className="sb-wide container-x relative">
             <div className="font-mono text-[10px] uppercase tracking-[0.3em] text-tomato mb-8">Ch. 05 · The place</div>
-            <h2 className="rise font-display text-4xl md:text-5xl mb-2">Masseria del Sole</h2>
+            <h2 className="rise font-display text-4xl md:text-5xl mb-2">{venue}</h2>
             <p className="rise font-hand inline-block text-2xl text-tomato -rotate-1 mb-6">between olive trees and the sea</p>
 
             <img
               src={illoMasseria}
-              alt="Illustration of a stone farmhouse among olive trees in Puglia"
+              alt={`Illustration of ${venue}, ${city}`}
               className="pop-illo w-full max-w-lg mx-auto my-6"
               loading="lazy"
               width={1024}
@@ -515,8 +583,8 @@ export default function GildedRomeTemplatePage() {
 
             <div className="rise ink-border overflow-hidden aspect-square md:aspect-[16/9] shadow-[6px_6px_0_0_var(--tomato)]">
               <iframe
-                title="Map of Masseria del Sole near Ostuni, Puglia"
-                src="https://www.google.com/maps?q=Ostuni+Puglia+Italy&output=embed"
+                title={`Map of ${venue}, ${address}`}
+                src={`https://www.google.com/maps?q=${mapQuery}&output=embed`}
                 className="block w-full h-full border-0 grayscale contrast-110"
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
@@ -525,7 +593,7 @@ export default function GildedRomeTemplatePage() {
 
             <div className="rise mt-4 grid grid-cols-2 gap-3">
               <a
-                href="https://maps.google.com/?q=Ostuni+Puglia"
+                href={`https://maps.google.com/?q=${mapQuery}`}
                 target="_blank"
                 rel="noreferrer"
                 className="ink-border bg-ink text-cream flex min-h-11 items-center justify-center px-2 py-3 text-center font-mono text-[11px] uppercase tracking-[0.2em] sm:tracking-[0.25em] shadow-[4px_4px_0_0_var(--tomato)]"
@@ -548,7 +616,7 @@ export default function GildedRomeTemplatePage() {
               </div>
               <div>
                 <dt className="text-ink">Stay</dt>
-                <dd className="mt-1">Rooms held under &ldquo;S+L&rdquo;</dd>
+                <dd className="mt-1">Rooms held under &ldquo;{initials[0]}+{initials[1]}&rdquo;</dd>
               </div>
             </dl>
           </div>
@@ -571,7 +639,7 @@ export default function GildedRomeTemplatePage() {
               Will you write the next page <span className="italic text-tomato">with us?</span>
             </h2>
             <p className="rise font-mono text-[11px] uppercase tracking-[0.25em] text-muted-foreground mb-8">
-              Please reply by · Saturday 1 May 2027
+              Please reply by · {rsvpDeadline}
             </p>
 
             {sent ? (
@@ -656,8 +724,12 @@ export default function GildedRomeTemplatePage() {
         />
         <div className="sb-wide container-x grid grid-cols-2 gap-6 font-mono text-[10px] uppercase tracking-[0.25em] text-muted-foreground relative">
           <div>
-            <div className="text-ink">Sofia &amp; Luca</div>
-            <div className="mt-1">12.06.2027 · Puglia</div>
+            <div className="text-ink">
+              {partner1} &amp; {partner2}
+            </div>
+            <div className="mt-1">
+              {date.dotDate} · {city}
+            </div>
           </div>
           <div className="text-right">
             <div className="text-ink">Colophon</div>
@@ -673,7 +745,7 @@ export default function GildedRomeTemplatePage() {
       <div className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-cream/95 backdrop-blur border-t border-ink/20 px-4 pt-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))] flex items-center justify-between">
         <div className="font-mono text-[10px] uppercase tracking-[0.25em] flex items-center gap-2">
           <img src={illoSun} alt="" aria-hidden="true" className="w-5 h-5" />
-          Sat 12·06·27 <span className="text-muted-foreground">· Puglia</span>
+          {date.weekdayShort} {date.shortDate} <span className="text-muted-foreground">· {city}</span>
         </div>
         <a
           href="#c06"

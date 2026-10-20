@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import { useWeddingCardFields } from '../../api/weddingCardContext'
 
 import hero from './assets/hero-generic.jpg'
 import feature1 from './assets/feature-1.jpg'
@@ -15,53 +16,60 @@ gsap.registerPlugin(ScrollTrigger)
 // Darker terracotta for small text on the cream background (theme --primary is ~4:1, too light for AA).
 const INK = 'text-[oklch(0.5_0.15_35)]'
 
-const VENUE = {
-  name: 'Villa Defne',
-  street: 'Yalıkavak Sahil Yolu',
+const DEFAULTS = {
+  partner1: 'Jane',
+  partner2: 'Joe',
+  eventDate: '2027-09-04T17:00:00+03:00',
+  venue: 'Villa Defne',
   city: 'Bodrum, Muğla',
-  query: 'Yalıkavak, Bodrum, Muğla',
+  address: 'Yalıkavak Sahil Yolu',
+  rsvpDeadline: '24 Temmuz 2027',
 }
 
-const CALENDAR_URL =
-  'https://calendar.google.com/calendar/render?action=TEMPLATE' +
-  '&text=' +
-  encodeURIComponent('Sole & Mare — Düğün') +
-  '&dates=20270904T140000Z/20270904T210000Z' +
-  '&details=' +
-  encodeURIComponent('Nikâh töreni 17:00, akşam yemeği 20:00.') +
-  '&location=' +
-  encodeURIComponent(`${VENUE.name}, ${VENUE.street}, ${VENUE.city}`)
+const DAY_MS = 24 * 60 * 60 * 1000
 
-const EVENTS = [
-  {
-    n: '01',
-    img: feature1,
-    t: 'Nikâh Töreni',
-    d: 'Denize bakan beyaz bir kemerin altında sade ve içten bir tören.',
-    time: '4 Eylül Cumartesi · 17:00',
-  },
-  {
-    n: '02',
-    img: feature2,
-    t: 'Akşam Yemeği',
-    d: 'Zeytin ağaçları ve mumların arasında uzun bir sofra, paylaşılan yemekler ve dans.',
-    time: '4 Eylül Cumartesi · 20:00',
-  },
-  {
-    n: '03',
-    img: church,
-    t: 'Sabah Kahvesi',
-    d: 'Mavi kubbeli küçük şapelin önünde sabah kahvesi, ardından sahil yürüyüşü.',
-    time: '5 Eylül Pazar · 09:30',
-  },
-  {
-    n: '04',
-    img: feature3,
-    t: 'Brunch & Veda',
-    d: 'Beyaz sokaklarda geç bir kahvaltı, son bir kadeh ve yola çıkış.',
-    time: '5 Eylül Pazar · 11:30',
-  },
-]
+const fmtTr = (date, options) => new Intl.DateTimeFormat('tr-TR', options).format(date)
+
+/** "4 Eylül Cumartesi" */
+const dayLabel = (date) =>
+  `${fmtTr(date, { day: 'numeric' })} ${fmtTr(date, { month: 'long' })} ${fmtTr(date, { weekday: 'long' })}`
+
+const toCalendarStamp = (date) => date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')
+
+function buildEvents(eventDate) {
+  const day1 = dayLabel(eventDate)
+  const day2 = dayLabel(new Date(eventDate.getTime() + DAY_MS))
+  return [
+    {
+      n: '01',
+      img: feature1,
+      t: 'Nikâh Töreni',
+      d: 'Denize bakan beyaz bir kemerin altında sade ve içten bir tören.',
+      time: `${day1} · 17:00`,
+    },
+    {
+      n: '02',
+      img: feature2,
+      t: 'Akşam Yemeği',
+      d: 'Zeytin ağaçları ve mumların arasında uzun bir sofra, paylaşılan yemekler ve dans.',
+      time: `${day1} · 20:00`,
+    },
+    {
+      n: '03',
+      img: church,
+      t: 'Sabah Kahvesi',
+      d: 'Mavi kubbeli küçük şapelin önünde sabah kahvesi, ardından sahil yürüyüşü.',
+      time: `${day2} · 09:30`,
+    },
+    {
+      n: '04',
+      img: feature3,
+      t: 'Brunch & Veda',
+      d: 'Beyaz sokaklarda geç bir kahvaltı, son bir kadeh ve yola çıkış.',
+      time: `${day2} · 11:30`,
+    },
+  ]
+}
 
 const QUOTE =
   'Deniz ne kadar maviyse, aşkımız o kadar derin. Bu güzel günde yanımızda olmanız bizim için bir armağan.'
@@ -86,7 +94,7 @@ function RsvpForm() {
         <p className="font-display text-2xl">Teşekkür ederiz!</p>
         <p className="mt-2 text-background/80">
           {attending === 'evet'
-            ? 'Yanıtınız bize ulaştı. 4 Eylül’de sizi aramızda görmek için sabırsızlanıyoruz.'
+            ? 'Yanıtınız bize ulaştı. Düğün günümüzde sizi aramızda görmek için sabırsızlanıyoruz.'
             : 'Yanıtınız bize ulaştı. Sizi çok özleyeceğiz; kadehlerimizi sizin için de kaldıracağız.'}
         </p>
         <button
@@ -174,6 +182,27 @@ function RsvpForm() {
 
 export default function SoleMarePage() {
   const root = useRef(null)
+  const { partner1, partner2, eventDate, dateLabel, venue, city, address, rsvpDeadline } = useWeddingCardFields(
+    DEFAULTS,
+    'tr-TR',
+  )
+  const cityShort = city.split(',')[0].trim()
+  const mapQuery = `${address}, ${city}`
+  const events = buildEvents(eventDate)
+  const calendarUrl =
+    'https://calendar.google.com/calendar/render?action=TEMPLATE' +
+    '&text=' +
+    encodeURIComponent(`${partner1} & ${partner2} — Düğün`) +
+    `&dates=${toCalendarStamp(eventDate)}/${toCalendarStamp(new Date(eventDate.getTime() + 7 * 60 * 60 * 1000))}` +
+    '&details=' +
+    encodeURIComponent('Nikâh töreni 17:00, akşam yemeği 20:00.') +
+    '&location=' +
+    encodeURIComponent(`${venue}, ${address}, ${city}`)
+  const statDay = fmtTr(eventDate, { day: 'numeric' })
+  const statMonthYear = `${fmtTr(eventDate, { month: 'long' })} ${fmtTr(eventDate, { year: 'numeric' })}`
+  const weekday = fmtTr(eventDate, { weekday: 'long' })
+  const bigDate = fmtTr(eventDate, { day: '2-digit', month: '2-digit', year: '2-digit' }).replace(/\D+/g, '·')
+  const footerDate = fmtTr(eventDate, { day: '2-digit', month: '2-digit', year: 'numeric' })
 
   useEffect(() => {
     let mm
@@ -351,7 +380,7 @@ export default function SoleMarePage() {
       mm?.revert()
       ctx.revert()
     }
-  }, [])
+  }, [partner1, partner2])
 
   return (
     <div ref={root} lang="tr" className="sm-root bg-background text-foreground overflow-x-clip">
@@ -365,7 +394,9 @@ export default function SoleMarePage() {
       <header className="fixed top-0 inset-x-0 z-50 backdrop-blur-md bg-background/75 border-b border-foreground/5">
         <div className="container-x flex items-center justify-between gap-4 py-2.5 md:py-4">
           <a href="#top" className="inline-flex min-h-11 items-center font-display text-lg md:text-xl tracking-wide">
-            Sole<span className="text-primary px-1">&amp;</span>Mare
+            {partner1}
+            <span className="text-primary px-1">&amp;</span>
+            {partner2}
           </a>
           <nav aria-label="Bölümler" className="hidden md:flex items-center gap-8 text-sm text-muted-foreground">
             {[
@@ -410,17 +441,17 @@ export default function SoleMarePage() {
 
           <div className="relative z-10 container-x pb-12 md:pb-20 pt-32">
             <p className="hero-eyebrow hero-text-halo text-[0.7rem] md:text-xs tracking-[0.3em] uppercase text-foreground/85 mb-4 md:mb-6">
-              Bodrum · 4 Eylül 2027
+              {cityShort} · {dateLabel}
             </p>
-            <h1 aria-label="Sole ve Mare" className="font-display leading-[0.9] text-balance">
+            <h1 aria-label={`${partner1} ve ${partner2}`} className="font-display leading-[0.9] text-balance">
               <span aria-hidden="true" className="split block overflow-hidden pt-[0.08em] pb-[0.04em] text-[17vw] md:text-[11vw] lg:text-[10rem]">
-                <SplitChars text="Sole" />
+                <SplitChars text={partner1} />
               </span>
               <span
                 aria-hidden="true"
                 className="split block overflow-hidden pt-[0.04em] pb-[0.08em] pr-[0.1em] italic text-primary text-[17vw] md:text-[11vw] lg:text-[10rem]"
               >
-                <SplitChars text="& Mare" />
+                <SplitChars text={`& ${partner2}`} />
               </span>
             </h1>
 
@@ -441,10 +472,10 @@ export default function SoleMarePage() {
             <dl className="mt-8 md:mt-12 inline-flex flex-wrap gap-x-6 gap-y-3 md:gap-x-12 rounded-md bg-background/85 backdrop-blur-sm border border-foreground/10 px-4 py-3 md:px-6 md:py-4 shadow-sm">
               <div className="hero-meta flex flex-col-reverse">
                 <dt className="text-[0.65rem] md:text-xs uppercase tracking-[0.12em] md:tracking-widest text-foreground/80 mt-1 whitespace-nowrap">
-                  Eylül 2027
+                  {statMonthYear}
                 </dt>
                 <dd className="font-display text-2xl md:text-4xl text-foreground">
-                  4
+                  {statDay}
                 </dd>
               </div>
               <div className="hero-meta flex flex-col-reverse">
@@ -512,7 +543,9 @@ export default function SoleMarePage() {
                 mavisine karşı.
               </p>
               <div className="pt-4">
-                <div className="font-display italic text-xl text-foreground">Sole &amp; Mare</div>
+                <div className="font-display italic text-xl text-foreground">
+                  {partner1} &amp; {partner2}
+                </div>
                 <div className="text-[0.7rem] uppercase tracking-widest text-muted-foreground">Gelin &amp; Damat</div>
               </div>
             </div>
@@ -531,7 +564,7 @@ export default function SoleMarePage() {
 
           <div className="pin-wrap">
             <ol className="pin-track flex flex-col gap-14 px-6 pb-20 md:px-12 md:motion-safe:flex-row md:motion-safe:w-max md:motion-safe:h-screen md:motion-safe:items-center md:motion-safe:gap-12 md:motion-safe:pb-0">
-              {EVENTS.map((c) => (
+              {events.map((c) => (
                 <li key={c.n} className="reveal group md:motion-safe:w-[70vw] lg:motion-safe:w-[55vw] md:motion-safe:shrink-0">
                   <div className="grid md:grid-cols-2 gap-6 md:gap-10 items-center">
                     <div className="relative aspect-[4/5] md:motion-safe:max-h-[75vh] overflow-hidden rounded-md clip-reveal">
@@ -562,12 +595,14 @@ export default function SoleMarePage() {
         <section className="py-24 md:py-40 container-x text-center overflow-hidden">
           <p className={`text-[0.7rem] md:text-xs tracking-[0.35em] uppercase ${INK} mb-6`}>Bu tarihi ayırın</p>
           <p className="big-date font-display italic text-primary text-[17vw] md:text-[12rem] leading-none whitespace-nowrap">
-            <span className="sr-only">4 Eylül 2027</span>
-            <span aria-hidden="true">04·09·27</span>
+            <span className="sr-only">{dateLabel}</span>
+            <span aria-hidden="true">{bigDate}</span>
           </p>
-          <p className="mt-6 text-muted-foreground tracking-widest text-xs uppercase">Cumartesi · Yalıkavak, Bodrum</p>
+          <p className="mt-6 text-muted-foreground tracking-widest text-xs uppercase">
+            {weekday} · {city}
+          </p>
           <a
-            href={CALENDAR_URL}
+            href={calendarUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="mt-8 inline-flex min-h-11 items-center gap-2 border-b border-foreground/40 text-xs md:text-sm tracking-widest uppercase hover:text-primary hover:border-primary transition-colors"
@@ -601,11 +636,11 @@ export default function SoleMarePage() {
               <dl className="grid grid-cols-2 gap-4 md:gap-6 text-sm border-t border-border pt-5 md:pt-6">
                 <div>
                   <dt className="uppercase tracking-widest text-[0.7rem] text-muted-foreground mb-1">Tarih</dt>
-                  <dd className="font-display text-xl md:text-2xl">4 Eylül 2027</dd>
+                  <dd className="font-display text-xl md:text-2xl">{dateLabel}</dd>
                 </div>
                 <div>
                   <dt className="uppercase tracking-widest text-[0.7rem] text-muted-foreground mb-1">Yer</dt>
-                  <dd className="font-display text-xl md:text-2xl">Yalıkavak</dd>
+                  <dd className="font-display text-xl md:text-2xl">{venue}</dd>
                 </div>
               </dl>
               <a
@@ -637,8 +672,8 @@ export default function SoleMarePage() {
           <div className="reveal relative rounded-md overflow-hidden border border-border shadow-xl bg-card">
             <div className="aspect-[4/3] sm:aspect-[16/10] md:aspect-[21/9] w-full">
               <iframe
-                title="Düğün mekânı haritası: Yalıkavak, Bodrum"
-                src={`https://www.google.com/maps?q=${encodeURIComponent(VENUE.query)}&output=embed`}
+                title={`Düğün mekânı haritası: ${venue}, ${city}`}
+                src={`https://www.google.com/maps?q=${encodeURIComponent(mapQuery)}&output=embed`}
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
                 className="w-full h-full border-0 grayscale-[0.2] contrast-[1.05]"
@@ -648,14 +683,14 @@ export default function SoleMarePage() {
 
             <div className="md:absolute md:left-8 md:bottom-8 bg-background/95 backdrop-blur md:border border-border md:rounded-md p-5 md:p-6 md:max-w-[18rem] md:shadow-2xl">
               <div className={`text-[0.65rem] uppercase tracking-[0.3em] ${INK} mb-2`}>Mekân</div>
-              <div className="font-display text-xl md:text-2xl leading-tight mb-1">{VENUE.name}</div>
+              <div className="font-display text-xl md:text-2xl leading-tight mb-1">{venue}</div>
               <address className="not-italic text-sm text-muted-foreground mb-3">
-                {VENUE.street}
+                {address}
                 <br />
-                {VENUE.city}
+                {city}
               </address>
               <a
-                href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(VENUE.query)}`}
+                href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(mapQuery)}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex min-h-11 items-center gap-2 text-xs tracking-widest uppercase border-b border-foreground/40 hover:text-primary hover:border-primary transition-colors"
@@ -686,7 +721,9 @@ export default function SoleMarePage() {
                 ))}
               </span>
             </blockquote>
-            <div className="mt-8 md:mt-10 text-background text-xs tracking-widest uppercase">Sole &amp; Mare</div>
+            <div className="mt-8 md:mt-10 text-background text-xs tracking-widest uppercase">
+              {partner1} &amp; {partner2}
+            </div>
           </div>
         </section>
       </main>
@@ -701,7 +738,7 @@ export default function SoleMarePage() {
                 <em className="text-primary">Sizleri bekliyoruz.</em>
               </h2>
               <p className="mt-6 text-background/80 max-w-md">
-                Yanıtınızı en geç <strong className="font-medium text-background">24 Temmuz 2027</strong> tarihine
+                Yanıtınızı en geç <strong className="font-medium text-background">{rsvpDeadline}</strong> tarihine
                 kadar bekliyoruz. Ulaşım ve konaklama bilgilerini e-posta ile ileteceğiz.
               </p>
             </div>
@@ -712,7 +749,9 @@ export default function SoleMarePage() {
 
           <div className="pt-10 flex flex-col md:flex-row md:items-center justify-between gap-6 text-sm text-background/75">
             <div className="font-display text-xl text-background">
-              Sole<span className="text-primary px-1">&amp;</span>Mare
+              {partner1}
+              <span className="text-primary px-1">&amp;</span>
+              {partner2}
             </div>
             <nav aria-label="Alt menü" className="flex flex-wrap gap-x-8">
               {[
@@ -725,7 +764,9 @@ export default function SoleMarePage() {
                 </a>
               ))}
             </nav>
-            <div>Sole &amp; Mare · 04.09.2027</div>
+            <div>
+              {partner1} &amp; {partner2} · {footerDate}
+            </div>
           </div>
         </div>
       </footer>

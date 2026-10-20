@@ -1,20 +1,50 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { cardDetail, useWeddingCardFields } from '../../api/weddingCardContext'
 
 const couple1 = '/assets/aegean/couple-1.svg'
 const couple2 = '/assets/aegean/couple-2.svg'
 const couple3 = '/assets/aegean/couple-3.svg'
 
-/* ===== Düğün günü — sayfadaki tüm tarihler buradan =====
+/* ===== Örnek çift — API (useWeddingCardFields) bunların herhangi birini ezebilir =====
    Cumartesi 19 Haziran 2027, nikâh 17.00 (TSİ, UTC+3). */
-const WEDDING = {
-  target: '2027-06-19T17:00:00+03:00', // nikâh saati, geri sayım hedefi
-  icsStart: '20270619T140000Z', // 17.00 TSİ
-  icsEnd: '20270619T210000Z', // 24.00 TSİ
-  uid: 'elif-deniz-20270619@dugun',
-  heroLine: 'Cumartesi · 19 Haziran 2027',
-  postmark: '19 · 06 · 2027',
-  year: '2027',
-  rsvpBy: '8 Mayıs 2027 Cumartesi',
+const DEFAULTS = {
+  partner1: 'Jane',
+  partner2: 'Joe',
+  eventDate: '2027-06-19T17:00:00+03:00', // nikâh saati, geri sayım hedefi
+  venue: 'Zeytinlik Koyu',
+  city: 'Alaçatı, Çeşme',
+  address: 'Zeytinlik Koyu, Alaçatı, Çeşme, İzmir',
+  rsvpDeadline: '8 Mayıs 2027 Cumartesi',
+}
+const LOCALE = 'tr-TR'
+const EVENT_TZ = 'Europe/Istanbul' // tarihler mekânın saat diliminde gösterilir
+const EVENT_HOURS = 7 // nikâhtan gece yarısına (17.00 – 24.00)
+
+const dateParts = (date, opts) => Object.fromEntries(
+  new Intl.DateTimeFormat(LOCALE, { ...opts, timeZone: EVENT_TZ }).formatToParts(date).map(p => [p.type, p.value]),
+)
+/** "Cumartesi · 19 Haziran 2027" */
+function formatHeroDate(date) {
+  const p = dateParts(date, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+  return `${p.weekday} · ${p.day} ${p.month} ${p.year}`
+}
+/** "19 · 06 · 2027" (posta damgası) */
+function formatPostmark(date) {
+  const p = dateParts(date, { day: '2-digit', month: '2-digit', year: 'numeric' })
+  return `${p.day} · ${p.month} · ${p.year}`
+}
+
+const icsStamp = date => date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')
+const icsText = s => String(s).replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n')
+const slug = s => String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ı/g, 'i')
+  .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'x'
+const initial = s => ([...String(s).trim()][0] || '').toLocaleUpperCase(LOCALE)
+/** mekân + adres + şehir; diğerlerinde zaten geçen parçayı tekrarlamaz */
+function placeQuery(venue, address, city) {
+  let q = address || ''
+  if (venue && !q.includes(venue)) q = q ? `${venue}, ${q}` : venue
+  if (city && !q.includes(city)) q = q ? `${q}, ${city}` : city
+  return q
 }
 
 const css = String.raw`
@@ -461,17 +491,16 @@ function setupReveals(root, signal) {
   })
 }
 
-function downloadIcs() {
-  const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')
-  const ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Elif & Deniz//Dugun//TR', 'CALSCALE:GREGORIAN',
-    'BEGIN:VEVENT', `UID:${WEDDING.uid}`, `DTSTAMP:${stamp}`,
-    `DTSTART:${WEDDING.icsStart}`, `DTEND:${WEDDING.icsEnd}`,
-    'SUMMARY:Elif & Deniz — Bir Ege Düğünü',
-    'LOCATION:Zeytinlik Koyu\\, Alaçatı\\, Çeşme\\, İzmir',
-    'DESCRIPTION:Nikâh saat 17.00 zeytinlerin altında\\; ardından gün batımı kokteyli ve uzun masa.',
+function downloadIcs(w) {
+  const ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', `PRODID:-//${icsText(w.couple)}//Dugun//TR`, 'CALSCALE:GREGORIAN',
+    'BEGIN:VEVENT', `UID:${w.uid}`, `DTSTAMP:${icsStamp(new Date())}`,
+    `DTSTART:${w.icsStart}`, `DTEND:${w.icsEnd}`,
+    `SUMMARY:${icsText(`${w.couple} — Bir Ege Düğünü`)}`,
+    `LOCATION:${icsText(w.place)}`,
+    'DESCRIPTION:Zeytinlerin altında nikâh\\; ardından gün batımı kokteyli ve uzun masa.',
     'END:VEVENT', 'END:VCALENDAR'].join('\r\n')
   const url = URL.createObjectURL(new Blob([ics], { type: 'text/calendar;charset=utf-8' }))
-  const a = document.createElement('a'); a.href = url; a.download = 'elif-deniz-dugun.ics'
+  const a = document.createElement('a'); a.href = url; a.download = w.icsFile
   document.body.appendChild(a); a.click(); a.remove()
   setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
@@ -494,6 +523,36 @@ export default function AegeanWeddingPage() {
   const timersRef = useRef([])
   const [sending, setSending] = useState(false)
   const [toast, setToast] = useState({ show: false, title: '', text: '' })
+
+  /* ===== Düğün günü — sayfadaki tüm isim, tarih ve yerler buradan ===== */
+  const {
+    card, partner1, partner2, eventDate, venue, city, address, rsvpDeadline,
+  } = useWeddingCardFields(DEFAULTS, LOCALE)
+  const targetMs = eventDate.getTime()
+  const day = icsStamp(eventDate).slice(0, 8)
+  const place = placeQuery(venue, address, city)
+  // posta damgası: şehrin ilk parçası üstte, kalanı altta ("Alaçatı" / "Çeşme")
+  const [pmTop, ...pmRest] = city.split(',').map(s => s.trim()).filter(Boolean)
+  const WEDDING = {
+    partner1,
+    partner2,
+    couple: `${partner1} & ${partner2}`,
+    icsStart: icsStamp(eventDate),
+    icsEnd: icsStamp(new Date(targetMs + EVENT_HOURS * 36e5)),
+    uid: `${slug(partner1)}-${slug(partner2)}-${day}@dugun`,
+    icsFile: `${slug(partner1)}-${slug(partner2)}-dugun.ics`,
+    // API'den gelen etiket öncelikli; yoksa etkinlik tarihinin Türkçe biçimi
+    heroLine: cardDetail(card, 'dateLabel', formatHeroDate(eventDate)),
+    where: `${venue} — ${city}`,
+    place,
+    mapUrl: `https://maps.google.com/?q=${encodeURIComponent(place)}`,
+    postmarkTop: pmTop || '',
+    postmarkBottom: pmRest.join(', '),
+    postmark: formatPostmark(eventDate),
+    year: dateParts(eventDate, { year: 'numeric' }).year,
+    rsvpBy: rsvpDeadline,
+    mono: `${initial(partner1)} · ${initial(partner2)}`,
+  }
 
   // Arm reveals before first paint so nothing flashes in then hides.
   useLayoutEffect(() => {
@@ -638,30 +697,6 @@ export default function AegeanWeddingPage() {
       signal.addEventListener('abort', () => cancelAnimationFrame(raf))
     })()
 
-    /* ===== Geri sayım (rakamlar kayarak değişir) ===== */
-    ;(function () {
-      const TARGET = new Date(WEDDING.target).getTime()
-      const els = ['#cd-d', '#cd-h', '#cd-m', '#cd-s'].map($)
-      if (els.some(el => !el)) return
-      const [d, h, m, s] = els
-      const pad = n => String(Math.max(0, n)).padStart(2, '0')
-      function roll(el, v) {
-        if (el.dataset.v === v) return
-        const old = el.dataset.v
-        el.dataset.v = v
-        if (old === undefined || document.hidden) { el.textContent = v; return }
-        el.innerHTML = `<span class="roll out" aria-hidden="true">${old}</span><span class="roll in">${v}</span>`
-      }
-      function tick() {
-        const diff = Math.max(0, TARGET - Date.now())
-        roll(d, pad(Math.floor(diff / 864e5))); roll(h, pad(Math.floor(diff % 864e5 / 36e5)))
-        roll(m, pad(Math.floor(diff % 36e5 / 6e4))); roll(s, pad(Math.floor(diff % 6e4 / 1e3)))
-      }
-      tick()
-      const id = setInterval(tick, 1000)
-      signal.addEventListener('abort', () => clearInterval(id))
-    })()
-
     /* ===== Galeri slider noktaları (mobil) ===== */
     ;(function () {
       const gal = $('.pins'), dots = $('#galleryDots')
@@ -683,6 +718,39 @@ export default function AegeanWeddingPage() {
 
     return () => ac.abort()
   }, [])
+
+  /* ===== Geri sayım (rakamlar kayarak değişir) — ayrı effect: API tarihi
+     değişirse yalnızca saat yeniden kurulur, asmalar değil ===== */
+  useEffect(() => {
+    const root = rootRef.current; if (!root) return
+    const ac = new AbortController()
+    const { signal } = ac
+    const $ = sel => root.querySelector(sel)
+    ;(function () {
+      const TARGET = targetMs
+      const els = ['#cd-d', '#cd-h', '#cd-m', '#cd-s'].map($)
+      if (els.some(el => !el)) return
+      const [d, h, m, s] = els
+      const pad = n => String(Math.max(0, n)).padStart(2, '0')
+      function roll(el, v) {
+        if (el.dataset.v === v) return
+        const old = el.dataset.v
+        el.dataset.v = v
+        if (old === undefined || document.hidden) { el.textContent = v; return }
+        el.innerHTML = `<span class="roll out" aria-hidden="true">${old}</span><span class="roll in">${v}</span>`
+      }
+      function tick() {
+        const diff = Math.max(0, TARGET - Date.now())
+        roll(d, pad(Math.floor(diff / 864e5))); roll(h, pad(Math.floor(diff % 864e5 / 36e5)))
+        roll(m, pad(Math.floor(diff % 36e5 / 6e4))); roll(s, pad(Math.floor(diff % 6e4 / 1e3)))
+      }
+      tick()
+      const id = setInterval(tick, 1000)
+      signal.addEventListener('abort', () => clearInterval(id))
+    })()
+
+    return () => ac.abort()
+  }, [targetMs])
 
   useEffect(() => {
     const timers = timersRef.current
@@ -708,7 +776,7 @@ export default function AegeanWeddingPage() {
 
   return (
     <div ref={rootRef} className="aegean-page" lang="tr">
-      <meta name="description" content="Elif & Deniz'in Alaçatı'daki Ege düğününe davetlisiniz." />
+      <meta name="description" content={`${partner1} ve ${partner2} sizi Ege düğünlerine davet ediyor — ${WEDDING.where}.`} />
       <link rel="preconnect" href="https://fonts.googleapis.com" />
       <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
       <link
@@ -754,16 +822,16 @@ export default function AegeanWeddingPage() {
           <div className="shell">
             <div className="arch-frame">
               <span className="label">Bir Ege Düğünü</span>
-              <h1 className="names">Elif<span className="amp"> ve </span>Deniz</h1>
+              <h1 className="names">{partner1}<span className="amp"> ve </span>{partner2}</h1>
               <div className="hero-meta">
                 <p className="when">{WEDDING.heroLine}</p>
-                <p className="where">Zeytinlik Koyu — Alaçatı, Çeşme</p>
+                <p className="where">{WEDDING.where}</p>
               </div>
             </div>
             <div className="hero-actions">
-              <button type="button" className="ghost" onClick={downloadIcs}>Takvime Ekle</button>
+              <button type="button" className="ghost" onClick={() => downloadIcs(WEDDING)}>Takvime Ekle</button>
               <span className="dot" aria-hidden="true">·</span>
-              <a className="ghost" href="https://maps.google.com/?q=Ala%C3%A7at%C4%B1,+%C3%87e%C5%9Fme,+%C4%B0zmir" target="_blank" rel="noopener noreferrer">Yol Tarifi<span className="sr-only"> (yeni sekmede açılır)</span></a>
+              <a className="ghost" href={WEDDING.mapUrl} target="_blank" rel="noopener noreferrer">Yol Tarifi<span className="sr-only"> (yeni sekmede açılır)</span></a>
             </div>
           </div>
           <a className="scroll-cue" href="#davet">Kaydır</a>
@@ -776,7 +844,7 @@ export default function AegeanWeddingPage() {
             <div className="eyrow reveal"><span className="label">Davet</span></div>
             <div className="invite reveal">
               <p className="lead">Begonvillerin gölgesinde, denize karşı —<br />iki hayat tek yaza karışıyor.</p>
-              <p className="body">Ailelerimizin sevinci ve duasıyla, <strong>Elif</strong> ile <strong>Deniz</strong>'in nikâhına davetlisiniz — zeytin ağaçlarının altında bir ikindi, ardından deniz kenarında uzun bir yaz gecesi.</p>
+              <p className="body">Ailelerimizin sevinci ve duasıyla <strong>{partner1}</strong> ile <strong>{partner2}</strong> evleniyor; sizi de nikâhımıza bekliyoruz — zeytin ağaçlarının altında bir ikindi, ardından deniz kenarında uzun bir yaz gecesi.</p>
               <p className="body">En beyaz keteninizi giyin, en güzel anılarınızı getirin. Limonata, uzun masa ve gün doğana dek dans bizden.</p>
             </div>
           </div>
@@ -823,9 +891,9 @@ export default function AegeanWeddingPage() {
               <div className="rope" aria-hidden="true"><svg viewBox="0 0 1440 44" preserveAspectRatio="none" focusable="false"><path d="M0,8 Q720,44 1440,8" /></svg></div>
               <div className="pins">
                 {/* Kendi fotoğrafını eklemek için src="..." değerini değiştir */}
-                <div className="pin" style={{ '--tilt': '-2.4deg' }}><span className="peg" aria-hidden="true"></span><figure className="polar"><img src={couple1} alt="Elif ile Deniz, her şeyin başladığı yerde" loading="lazy" decoding="async" /><figcaption className="cap">her şeyin başladığı yer</figcaption></figure></div>
-                <div className="pin" style={{ '--tilt': '1.8deg' }}><span className="peg" aria-hidden="true"></span><figure className="polar"><img src={couple2} alt="Elif ile Deniz, evlilik teklifi günü" loading="lazy" decoding="async" /><figcaption className="cap">o soru</figcaption></figure></div>
-                <div className="pin" style={{ '--tilt': '-1.4deg' }}><span className="peg" aria-hidden="true"></span><figure className="polar"><img src={couple3} alt="Elif ile Deniz, geçen eylül" loading="lazy" decoding="async" /><figcaption className="cap">geçen eylül</figcaption></figure></div>
+                <div className="pin" style={{ '--tilt': '-2.4deg' }}><span className="peg" aria-hidden="true"></span><figure className="polar"><img src={couple1} alt={`${partner1} ile ${partner2}, her şeyin başladığı yerde`} loading="lazy" decoding="async" /><figcaption className="cap">her şeyin başladığı yer</figcaption></figure></div>
+                <div className="pin" style={{ '--tilt': '1.8deg' }}><span className="peg" aria-hidden="true"></span><figure className="polar"><img src={couple2} alt={`${partner1} ile ${partner2}, evlilik teklifi günü`} loading="lazy" decoding="async" /><figcaption className="cap">o soru</figcaption></figure></div>
+                <div className="pin" style={{ '--tilt': '-1.4deg' }}><span className="peg" aria-hidden="true"></span><figure className="polar"><img src={couple3} alt={`${partner1} ile ${partner2}, geçen eylül`} loading="lazy" decoding="async" /><figcaption className="cap">geçen eylül</figcaption></figure></div>
               </div>
             </div>
             <div className="gallery-dots" id="galleryDots" aria-hidden="true"><i className="on"></i><i></i><i></i></div>
@@ -880,10 +948,10 @@ export default function AegeanWeddingPage() {
                   <NazarSvg size={34} />
                   <span className="val">EGE · {WEDDING.year}</span>
                 </div>
-                <div className="postmark"><span>Alaçatı<br />{WEDDING.postmark}<br />Çeşme</span></div>
+                <div className="postmark"><span>{WEDDING.postmarkTop}<br />{WEDDING.postmark}{WEDDING.postmarkBottom && <><br />{WEDDING.postmarkBottom}</>}</span></div>
                 <div className="addr">
                   <p className="to">Kime:</p>
-                  <div className="ln name">Elif &amp; Deniz</div>
+                  <div className="ln name">{partner1} &amp; {partner2}</div>
                   <div className="ln"></div>
                   <div className="ln"></div>
                 </div>
@@ -893,7 +961,7 @@ export default function AegeanWeddingPage() {
         </section>
 
         <footer>
-          <p className="mono">E &middot; D</p>
+          <p className="mono">{WEDDING.mono}</p>
           <p className="q">“İki kıyı, tek deniz — iki kalp, tek ömür.”</p>
           <div className="nazar" aria-hidden="true">
             <NazarSvg />

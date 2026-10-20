@@ -3,16 +3,27 @@ import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import * as THREE from 'three'
 import { Body, Equator, GeoMoon, HelioDistance, Horizon, Illumination, KM_PER_AU, MoonPhase, Observer, SearchRiseSet } from 'astronomy-engine'
+import { cardDetail, useWeddingCardFields } from '../../api/weddingCardContext'
 
 gsap.registerPlugin(ScrollTrigger)
 
+// Demo couple; the card API (useWeddingCardFields) overrides every field.
 // Saturday 11 September 2027, 5:30 pm Pacific (PDT). Everything date- and
-// sky-related on the page (countdown, moon phase, copy) is derived from this.
-const EVENT_DATE = new Date('2027-09-11T17:30:00-07:00')
-// RSVP + room-block deadline, six weeks before the wedding.
-const RSVP_DEADLINE = new Date('2027-07-31T23:59:00-07:00')
+// sky-related on the page (countdown, moon phase, copy) is derived from the
+// event date the hook returns.
+const DEFAULT_FIELDS = {
+  partner1: 'Jane',
+  partner2: 'Joe',
+  eventDate: '2027-09-11T17:30:00-07:00',
+  venue: 'Lumiere Estate',
+  city: 'Napa Valley',
+  address: '1700 Stargrove Lane, Napa Valley, California',
+  // RSVP + room-block deadline, six weeks before the wedding.
+  rsvpDeadline: 'Saturday, July 31, 2027',
+}
+// Sky maths and date formatting use the demo venue's coordinates / time zone
+// (the card API has no location fields yet).
 const EVENT_LOCATION = {
-  label: 'Napa Valley',
   region: 'Napa Valley, California',
   latitude: 38.2975,
   longitude: -122.2869,
@@ -53,20 +64,22 @@ const schedule = [
   },
 ]
 
-const venueDetails = [
-  {
-    key: 'Ceremony',
-    value: 'Open-air, on the East Lawn beneath the old oak. Arrive by 5:00pm.',
-  },
-  {
-    key: 'Parking',
-    value: 'Complimentary valet at the main gate, plus a shuttle from The Stellar Hotel.',
-  },
-  {
-    key: 'Stay',
-    value: `Room block held under "Aurora & Elias" until ${formatEventDate(RSVP_DEADLINE, { day: 'numeric', month: 'long', year: 'numeric' })}.`,
-  },
-]
+function getVenueDetails(partner1, partner2, rsvpDeadline) {
+  return [
+    {
+      key: 'Ceremony',
+      value: 'Open-air, on the East Lawn beneath the old oak. Arrive by 5:00pm.',
+    },
+    {
+      key: 'Parking',
+      value: 'Complimentary valet at the main gate, plus a shuttle from The Stellar Hotel.',
+    },
+    {
+      key: 'Stay',
+      value: `Room block held under "${partner1} & ${partner2}" until ${rsvpDeadline}.`,
+    },
+  ]
+}
 
 const gallery = [
   'First rooftop evening',
@@ -128,7 +141,7 @@ function describeDirection(code) {
 }
 
 /* Plain-language sentence about the Moon on the wedding evening, computed
-   from the real ephemeris so it stays correct when EVENT_DATE changes. */
+   from the real ephemeris so it stays correct when the event date changes. */
 function getMoonStory(date, location) {
   const angle = MoonPhase(date)
   const illumination = Math.round(Illumination(Body.Moon, date).phase_fraction * 100)
@@ -260,9 +273,9 @@ function getSkySnapshot(date, location) {
   ]
 }
 
-function getCountdownParts() {
+function getCountdownParts(eventTime) {
   // Days are zero-padded to three digits so the grid never reflows.
-  let diff = Math.max(0, EVENT_DATE.getTime() - Date.now())
+  let diff = Math.max(0, eventTime - Date.now())
   const days = Math.floor(diff / 864e5)
   diff -= days * 864e5
   const hours = Math.floor(diff / 36e5)
@@ -323,14 +336,15 @@ function SplitChars({ text }) {
 }
 
 /* Countdown lives in its own component so the per-second tick re-renders
-   only these four cells, not the whole page. */
-function Countdown() {
-  const [countdown, setCountdown] = useState(getCountdownParts)
+   only these four cells, not the whole page. The parent keys it by the event
+   time, so a date arriving from the card API remounts it with fresh state. */
+function Countdown({ eventTime }) {
+  const [countdown, setCountdown] = useState(() => getCountdownParts(eventTime))
 
   useEffect(() => {
-    const interval = window.setInterval(() => setCountdown(getCountdownParts()), 1000)
+    const interval = window.setInterval(() => setCountdown(getCountdownParts(eventTime)), 1000)
     return () => window.clearInterval(interval)
-  }, [])
+  }, [eventTime])
 
   return (
     <div className="cw-count-grid cw-reveal cw-d1" role="timer" aria-live="off">
@@ -384,6 +398,21 @@ function disposeObject3D(object) {
 export default function CelestialWeddingPage() {
   const rootRef = useRef(null)
   const starHostRef = useRef(null)
+  // Set by the three.js effect: re-lights the 3D moon without rebuilding the scene.
+  const setMoonPhaseRef = useRef(null)
+  const {
+    card,
+    partner1,
+    partner2,
+    eventDate,
+    venue,
+    city,
+    address,
+    rsvpDeadline,
+  } = useWeddingCardFields(DEFAULT_FIELDS)
+  const eventTime = eventDate.getTime()
+  const region = city === DEFAULT_FIELDS.city ? EVENT_LOCATION.region : city
+  const cardDateLabel = cardDetail(card, 'dateLabel', '')
   const [attending, setAttending] = useState('yes')
   const [formState, setFormState] = useState({ name: '', email: '' })
   const [errors, setErrors] = useState({})
@@ -393,26 +422,28 @@ export default function CelestialWeddingPage() {
     () => formState.name.trim().split(' ')[0] || 'friend',
     [formState.name],
   )
-  const skySnapshot = useMemo(() => getSkySnapshot(EVENT_DATE, EVENT_LOCATION), [])
-  const moonLit = useMemo(() => getMoonLitPath(EVENT_DATE), [])
-  const moonStory = useMemo(() => getMoonStory(EVENT_DATE, EVENT_LOCATION), [])
+  const skySnapshot = useMemo(() => getSkySnapshot(eventDate, EVENT_LOCATION), [eventDate])
+  const moonLit = useMemo(() => getMoonLitPath(eventDate), [eventDate])
+  const moonStory = useMemo(() => getMoonStory(eventDate, EVENT_LOCATION), [eventDate])
+  const moonPhaseAngle = useMemo(() => MoonPhase(eventDate), [eventDate])
   const moonPhaseLabel = skySnapshot.find((item) => item.label === 'Moon phase')?.value ?? 'Moon phase'
   const eventDateLong = useMemo(
-    () => formatEventDate(EVENT_DATE, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }),
-    [],
-  )
-  const rsvpDeadline = useMemo(
-    () => formatEventDate(RSVP_DEADLINE, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }),
-    [],
+    () => cardDateLabel || formatEventDate(eventDate, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }),
+    [cardDateLabel, eventDate],
   )
   const eventDateShort = useMemo(
-    () => formatEventDate(EVENT_DATE, { day: 'numeric', month: 'short', year: 'numeric' }),
-    [],
+    () => formatEventDate(eventDate, { day: 'numeric', month: 'short', year: 'numeric' }),
+    [eventDate],
   )
   const eventDateNumeric = useMemo(
-    () => formatNumericEventDate(EVENT_DATE),
-    [],
+    () => formatNumericEventDate(eventDate),
+    [eventDate],
   )
+  const venueDetails = useMemo(
+    () => getVenueDetails(partner1, partner2, rsvpDeadline),
+    [partner1, partner2, rsvpDeadline],
+  )
+  const mapsHref = `https://maps.google.com/?q=${encodeURIComponent(`${venue}, ${address}`)}`
 
   useEffect(() => {
     document.documentElement.classList.add('celestial-native-scroll')
@@ -1210,9 +1241,13 @@ export default function CelestialWeddingPage() {
     moonGroup.add(moonGlow, moon)
     // Light the 3D moon with the real phase on the wedding evening:
     // phase angle 0 = new (sun behind the moon), 180 = full (sun behind us);
-    // waxing lights the right limb, waning the left.
-    const phaseRad = (MoonPhase(EVENT_DATE) * Math.PI) / 180
-    moonKeyLight.position.set(Math.sin(phaseRad) * 300, 40, -Math.cos(phaseRad) * 300)
+    // waxing lights the right limb, waning the left. The phase effect below
+    // calls this, so a new event date only moves the light.
+    setMoonPhaseRef.current = (angle) => {
+      const phaseRad = (angle * Math.PI) / 180
+      moonKeyLight.position.set(Math.sin(phaseRad) * 300, 40, -Math.cos(phaseRad) * 300)
+      if (!frame) renderOnce()
+    }
     moonFillLight.position.set(180, -120, 120)
     scene.add(moonKeyLight, moonFillLight, ambientLight)
 
@@ -1326,6 +1361,7 @@ export default function CelestialWeddingPage() {
 
     return () => {
       disposed = true
+      setMoonPhaseRef.current = null
       stop()
       visibilityObserver.disconnect()
       if (meteorTimer) window.clearInterval(meteorTimer)
@@ -1346,6 +1382,12 @@ export default function CelestialWeddingPage() {
       canvas.remove()
     }
   }, [])
+
+  // Runs after the scene effect (declaration order), on mount and whenever the
+  // event date's moon phase changes.
+  useEffect(() => {
+    setMoonPhaseRef.current?.(moonPhaseAngle)
+  }, [moonPhaseAngle])
 
   const onSubmit = (event) => {
     event.preventDefault()
@@ -2276,13 +2318,13 @@ export default function CelestialWeddingPage() {
           <div className="cw-moon-stage" aria-hidden="true" />
           <div className="cw-eyebrow cw-reveal in">Together with their families</div>
           <h1 className="cw-hero-names cw-reveal in cw-d1">
-            Aurora <span className="cw-and">and</span> Elias
+            {partner1} <span className="cw-and">and</span> {partner2}
           </h1>
           <div className="cw-hero-line cw-reveal in cw-d2" aria-hidden="true" />
           <div className="cw-hero-meta cw-reveal in cw-d2">
             <div className="cw-hero-chip cw-hero-sub">Wedding Celebration</div>
-            <time className="cw-hero-chip strong cw-hero-date" dateTime={EVENT_DATE.toISOString()}>{eventDateLong}</time>
-            <div className="cw-hero-chip">{EVENT_LOCATION.label}</div>
+            <time className="cw-hero-chip strong cw-hero-date" dateTime={eventDate.toISOString()}>{eventDateLong}</time>
+            <div className="cw-hero-chip">{city}</div>
           </div>
         </div>
         <div className="cw-scroll-cue" aria-hidden="true">
@@ -2303,7 +2345,7 @@ export default function CelestialWeddingPage() {
               <span className="cw-script"><SplitChars text="I do" /></span>
             </h2>
           </div>
-          <Countdown />
+          <Countdown key={eventTime} eventTime={eventTime} />
         </div>
       </section>
 
@@ -2316,7 +2358,7 @@ export default function CelestialWeddingPage() {
             </div>
             <h2 aria-label="The moon and stars that night"><SplitChars text="The moon & stars that night" /></h2>
             <p className="cw-lead">
-              A stylized look at the Moon, Mercury and the evening stars over {EVENT_LOCATION.label}
+              A stylized look at the Moon, Mercury and the evening stars over {city}{' '}
               on {eventDateLong}.
             </p>
           </div>
@@ -2341,7 +2383,7 @@ export default function CelestialWeddingPage() {
               ))}
             </div>
             <div className="cw-sky-body cw-reveal cw-d1">
-              <div className="cw-eyebrow">{eventDateShort} • {EVENT_LOCATION.label}</div>
+              <div className="cw-eyebrow">{eventDateShort} • {city}</div>
               <h3>The sky above the vows</h3>
               <p>{moonStory}</p>
               <div className="cw-sky-card-grid">
@@ -2370,13 +2412,13 @@ export default function CelestialWeddingPage() {
               <h2 aria-label="Written in the stars"><SplitChars text="Written in the stars" /></h2>
               <p>
                 We met on a rooftop in late autumn, both of us pretending to know
-                the constellations. <span className="hl">Elias</span> pointed at a
-                planet and called it a star; <span className="hl">Aurora</span> let
-                him believe it for exactly three minutes.
+                the constellations. <span className="hl">{partner2}</span> pointed at a
+                planet and called it a star; <span className="hl">{partner1}</span> let
+                that stand for exactly three minutes.
               </p>
               <p>
-                Five years, two cities and one very persistent houseplant later, he
-                asked under that same sky - and this time, she knew every star by name.
+                Five years, two cities and one very persistent houseplant later, {partner2}{' '}
+                asked under that same sky - and this time, {partner1} knew every star by name.
               </p>
               <div className="cw-constellation">
                 <svg width="220" height="44" viewBox="0 0 220 44" fill="none" aria-hidden="true">
@@ -2437,7 +2479,7 @@ export default function CelestialWeddingPage() {
             <div className="cw-eyebrow dim" style={{ marginTop: 18 }}>
               Where to find us
             </div>
-            <h2 aria-label="The Observatory Estate"><SplitChars text="The Observatory Estate" /></h2>
+            <h2 aria-label={venue}><SplitChars key={venue} text={venue} /></h2>
           </div>
           <div className="cw-venue-grid">
             <div className="cw-starmap cw-reveal">
@@ -2463,13 +2505,13 @@ export default function CelestialWeddingPage() {
               </svg>
               <div className="cw-pin" aria-hidden="true">
                 <div className="cw-pin-dot" />
-                <div className="cw-pin-tag">Lumiere Estate</div>
+                <div className="cw-pin-tag">{venue}</div>
               </div>
             </div>
             <div className="cw-venue-info cw-reveal cw-d1">
               <div className="cw-eyebrow">The Celebration</div>
-              <h2 aria-label="Lumiere Estate"><SplitChars text="Lumiere Estate" /></h2>
-              <div className="cw-address">1700 Stargrove Lane, Napa Valley, California</div>
+              <h2 aria-label={venue}><SplitChars key={venue} text={venue} /></h2>
+              <div className="cw-address">{address}</div>
               {venueDetails.map((detail) => (
                 <div className="cw-detail-row" key={detail.key}>
                   <div className="cw-detail-key">{detail.key}</div>
@@ -2478,7 +2520,7 @@ export default function CelestialWeddingPage() {
               ))}
               <a
                 className="cw-btn"
-                href="https://maps.google.com/?q=Napa+Valley+California"
+                href={mapsHref}
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -2579,7 +2621,7 @@ export default function CelestialWeddingPage() {
                     onChange={(event) =>
                       setFormState((current) => ({ ...current, name: event.target.value }))
                     }
-                    placeholder="Aurora Vance"
+                    placeholder="Your full name"
                     type="text"
                     value={formState.name}
                   />
@@ -2649,10 +2691,11 @@ export default function CelestialWeddingPage() {
 
       <footer className="cw-footer">
         <Divider mark="star" />
-        <div className="cw-footer-names" role="heading" aria-level={2} aria-label="Aurora and Elias">
-          <SplitChars text="Aurora" /> <span className="cw-amp"><SplitChars text="&" /></span> <SplitChars text="Elias" />
+        <div className="cw-footer-names" role="heading" aria-level={2} aria-label={`${partner1} and ${partner2}`}>
+          {/* keyed by text: names arriving from the API mount fresh, visible chars */}
+          <SplitChars key={`a-${partner1}`} text={partner1} /> <span className="cw-amp"><SplitChars text="&" /></span> <SplitChars key={`b-${partner2}`} text={partner2} />
         </div>
-        <div className="cw-footer-meta">{eventDateNumeric} - {EVENT_LOCATION.region}</div>
+        <div className="cw-footer-meta">{eventDateNumeric} - {region}</div>
       </footer>
     </div>
   )

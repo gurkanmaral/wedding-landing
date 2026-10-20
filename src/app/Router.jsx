@@ -3,6 +3,13 @@ import LandingPage from '../landing/LandingPage.jsx'
 import ErrorBoundary from './ErrorBoundary.jsx'
 import { consumeOpened } from './openedFlag.js'
 import { findTemplate, templates } from '../templates/registry.js'
+import { WeddingCardProvider } from '../api/WeddingCardContext.jsx'
+
+const AdminPage = lazy(() => import('../admin/AdminPage.jsx'))
+const WeddingCardManagerPage = lazy(() => import('../admin/WeddingCardManagerPage.jsx'))
+const AuthPage = lazy(() => import('../account/AuthPage.jsx'))
+
+const AUTH_PATHS = ['/login', '/register', '/confirm-email', '/resend-confirmation', '/forgot-password', '/reset-password', '/account']
 
 const InvitationIntro = lazy(() => import('../shared/intro/InvitationIntro.jsx'))
 const pages = Object.fromEntries(templates.map((t) => [t.slug, lazy(t.load)]))
@@ -60,14 +67,37 @@ function TemplateShell({ template }) {
   )
 }
 
+function appPage(pathname) {
+  if (pathname === '/admin') return 'admin'
+  if (pathname === '/manage') return 'manage'
+  if (AUTH_PATHS.includes(pathname)) return 'auth'
+  return null
+}
+
 export default function Router() {
-  const template = findTemplate(window.location.pathname)
+  const pathname = window.location.pathname.replace(/\/+$/, '') || '/'
+  const app = appPage(pathname)
+  const template = app ? null : findTemplate(pathname)
 
   useEffect(() => {
-    if (template) return
-    document.title = 'Wedfolio — Wedding invitation websites'
-    document.documentElement.lang = 'en'
-  }, [template])
+    if (template || app) return
+    document.title = 'Wedfolio — Online düğün davetiyeleri'
+    document.documentElement.lang = 'tr'
+  }, [template, app])
 
-  return template ? <TemplateShell template={template} /> : <LandingPage />
+  if (app) {
+    return (
+      <ErrorBoundary>
+        <Suspense fallback={null}>
+          {app === 'admin' && <AdminPage />}
+          {app === 'manage' && <WeddingCardManagerPage />}
+          {app === 'auth' && <AuthPage />}
+        </Suspense>
+      </ErrorBoundary>
+    )
+  }
+
+  return (
+    <WeddingCardProvider>{template ? <TemplateShell template={template} /> : <LandingPage />}</WeddingCardProvider>
+  )
 }

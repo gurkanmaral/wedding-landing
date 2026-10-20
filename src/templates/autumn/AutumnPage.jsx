@@ -1,19 +1,51 @@
 import { Fragment, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { cardDetail, useWeddingCardFields } from '../../api/weddingCardContext'
 
 const autumnTree = '/assets/autumn/autumn-tree.png'
 const couple1 = '/assets/autumn/couple-1.svg'
 const couple2 = '/assets/autumn/couple-2.svg'
 const couple3 = '/assets/autumn/couple-3.svg'
 
-/* ===== The day itself — every date on the page derives from here =====
+/* ===== Demo couple — the API (useWeddingCardFields) overrides any of these =====
    Saturday 16 October 2027, ceremony 4:00 PM Eastern (EDT, UTC-4). */
-const WEDDING = {
-  target: '2027-10-16T16:00:00-04:00', // ceremony start, countdown target
-  icsStart: '20271016T200000Z', // 4:00 PM EDT
-  icsEnd: '20271017T030000Z', // 11:00 PM EDT
-  uid: 'nazli-bahadir-20271016@wedding',
-  heroLine: 'Saturday · the 16th of October · 2027',
-  rsvpBy: 'the 4th of September, 2027',
+const DEFAULTS = {
+  partner1: 'Jane',
+  partner2: 'Joe',
+  eventDate: '2027-10-16T16:00:00-04:00', // ceremony start, countdown target
+  venue: 'Maplewood Estate',
+  city: 'Hudson Valley, New York',
+  address: 'Maplewood Estate, Hudson Valley, New York',
+  rsvpDeadline: 'the 4th of September, 2027',
+}
+const LOCALE = 'en-GB'
+const EVENT_TZ = 'America/New_York' // dates are shown in the venue's time zone
+const EVENT_HOURS = 7 // ceremony to last dance (4:00 PM – 11:00 PM)
+
+const ordinal = n => {
+  const v = n % 100
+  if (v >= 11 && v <= 13) return `${n}th`
+  return `${n}${({ 1: 'st', 2: 'nd', 3: 'rd' })[n % 10] || 'th'}`
+}
+
+/** "Saturday · the 16th of October · 2027" — the hero's own date style. */
+function formatHeroDate(date) {
+  const parts = Object.fromEntries(new Intl.DateTimeFormat(LOCALE, {
+    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: EVENT_TZ,
+  }).formatToParts(date).map(p => [p.type, p.value]))
+  return `${parts.weekday} · the ${ordinal(Number(parts.day))} of ${parts.month} · ${parts.year}`
+}
+
+const icsStamp = date => date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')
+const icsText = s => String(s).replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n')
+const slug = s => String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ı/g, 'i')
+  .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'x'
+const initial = s => ([...String(s).trim()][0] || '').toLocaleUpperCase(LOCALE)
+/** venue + address + city without repeating a part the others already contain */
+function placeQuery(venue, address, city) {
+  let q = address || ''
+  if (venue && !q.includes(venue)) q = q ? `${venue}, ${q}` : venue
+  if (city && !q.includes(city)) q = q ? `${q}, ${city}` : city
+  return q
 }
 
 const LEAF_HTML = '<div class="maple-leaf"><div class="top trapezium"></div><div class="mid"><div class="left trapezium"></div><div class="center"></div><div class="right trapezium"></div></div><div class="branch"></div></div>'
@@ -434,17 +466,16 @@ function HeroName({ text, offset }) {
   )
 }
 
-function downloadIcs() {
-  const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')
-  const ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Nazli & Bahadir//Wedding//EN', 'CALSCALE:GREGORIAN',
-    'BEGIN:VEVENT', `UID:${WEDDING.uid}`, `DTSTAMP:${stamp}`,
-    `DTSTART:${WEDDING.icsStart}`, `DTEND:${WEDDING.icsEnd}`,
-    'SUMMARY:Nazlı & Bahadır — An Autumn Wedding',
-    'LOCATION:Maplewood Estate\\, Hudson Valley\\, New York',
-    'DESCRIPTION:Ceremony at 4:00 PM beneath the maples\\, followed by a harvest dinner and bonfire.',
+function downloadIcs(w) {
+  const ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', `PRODID:-//${icsText(w.couple)}//Wedding//EN`, 'CALSCALE:GREGORIAN',
+    'BEGIN:VEVENT', `UID:${w.uid}`, `DTSTAMP:${icsStamp(new Date())}`,
+    `DTSTART:${w.icsStart}`, `DTEND:${w.icsEnd}`,
+    `SUMMARY:${icsText(`${w.couple} — An Autumn Wedding`)}`,
+    `LOCATION:${icsText(w.place)}`,
+    'DESCRIPTION:Ceremony beneath the maples\\, followed by a harvest dinner and bonfire.',
     'END:VEVENT', 'END:VCALENDAR'].join('\r\n')
   const url = URL.createObjectURL(new Blob([ics], { type: 'text/calendar;charset=utf-8' }))
-  const a = document.createElement('a'); a.href = url; a.download = 'nazli-bahadir-wedding.ics'
+  const a = document.createElement('a'); a.href = url; a.download = w.icsFile
   document.body.appendChild(a); a.click(); a.remove()
   setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
@@ -456,6 +487,31 @@ export default function AutumnFallsPage() {
   const timersRef = useRef([])
   const [sending, setSending] = useState(false)
   const [toast, setToast] = useState({ show: false, title: '', text: '' })
+
+  /* ===== The day itself — every name, date and place on the page derives from here ===== */
+  const {
+    card, partner1, partner2, eventDate, venue, city, address, rsvpDeadline,
+  } = useWeddingCardFields(DEFAULTS, LOCALE)
+  const targetMs = eventDate.getTime()
+  const day = icsStamp(eventDate).slice(0, 8)
+  const place = placeQuery(venue, address, city)
+  const WEDDING = {
+    partner1,
+    partner2,
+    couple: `${partner1} & ${partner2}`,
+    icsStart: icsStamp(eventDate),
+    icsEnd: icsStamp(new Date(targetMs + EVENT_HOURS * 36e5)),
+    uid: `${slug(partner1)}-${slug(partner2)}-${day}@wedding`,
+    icsFile: `${slug(partner1)}-${slug(partner2)}-wedding.ics`,
+    // an API-supplied label wins; otherwise our English hero format of the event date
+    heroLine: cardDetail(card, 'dateLabel', formatHeroDate(eventDate)),
+    venue,
+    where: `${venue} — ${city}`,
+    place,
+    mapUrl: `https://maps.google.com/?q=${encodeURIComponent(place)}`,
+    rsvpBy: rsvpDeadline,
+    mono: `${initial(partner1)} · ${initial(partner2)}`,
+  }
 
   // Arm reveals before first paint so nothing flashes in then hides.
   useLayoutEffect(() => {
@@ -678,9 +734,18 @@ export default function AutumnFallsPage() {
       signal.addEventListener('abort', () => cancelAnimationFrame(raf))
     })()
 
-    /* ===== Countdown (digits roll on change) ===== */
+    return () => ac.abort()
+  }, [])
+
+  /* ===== Countdown (digits roll on change) — own effect so an API date change
+     only restarts the clock, not the leaves ===== */
+  useEffect(() => {
+    const root = rootRef.current; if (!root) return
+    const ac = new AbortController()
+    const { signal } = ac
+    const $ = sel => root.querySelector(sel)
     ;(function () {
-      const TARGET = new Date(WEDDING.target).getTime()
+      const TARGET = targetMs
       const els = ['#cd-d', '#cd-h', '#cd-m', '#cd-s'].map($)
       if (els.some(el => !el)) return
       const [d, h, m, s] = els
@@ -703,7 +768,7 @@ export default function AutumnFallsPage() {
     })()
 
     return () => ac.abort()
-  }, [])
+  }, [targetMs])
 
   useEffect(() => {
     const timers = timersRef.current
@@ -725,7 +790,7 @@ export default function AutumnFallsPage() {
 
   return (
     <div ref={rootRef} className="autumn-page">
-      <meta name="description" content="An invitation to the autumn wedding of Nazlı & Bahadır at Maplewood Estate." />
+      <meta name="description" content={`An invitation to the autumn wedding of ${WEDDING.couple} at ${WEDDING.venue}.`} />
       <link rel="preconnect" href="https://fonts.googleapis.com" />
       <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
       <link
@@ -749,22 +814,22 @@ export default function AutumnFallsPage() {
             <div className="hero-block">
               <span className="label">An Autumn Wedding</span>
               <h1 className="names">
-                <span className="sr-only">Nazlı and Bahadır</span>
-                <HeroName text="Nazlı" offset={0} />
-                <span className="amp hl" aria-hidden="true" style={{ '--i': 5 }}>and</span>
-                <HeroName text="Bahadır" offset={6} />
+                <span className="sr-only">{partner1} and {partner2}</span>
+                <HeroName text={partner1} offset={0} />
+                <span className="amp hl" aria-hidden="true" style={{ '--i': [...partner1].length }}>and</span>
+                <HeroName text={partner2} offset={[...partner1].length + 1} />
               </h1>
               <div className="hero-meta">
                 <div className="vrule" aria-hidden="true"></div>
                 <div>
                   <p className="when">{WEDDING.heroLine}</p>
-                  <p className="where">Maplewood Estate — Hudson Valley, New York</p>
+                  <p className="where">{WEDDING.where}</p>
                 </div>
               </div>
               <div className="hero-actions">
-                <button type="button" className="ghost" onClick={downloadIcs}>Add to Calendar</button>
+                <button type="button" className="ghost" onClick={() => downloadIcs(WEDDING)}>Add to Calendar</button>
                 <span className="dot" aria-hidden="true">·</span>
-                <a className="ghost" href="https://maps.google.com/?q=Maplewood+Estate,+Hudson+Valley,+New+York" target="_blank" rel="noopener noreferrer">Getting There<span className="sr-only"> (opens in a new tab)</span></a>
+                <a className="ghost" href={WEDDING.mapUrl} target="_blank" rel="noopener noreferrer">Getting There<span className="sr-only"> (opens in a new tab)</span></a>
               </div>
             </div>
           </div>
@@ -778,7 +843,7 @@ export default function AutumnFallsPage() {
             <div className="invite">
               <p className="lead reveal">Come gather where the maples burn gold, and watch two lives grow into one.</p>
               <div className="reveal">
-                <p className="body">With the blessing of our families, we invite you to the marriage of <strong>Nazlı</strong> and <strong>Bahadır</strong> — an afternoon among the turning leaves, followed by an evening of warmth, harvest, and firelight.</p>
+                <p className="body">With the blessing of our families, we invite you to the marriage of <strong>{partner1}</strong> and <strong>{partner2}</strong> — an afternoon among the turning leaves, followed by an evening of warmth, harvest, and firelight.</p>
                 <p className="body">Bring your softest knit and your fondest stories. Stay for the cider, the long table, and the dancing.</p>
               </div>
             </div>
@@ -821,9 +886,9 @@ export default function AutumnFallsPage() {
             <SplitHead lines={['A few of our', 'favourite seasons.']} />
             <div className="gallery reveal">
               {/* Kendi fotoğrafını eklemek için src="..." değerini değiştir */}
-              <figure className="frame"><img className="arch" src={couple1} alt="Nazlı and Bahadır, where it began" loading="lazy" decoding="async" /><figcaption className="cap">where it began</figcaption></figure>
-              <figure className="frame up"><img className="arch" src={couple2} alt="Nazlı and Bahadır on the day of the proposal" loading="lazy" decoding="async" /><figcaption className="cap">the question</figcaption></figure>
-              <figure className="frame"><img className="arch" src={couple3} alt="Nazlı and Bahadır last October" loading="lazy" decoding="async" /><figcaption className="cap">last october</figcaption></figure>
+              <figure className="frame"><img className="arch" src={couple1} alt={`${partner1} and ${partner2}, where it began`} loading="lazy" decoding="async" /><figcaption className="cap">where it began</figcaption></figure>
+              <figure className="frame up"><img className="arch" src={couple2} alt={`${partner1} and ${partner2} on the day of the proposal`} loading="lazy" decoding="async" /><figcaption className="cap">the question</figcaption></figure>
+              <figure className="frame"><img className="arch" src={couple3} alt={`${partner1} and ${partner2} last October`} loading="lazy" decoding="async" /><figcaption className="cap">last october</figcaption></figure>
             </div>
             <div className="gallery-dots" id="galleryDots" aria-hidden="true"><i className="on"></i><i></i><i></i></div>
           </div>
@@ -874,7 +939,7 @@ export default function AutumnFallsPage() {
         </section>
 
         <footer>
-          <p className="mono">N &middot; B</p>
+          <p className="mono">{WEDDING.mono}</p>
           <p className="q">“The falling leaves remind us — every ending is the seed of a new beginning.”</p>
         </footer>
       </main>

@@ -8,11 +8,86 @@ import decoLeaf from './assets/deco-leaf.png'
 import decoFeather from './assets/deco-feather.jpg'
 import decoCouple from './assets/deco-couple.jpg'
 import decoFrame from './assets/deco-frame.jpg'
+import { useWeddingCardFields } from '../../api/weddingCardContext'
 
 gsap.registerPlugin(ScrollTrigger)
 
+// Demo couple shown until the API supplies real card data.
 // Saturday 18 September 2027, ceremony at 16:00 Rome time (CEST).
-const TARGET_DATE = new Date('2027-09-18T16:00:00+02:00')
+const DEFAULTS = {
+  partner1: 'Jane',
+  partner2: 'Joe',
+  eventDate: '2027-09-18T16:00:00+02:00',
+  venue: 'Villa Aurelia',
+  city: 'Rome',
+  address: 'Largo di Porta San Pancrazio, 1, 00152 Roma',
+  rsvpDeadline: '7 August 2027',
+}
+
+const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+const ONES = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen']
+const TENS = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety']
+const ORDINAL_IRREGULAR = { One: 'First', Two: 'Second', Three: 'Third', Five: 'Fifth', Eight: 'Eighth', Nine: 'Ninth', Twelve: 'Twelfth', Twenty: 'Twentieth', Thirty: 'Thirtieth' }
+
+// 1–99 in title-cased words ("Twenty Seven").
+function numberToWords(n) {
+  if (n < 20) return ONES[n]
+  return TENS[Math.floor(n / 10)] + (n % 10 ? ` ${ONES[n % 10]}` : '')
+}
+
+function dayToWords(day) {
+  return day >= 1 && day <= 31 ? numberToWords(day) : String(day)
+}
+
+function yearToWords(year) {
+  if (year < 2000 || year > 2099) return String(year)
+  const rest = year - 2000
+  return rest ? `Two Thousand ${numberToWords(rest)}` : 'Two Thousand'
+}
+
+// 1–31 as a lower-case ordinal ("seventh", "twenty first").
+function dayToOrdinalWords(day) {
+  const words = numberToWords(day).split(' ')
+  const lastWord = words.pop()
+  words.push(ORDINAL_IRREGULAR[lastWord] || `${lastWord}th`)
+  return words.join(' ').toLowerCase()
+}
+
+// "7 August 2027" -> "the seventh of August"; anything unparseable is shown as given.
+function deadlinePhrase(deadline) {
+  const match = new RegExp(`\\b(\\d{1,2})(?:st|nd|rd|th)?\\s+(${MONTHS.join('|')})\\b`, 'i').exec(deadline)
+  const day = match ? Number(match[1]) : 0
+  if (!match || day < 1 || day > 31) return deadline
+  const month = MONTHS.find((m) => m.toLowerCase() === match[2].toLowerCase())
+  return `the ${dayToOrdinalWords(day)} of ${month}`
+}
+
+// Calendar parts in the venue's own time: taken from the ISO string when possible,
+// so a guest in another time zone still sees the wedding's local date.
+function getEventParts(value, fallbackDate) {
+  const source = Number.isFinite(new Date(value).getTime()) ? value : DEFAULTS.eventDate
+  const iso = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(source))
+  const year = iso ? Number(iso[1]) : fallbackDate.getFullYear()
+  const month = iso ? Number(iso[2]) : fallbackDate.getMonth() + 1
+  const day = iso ? Number(iso[3]) : fallbackDate.getDate()
+  const utc = new Date(Date.UTC(year, month - 1, day))
+  const weekday = new Intl.DateTimeFormat('en-GB', { weekday: 'long', timeZone: 'UTC' }).format(utc)
+  const monthName = MONTHS[month - 1]
+  const dd = String(day).padStart(2, '0')
+  const mm = String(month).padStart(2, '0')
+  return {
+    weekday,
+    monthName,
+    longDate: `${weekday} ${day} ${monthName} ${year}`,
+    numericDate: `${dd} · ${mm} · ${year}`,
+    shortDate: `${dd}·${mm}·${String(year).slice(-2)}`,
+    words: [dayToWords(day), monthName, yearToWords(year)],
+  }
+}
+
+function initial(name) {
+  return (Array.from(name.trim())[0] || '').toUpperCase()
+}
 
 // Words are split in React (not via innerHTML) so StrictMode re-mounts and
 // reconciliation never see a DOM that GSAP rewrote behind React's back.
@@ -53,20 +128,31 @@ const STYLES = `
 }
 `
 
-const GALLERY = [
-  { src: decoCouple, alt: 'Elena and Marcus' },
-  { src: decoFeather, alt: 'Gold peacock feather illustration' },
-  { src: decoHero, alt: 'Gilded palm-leaf art deco frame' },
-  { src: decoFrame, alt: 'Gold art deco sunburst frame' },
-  { src: decoFeather, alt: 'Gold peacock feather illustration' },
-  { src: decoCouple, alt: 'Elena and Marcus' },
-  { src: decoFrame, alt: 'Gold art deco sunburst frame' },
-  { src: decoHero, alt: 'Gilded palm-leaf art deco frame' },
-]
+function getGallery(coupleAlt) {
+  return [
+    { src: decoCouple, alt: coupleAlt },
+    { src: decoFeather, alt: 'Gold peacock feather illustration' },
+    { src: decoHero, alt: 'Gilded palm-leaf art deco frame' },
+    { src: decoFrame, alt: 'Gold art deco sunburst frame' },
+    { src: decoFeather, alt: 'Gold peacock feather illustration' },
+    { src: decoCouple, alt: coupleAlt },
+    { src: decoFrame, alt: 'Gold art deco sunburst frame' },
+    { src: decoHero, alt: 'Gilded palm-leaf art deco frame' },
+  ]
+}
 
-function getCountdown() {
-  const targetMs = Number.isFinite(TARGET_DATE.getTime()) ? TARGET_DATE.getTime() : Date.now()
-  const totalSeconds = Math.max(0, Math.floor((targetMs - Date.now()) / 1000))
+// Name split into animatable letters; works for any name (spaces kept visible).
+function HeroLetters({ name, prefix }) {
+  return Array.from(name).map((c, i) => (
+    <span key={`${prefix}${i}`} className="hero-letter inline-block">
+      {c === ' ' ? ' ' : c}
+    </span>
+  ))
+}
+
+function getCountdown(targetDate, now) {
+  const targetMs = Number.isFinite(targetDate.getTime()) ? targetDate.getTime() : now
+  const totalSeconds = Math.max(0, Math.floor((targetMs - now) / 1000))
   const days = Math.floor(totalSeconds / 86400)
   const hours = Math.floor((totalSeconds % 86400) / 3600)
   const minutes = Math.floor((totalSeconds % 3600) / 60)
@@ -77,11 +163,35 @@ function getCountdown() {
 export default function MedDreamSparkArtDecoTemplatePage() {
   const root = useRef(null)
   const jewelCanvas = useRef(null)
-  const [time, setTime] = useState(() => getCountdown())
+  const {
+    loading: cardLoading,
+    error: cardError,
+    card,
+    partner1,
+    partner2,
+    eventDate: targetDate,
+    eventDateValue,
+    dateLabel,
+    venue,
+    city,
+    address,
+    rsvpDeadline,
+  } = useWeddingCardFields(DEFAULTS)
+  const { weekday, longDate, numericDate, shortDate, words: dateWords } = getEventParts(eventDateValue, targetDate)
+  // An explicit dateLabel from the card wins; otherwise use the venue-local long date.
+  const displayDate = card?.details?.dateLabel ? dateLabel : longDate
+  const couple = `${partner1} & ${partner2}`
+  const coupleAlt = `${partner1} and ${partner2}`
+  const gallery = getGallery(coupleAlt)
+  const mapQuery = encodeURIComponent([venue, address, city].filter(Boolean).join(', '))
+
+  // Only the clock ticks; the countdown itself is derived so a new target date applies at once.
+  const [now, setNow] = useState(() => Date.now())
+  const time = getCountdown(targetDate, now)
   const [sent, setSent] = useState(false)
 
   useEffect(() => {
-    const id = window.setInterval(() => setTime(getCountdown()), 1000)
+    const id = window.setInterval(() => setNow(Date.now()), 1000)
     return () => window.clearInterval(id)
   }, [])
 
@@ -616,8 +726,8 @@ export default function MedDreamSparkArtDecoTemplatePage() {
 
       <header className="fixed top-0 left-0 right-0 z-40 backdrop-blur-md bg-[oklch(0.15_0.045_185/0.72)] border-b border-primary/20">
         <div className="container-x flex items-center justify-between py-1.5">
-          <a href="#top" className="inline-flex min-h-11 items-center font-display text-lg tracking-[0.3em] gold-text" aria-label="Elena and Marcus — back to top">
-            E &amp; M
+          <a href="#top" className="inline-flex min-h-11 items-center font-display text-lg tracking-[0.3em] gold-text" aria-label={`${coupleAlt} — back to top`}>
+            {initial(partner1)} &amp; {initial(partner2)}
           </a>
           <nav aria-label="Sections" className="hidden md:flex items-center gap-6 text-xs uppercase tracking-[0.25em] text-muted-foreground">
             {[
@@ -677,13 +787,9 @@ export default function MedDreamSparkArtDecoTemplatePage() {
               <span aria-hidden="true" className="h-px w-10 bg-primary" />
             </div>
 
-            <h1 aria-label="Elena & Marcus" className="deco-hero-title font-display text-[clamp(3.5rem,18vw,9rem)] leading-[0.95] font-light">
+            <h1 aria-label={couple} className="deco-hero-title font-display text-[clamp(3.5rem,18vw,9rem)] leading-[0.95] font-light">
               <span aria-hidden="true" className="block overflow-hidden">
-                {'Elena'.split('').map((c, i) => (
-                  <span key={`e${i}`} className="hero-letter inline-block">
-                    {c}
-                  </span>
-                ))}
+                <HeroLetters name={partner1} prefix="a" />
               </span>
               <span aria-hidden="true" className="block overflow-hidden">
                 <span className="hero-letter inline-block font-script text-primary text-[clamp(3rem,14vw,7rem)] italic">
@@ -691,23 +797,19 @@ export default function MedDreamSparkArtDecoTemplatePage() {
                 </span>
               </span>
               <span aria-hidden="true" className="block overflow-hidden">
-                {'Marcus'.split('').map((c, i) => (
-                  <span key={`m${i}`} className="hero-letter inline-block">
-                    {c}
-                  </span>
-                ))}
+                <HeroLetters name={partner2} prefix="b" />
               </span>
             </h1>
 
             <p className="hero-sub mt-8 flex flex-col md:flex-row items-center justify-center gap-3 md:gap-6 text-sm uppercase tracking-[0.3em] text-muted-foreground">
-              <span>Eighteen</span>
+              <span>{dateWords[0]}</span>
               <span aria-hidden="true" className="text-primary">◆</span>
-              <span>September</span>
+              <span>{dateWords[1]}</span>
               <span aria-hidden="true" className="text-primary">◆</span>
-              <span>Two Thousand Twenty Seven</span>
+              <span>{dateWords[2]}</span>
             </p>
 
-            <p className="hero-sub mt-3 text-xs uppercase tracking-[0.4em] text-muted-foreground">Saturday · Villa Aurelia · Rome</p>
+            <p className="hero-sub mt-3 text-xs uppercase tracking-[0.4em] text-muted-foreground">{weekday} · {venue} · {city}</p>
           </div>
 
           <div aria-hidden="true" className="absolute bottom-8 left-1/2 -translate-x-1/2 hero-sub">
@@ -721,11 +823,11 @@ export default function MedDreamSparkArtDecoTemplatePage() {
               <div key={i} className="flex items-center gap-12 shrink-0">
                 <span>Forever begins</span>
                 <span>◆</span>
-                <span>18 · 09 · 2027</span>
+                <span>{numericDate}</span>
                 <span>◆</span>
-                <span>Villa Aurelia</span>
+                <span>{venue}</span>
                 <span>◆</span>
-                <span>Roma</span>
+                <span>{city}</span>
                 <span>◆</span>
               </div>
             ))}
@@ -755,7 +857,7 @@ export default function MedDreamSparkArtDecoTemplatePage() {
 
             <div
               role="timer"
-              aria-label="Countdown to Saturday 18 September 2027"
+              aria-label={`Countdown to ${displayDate}`}
               className="mt-12 grid grid-cols-4 gap-2 md:gap-6 max-w-2xl mx-auto"
             >
               {[
@@ -782,7 +884,7 @@ export default function MedDreamSparkArtDecoTemplatePage() {
             <div aria-hidden="true" className="absolute -inset-4 gold-border opacity-50" />
             <img
               src={decoCouple}
-              alt="Elena and Marcus"
+              alt={coupleAlt}
               className="relative w-full aspect-[4/5] object-cover"
               loading="lazy"
               width={1024}
@@ -807,7 +909,7 @@ export default function MedDreamSparkArtDecoTemplatePage() {
               href="#rsvp"
               className="magnetic inline-flex min-h-11 items-center gold-border px-8 py-4 text-xs uppercase tracking-[0.4em] text-primary hover:bg-primary hover:text-primary-foreground transition-colors"
             >
-              Reply by 7 August 2027
+              Reply by {rsvpDeadline}
             </a>
           </div>
         </section>
@@ -816,7 +918,7 @@ export default function MedDreamSparkArtDecoTemplatePage() {
           <img src={decoFrame} alt="" aria-hidden="true" className="absolute inset-0 w-full h-full object-cover opacity-12 mix-blend-screen" loading="lazy" />
           <div className="container-x relative">
             <div className="text-center mb-16">
-              <div className="text-xs uppercase tracking-[0.4em] text-primary mb-3">The Details · Saturday 18 September 2027</div>
+              <div className="text-xs uppercase tracking-[0.4em] text-primary mb-3">The Details · {displayDate}</div>
               <h2 className="reveal-words font-display text-4xl md:text-6xl">
                 <SplitWords text="An evening of glamour" />
               </h2>
@@ -827,19 +929,19 @@ export default function MedDreamSparkArtDecoTemplatePage() {
                 {
                   time: '16:00',
                   title: 'Ceremony',
-                  place: 'Villa Aurelia · Gardens',
+                  place: `${venue} · Gardens`,
                   desc: 'Vows beneath the cypress trees as the afternoon light turns gold.',
                 },
                 {
                   time: '18:30',
                   title: 'Reception',
-                  place: 'Villa Aurelia · Salone',
+                  place: `${venue} · Salone`,
                   desc: 'Champagne, oysters, and the music of a string quartet on the terrace.',
                 },
                 {
                   time: '21:00',
                   title: 'Dancing',
-                  place: 'Villa Aurelia · Ballroom',
+                  place: `${venue} · Ballroom`,
                   desc: 'Black tie. A live jazz orchestra until the small hours of the morning.',
                 },
               ].map((d) => (
@@ -871,7 +973,7 @@ export default function MedDreamSparkArtDecoTemplatePage() {
           </div>
 
           <div className="ad-gallery-grid grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-            {GALLERY.map((item, i) => (
+            {gallery.map((item, i) => (
               <div key={i} className="ad-gallery-tile deco-card overflow-hidden aspect-[3/4] gold-border">
                 <img src={item.src} alt={item.alt} className="gallery-img h-full w-full object-cover" loading="lazy" />
               </div>
@@ -882,8 +984,8 @@ export default function MedDreamSparkArtDecoTemplatePage() {
         <section className="ad-venue-section container-x py-20 md:py-32 grid md:grid-cols-2 gap-8 items-stretch">
           <div className="ad-map-panel deco-panel gold-border overflow-hidden aspect-[4/3] md:aspect-auto md:min-h-[22rem]">
             <iframe
-              title="Map of Villa Aurelia, Rome"
-              src="https://www.google.com/maps?q=Villa+Aurelia+Rome&output=embed"
+              title={`Map of ${venue}, ${city}`}
+              src={`https://www.google.com/maps?q=${mapQuery}&output=embed`}
               className="block w-full h-full border-0 grayscale contrast-125 invert-[0.85] hue-rotate-[60deg]"
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
@@ -891,16 +993,17 @@ export default function MedDreamSparkArtDecoTemplatePage() {
           </div>
           <div className="ad-venue-copy flex flex-col justify-center">
             <div className="text-xs uppercase tracking-[0.4em] text-primary mb-3">The Venue</div>
-            <h2 className="font-display text-4xl md:text-5xl mb-6">Villa Aurelia</h2>
+            <h2 className="font-display text-4xl md:text-5xl mb-6">{venue}</h2>
             <p className="text-muted-foreground leading-relaxed mb-2">
-              Largo di Porta San Pancrazio, 1<br />
-              00152 Roma, Italia
+              {address}
+              <br />
+              {city}
             </p>
             <p className="text-sm text-muted-foreground/85 italic mb-6">
               Perched atop the Janiculum Hill, with sweeping views over the Eternal City.
             </p>
             <a
-              href="https://maps.google.com/?q=Villa+Aurelia+Rome"
+              href={`https://maps.google.com/?q=${mapQuery}`}
               target="_blank"
               rel="noreferrer"
               className="magnetic self-start inline-flex min-h-11 items-center gold-border px-6 py-3 text-xs uppercase tracking-[0.4em] text-primary hover:bg-primary hover:text-primary-foreground transition-colors"
@@ -920,7 +1023,7 @@ export default function MedDreamSparkArtDecoTemplatePage() {
             <h2 className="reveal-words font-display text-4xl md:text-6xl mb-3">
               <SplitWords text="Will you join us?" />
             </h2>
-            <p className="font-script text-3xl md:text-4xl text-primary mb-10">by the seventh of August</p>
+            <p className="font-script text-3xl md:text-4xl text-primary mb-10">by {deadlinePhrase(rsvpDeadline)}</p>
 
             {sent ? (
               <div role="status" className="ad-rsvp-form gold-border px-6 py-10 text-center">
@@ -976,16 +1079,31 @@ export default function MedDreamSparkArtDecoTemplatePage() {
       </main>
 
       <footer className="border-t border-primary/20 pt-12 pb-24 md:pb-12 text-center">
-        <div className="font-script text-5xl gold-text mb-3">Elena &amp; Marcus</div>
-        <div className="text-xs uppercase tracking-[0.5em] text-muted-foreground">18 · 09 · 2027 · Roma</div>
+        <div className="font-script text-5xl gold-text mb-3">
+          {partner1} &amp; {partner2}
+        </div>
+        <div className="text-xs uppercase tracking-[0.5em] text-muted-foreground">
+          {numericDate} · {city}
+        </div>
       </footer>
 
       <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[oklch(0.14_0.03_165/0.95)] backdrop-blur border-t border-primary/30 px-4 py-2 flex items-center justify-between pb-[max(0.5rem,env(safe-area-inset-bottom))]">
-        <div className="text-[11px] uppercase tracking-[0.3em] text-muted-foreground">18·09·27 · Roma</div>
+        <div className="text-[11px] uppercase tracking-[0.3em] text-muted-foreground">
+          {shortDate} · {city}
+        </div>
         <a href="#rsvp" className="inline-flex min-h-11 items-center bg-primary text-primary-foreground px-5 text-[11px] uppercase tracking-[0.4em]">
           RSVP
         </a>
       </div>
+
+      {(cardLoading || cardError) && (
+        <div
+          role="status"
+          className={`fixed left-4 top-20 z-50 border px-3 py-2 text-[10px] uppercase tracking-[0.18em] backdrop-blur ${cardError ? 'border-red-400/40 bg-red-950/80 text-red-100' : 'border-primary/30 bg-[oklch(0.12_0.04_205/0.82)] text-primary'}`}
+        >
+          {cardError ? 'Invitation data could not be loaded' : 'Loading invitation data'}
+        </div>
+      )}
     </div>
   )
 }
