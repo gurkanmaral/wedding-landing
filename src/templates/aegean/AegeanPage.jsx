@@ -1,17 +1,33 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 
 const couple1 = '/assets/aegean/couple-1.svg'
 const couple2 = '/assets/aegean/couple-2.svg'
 const couple3 = '/assets/aegean/couple-3.svg'
+
+/* ===== Düğün günü — sayfadaki tüm tarihler buradan =====
+   Cumartesi 19 Haziran 2027, nikâh 17.00 (TSİ, UTC+3). */
+const WEDDING = {
+  target: '2027-06-19T17:00:00+03:00', // nikâh saati, geri sayım hedefi
+  icsStart: '20270619T140000Z', // 17.00 TSİ
+  icsEnd: '20270619T210000Z', // 24.00 TSİ
+  uid: 'elif-deniz-20270619@dugun',
+  heroLine: 'Cumartesi · 19 Haziran 2027',
+  postmark: '19 · 06 · 2027',
+  year: '2027',
+  rsvpBy: '8 Mayıs 2027 Cumartesi',
+}
 
 const css = String.raw`
   :root{
     --bg:        oklch(0.977 0.008 85);
     --bg-deep:   oklch(0.947 0.016 80);
     --ink:       oklch(0.3 0.045 255);
-    --muted:     oklch(0.49 0.04 250);
+    --muted:     oklch(0.45 0.04 250);
     --accent:    oklch(0.5 0.12 245);
     --accent-2:  oklch(0.56 0.19 350);
+    /* darker tones for small letter-spaced labels (AA on whitewash) */
+    --label:     oklch(0.43 0.11 248);
+    --label-2:   oklch(0.48 0.18 352);
     --olive:     oklch(0.53 0.08 125);
     --sea:       oklch(0.42 0.1 247);
     --sea-2:     oklch(0.34 0.09 252);
@@ -28,7 +44,13 @@ const css = String.raw`
     font-family:var(--serif); font-size:18px; line-height:1.7;
     -webkit-font-smoothing:antialiased; overflow-x:clip;
   }
+  .aegean-page{ overflow-x:clip; }
   ::selection{ background:var(--accent-2); color:var(--bg); }
+  .aegean-page .sr-only{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); clip-path:inset(50%); white-space:nowrap; }
+
+  /* visible keyboard focus */
+  .aegean-page a:focus-visible, .aegean-page button:focus-visible{
+    outline:2px solid var(--label); outline-offset:4px; border-radius:2px; }
 
   /* ---- whitewashed wall + sea light ---- */
   #ground{ position:fixed; inset:0; z-index:0;
@@ -41,9 +63,10 @@ const css = String.raw`
     background-image:radial-gradient(oklch(0.55 0.03 250 / .05) 1px, transparent 1px);
     background-size:4px 4px; }
 
-  /* ---- bougainvillea petals ---- */
-  #leaves{ position:fixed; inset:0; z-index:3; pointer-events:none; overflow:hidden; }
-  .aegean-page .dom-leaf{ position:absolute; top:0; left:0; transform-origin:50% 45%; will-change:transform; }
+  /* offscreen sections pause their looping CSS animations */
+  .aegean-page .is-off, .aegean-page .is-off *{ animation-play-state:paused !important; }
+
+  /* ---- bougainvillea petals (vine clusters) ---- */
   .aegean-page .petal-shape{ --p0:#d81b7f; display:block; width:14px; height:11px;
     border-radius:65% 35% 70% 30% / 55% 45% 60% 40%;
     background:radial-gradient(130% 130% at 30% 25%,
@@ -67,39 +90,54 @@ const css = String.raw`
   .aegean-page .vheart{ display:block; width:4px; height:4px; border-radius:50%;
     background:#ffedb0; margin:-2px 0 0 -2px; }
 
-  /* ---- the sea at the foot of the hero ---- */
-  #sea{ position:absolute; left:0; right:0; bottom:0; height:clamp(84px,15vh,150px);
-    z-index:1; overflow:hidden; }
-  #sea svg.wl{ position:absolute; bottom:0; left:0; width:200%; height:100%; }
-  .aegean-page .wl.w1{ height:100%; animation:driftr 17s linear infinite; }
-  .aegean-page .wl.w2{ height:74%; animation:driftl 11s linear infinite; }
-  .aegean-page .wl.w3{ height:52%; animation:driftr 8s linear infinite; }
-  .aegean-page .wl.w1 path{ fill:oklch(0.78 0.05 240 / .4); }
-  .aegean-page .wl.w2 path{ fill:oklch(0.64 0.08 244 / .55); }
-  .aegean-page .wl.w3 path{ fill:oklch(0.52 0.1 247 / .75); }
-  @keyframes driftr{ from{ transform:translateX(-50%); } to{ transform:translateX(0); } }
-  @keyframes driftl{ from{ transform:translateX(0); } to{ transform:translateX(-50%); } }
-  #boat{ position:absolute; bottom:44%; left:0; animation:sail 70s linear infinite; opacity:.85; }
+  /* ---- the aegean shore at the foot of the hero — a cove seen at an angle ---- */
+  .aegean-page{ --shoreH: clamp(190px, 30vh, 320px); }
+  #sea{ position:absolute; left:0; right:0; bottom:0; height:var(--shoreH);
+    z-index:1; overflow:hidden;
+    background:
+      radial-gradient(1.5px 1.5px at 12% 34%, oklch(0.72 0.06 70 / .7) 50%, transparent 51%),
+      radial-gradient(1.5px 1.5px at 34% 68%, oklch(0.7 0.07 65 / .6) 50%, transparent 51%),
+      radial-gradient(2px 2px at 8% 78%, oklch(0.75 0.05 75 / .5) 50%, transparent 51%),
+      radial-gradient(1.5px 1.5px at 23% 15%, oklch(0.68 0.07 60 / .6) 50%, transparent 51%),
+      radial-gradient(2px 2px at 42% 45%, oklch(0.78 0.05 80 / .55) 50%, transparent 51%),
+      linear-gradient(105deg, oklch(0.9 0.05 80) 0%, oklch(0.87 0.06 78) 55%, oklch(0.84 0.065 74) 100%);
+    background-size:90px 70px, 120px 90px, 140px 110px, 110px 80px, 100px 60px, 100% 100%;
+  }
+  #sea .shoreSvg{ position:absolute; inset:0; width:100%; height:100%; display:block; }
+  #sea .tide{ animation:tide 7s ease-in-out infinite alternate; will-change:transform; }
+  @keyframes tide{ from{ transform:translate(0,0); } to{ transform:translate(-18px,-8px); } }
+  #sea .foam.f2{ animation:foamlag 7s ease-in-out infinite alternate; }
+  @keyframes foamlag{ from{ transform:translate(6px,3px); opacity:.55; } to{ transform:translate(-34px,-14px); opacity:.12; } }
+  #sparkle{ position:absolute; inset:0; pointer-events:none; opacity:.5;
+    clip-path:polygon(45% 0, 100% 0, 100% 100%, 31% 100%);
+    background-image:
+      radial-gradient(3px 1.6px at 30px 22px, rgba(255,255,255,.8), transparent 70%),
+      radial-gradient(2.4px 1.3px at 90px 60px, rgba(255,255,255,.55), transparent 70%),
+      radial-gradient(3.6px 1.8px at 150px 38px, rgba(255,255,255,.65), transparent 70%);
+    background-size:180px 90px, 220px 120px, 260px 140px;
+    animation:glint 9s linear infinite;
+  }
+  @keyframes glint{ from{ background-position:0 0, 0 0, 0 0; } to{ background-position:180px 90px, -220px 120px, 260px -140px; } }
+  #sea::before{ content:""; position:absolute; left:0; right:0; top:0; height:20px; z-index:2;
+    background:linear-gradient(180deg, var(--bg), transparent); pointer-events:none; }
+  #boat{ position:absolute; top:14%; left:71%; opacity:.9; animation:drift 12s ease-in-out infinite alternate; }
   #boat .bob{ animation:bob 3.4s ease-in-out infinite alternate; transform-origin:50% 100%; }
-  @keyframes sail{ from{ transform:translateX(-90px); } to{ transform:translateX(calc(100vw + 90px)); } }
+  @keyframes drift{ from{ transform:translateX(-28px); } to{ transform:translateX(28px); } }
   @keyframes bob{ from{ transform:rotate(-2.2deg) translateY(0); } to{ transform:rotate(2.4deg) translateY(3px); } }
   .aegean-page .ripple{ position:absolute; width:150px; height:150px; margin:-75px 0 0 -75px;
     border-radius:50%; border:1.5px solid oklch(0.99 0.005 240 / .95);
     transform:scale(0); opacity:.9; animation:rip 1.25s ease-out forwards; pointer-events:none; }
+  .aegean-page .ripple.mini{ width:60px; height:60px; margin:-30px 0 0 -30px;
+    border-width:1.2px; opacity:.7; animation:rip .9s ease-out forwards; }
   @keyframes rip{ to{ transform:scale(1); opacity:0; } }
-  @media(prefers-reduced-motion:reduce){
-    .aegean-page .wl.w1,.aegean-page .wl.w2,.aegean-page .wl.w3{ animation:none; }
-    #boat{ animation:none; left:18%; }
-    #boat .bob{ animation:none; }
-  }
 
   .aegean-page main{ position:relative; }
   .aegean-page .band{ position:relative; z-index:4; }
   .aegean-page .band .shell{ position:relative; z-index:2; }
-  .aegean-page .shell{ width:100%; max-width:72rem; margin:0 auto; padding:0 clamp(1.5rem,5vw,4.5rem); }
+  .aegean-page .shell{ width:100%; max-width:72rem; margin:0 auto; padding:0 clamp(1.25rem,5vw,4.5rem); }
 
   .aegean-page .label{ font-family:var(--display); font-size:.72rem; letter-spacing:.42em;
-    text-transform:uppercase; color:var(--accent); }
+    text-transform:uppercase; color:var(--label); }
   .aegean-page em, .aegean-page .it{ font-family:var(--script); font-style:italic; }
 
   /* ---- wave section dividers ---- */
@@ -114,16 +152,16 @@ const css = String.raw`
   .aegean-page .hero{ position:relative; z-index:2; min-height:100vh; min-height:100svh;
     display:flex; align-items:center; justify-content:center; text-align:center; }
   .aegean-page .hero .shell{ display:flex; flex-direction:column; align-items:center; position:relative; z-index:2;
-    padding-top:4rem; padding-bottom:8.5rem; }
-  .aegean-page .arch-frame{ position:relative; width:min(34rem,88vw);
-    padding:clamp(3rem,7vw,4.6rem) clamp(1.4rem,4vw,3rem) clamp(2.2rem,5vw,3.2rem);
+    padding-top:4rem; padding-bottom:calc(var(--shoreH) + 2.5rem); }
+  .aegean-page .arch-frame{ position:relative; width:min(34rem,100%);
+    padding:clamp(3rem,7vw,4.6rem) clamp(1.2rem,4vw,3rem) clamp(2.2rem,5vw,3.2rem);
     border:1.5px solid var(--line); border-radius:999px 999px 16px 16px;
-    background:oklch(0.985 0.006 90 / .6); backdrop-filter:blur(3px);
+    background:oklch(0.985 0.006 90 / .6); backdrop-filter:blur(3px); -webkit-backdrop-filter:blur(3px);
     box-shadow:inset 0 0 0 7px var(--bg), inset 0 0 0 8.5px var(--line-soft),
       0 40px 80px -50px oklch(.3 .06 250 / .5); }
-  .aegean-page .hero .label{ display:block; margin-bottom:1.8rem; color:var(--accent-2); }
-  .aegean-page .names{ font-family:var(--display); color:var(--ink); line-height:.95;
-    font-size:clamp(2.9rem,10vw,5.6rem); letter-spacing:.01em; }
+  .aegean-page .hero .label{ display:block; margin-bottom:1.8rem; color:var(--label-2); }
+  .aegean-page .names{ font-family:var(--display); font-weight:400; color:var(--ink); line-height:.95;
+    font-size:clamp(2.7rem,10vw,5.6rem); letter-spacing:.01em; overflow-wrap:anywhere; }
   .aegean-page .names .amp{ display:block; font-family:var(--script); font-style:italic;
     font-size:clamp(1.6rem,4vw,2.4rem); color:var(--accent-2); line-height:1.1;
     margin:.14em 0 .08em; }
@@ -132,23 +170,28 @@ const css = String.raw`
   .aegean-page .hero-meta .where{ margin-top:.3rem; color:var(--muted); font-size:.98rem; }
   .aegean-page .hero-meta::before{ content:""; display:block; width:52px; height:1.5px;
     background:var(--accent); margin:0 auto 1.1rem; opacity:.55; }
-  .aegean-page .hero-actions{ margin-top:2rem; display:flex; flex-wrap:wrap; justify-content:center;
-    align-items:center; gap:.9rem 1.1rem; }
+  .aegean-page .hero-actions{ margin-top:1.4rem; display:flex; flex-wrap:wrap; justify-content:center;
+    align-items:center; gap:.2rem 1.1rem; }
   .aegean-page .hero-actions .dot{ color:var(--line); }
-  .aegean-page .ghost{ font-family:var(--display); font-size:.68rem; letter-spacing:.26em; text-transform:uppercase;
-    color:var(--accent); text-decoration:none; border-bottom:1px solid var(--line);
-    padding-bottom:.3rem; transition:border-color .3s, color .3s;
+  /* ghost links/buttons: hairline underline, 44px tall tap area */
+  .aegean-page .ghost{ display:inline-flex; align-items:flex-end; min-height:44px;
+    font-family:var(--display); font-size:.68rem; letter-spacing:.26em; text-transform:uppercase;
+    color:var(--label); text-decoration:none; background:none; border:0; border-bottom:1px solid var(--line);
+    padding:0 0 .3rem; cursor:pointer; transition:border-color .3s, color .3s;
     text-shadow:0 0 8px var(--bg),0 0 3px var(--bg); }
-  .aegean-page .ghost:hover{ border-color:var(--accent); color:var(--accent-2); }
-  .aegean-page .scroll-cue{ position:absolute; z-index:2; bottom:calc(clamp(84px,15vh,150px) + 1.3rem); left:50%; transform:translateX(-50%);
-    font-family:var(--display); font-size:.68rem; letter-spacing:.4em; text-transform:uppercase;
+  .aegean-page .ghost:hover{ border-color:var(--accent); color:var(--label-2); }
+  .aegean-page .scroll-cue{ position:absolute; z-index:2; bottom:calc(var(--shoreH) + .8rem); left:50%; transform:translateX(-50%);
+    min-height:44px; font-family:var(--display); font-size:.68rem; letter-spacing:.4em; text-transform:uppercase;
     color:oklch(0.3 0.05 255); display:flex; align-items:center; gap:.7rem; text-decoration:none; }
   .aegean-page .scroll-cue::after{ content:""; width:46px; height:1px; background:oklch(0.3 0.05 255);
     transform-origin:left; animation:grow 2.4s ease-in-out infinite; }
   @keyframes grow{ 0%,100%{transform:scaleX(.3);opacity:.5} 50%{transform:scaleX(1);opacity:1} }
+  /* short screens: the cue would collide with the hero links */
+  @media(max-height:960px){ .aegean-page .scroll-cue{ display:none; } }
   @media(max-width:720px){
+    .aegean-page{ --shoreH: clamp(140px, 22vh, 210px); }
     .aegean-page .scroll-cue{ display:none; }
-    .aegean-page .hero .shell{ padding-bottom:8.5rem; }
+    .aegean-page .hero .shell{ padding-bottom:calc(var(--shoreH) + 1.5rem); }
     .aegean-page .vinehost{ width:52vw; height:30vh; opacity:.9;
       -webkit-mask-image:linear-gradient(185deg,#000 55%,transparent 96%);
       mask-image:linear-gradient(185deg,#000 55%,transparent 96%); }
@@ -160,7 +203,7 @@ const css = String.raw`
   .aegean-page .sea-band{ position:relative; background:linear-gradient(180deg, var(--sea) 0%, var(--sea-2) 100%); }
   .aegean-page .eyrow{ display:flex; flex-direction:column; align-items:center; gap:1rem; margin-bottom:2.4rem; text-align:center; }
   .aegean-page h2.head{ font-family:var(--display); font-weight:400; color:var(--ink); text-align:center;
-    font-size:clamp(2rem,4.4vw,3rem); line-height:1.1; }
+    font-size:clamp(1.9rem,4.4vw,3rem); line-height:1.1; overflow-wrap:break-word; }
 
   .aegean-page .invite{ max-width:44rem; margin:0 auto; text-align:center; }
   .aegean-page .invite .lead{ font-family:var(--script); font-style:italic; font-size:clamp(1.5rem,2.6vw,2rem);
@@ -169,7 +212,7 @@ const css = String.raw`
   .aegean-page .invite p.body + p.body{ margin-top:1rem; }
 
   /* ---- coastal route timeline ---- */
-  .aegean-page .route{ position:relative; display:grid; grid-template-columns:repeat(5,1fr);
+  .aegean-page .route{ position:relative; display:grid; grid-template-columns:repeat(5,minmax(0,1fr));
     gap:clamp(1rem,2.4vw,2rem); margin-top:3.4rem; }
   .aegean-page .route::before{ content:""; position:absolute; top:5px; left:1.5%; right:1.5%;
     border-top:2px dashed var(--line); }
@@ -177,7 +220,7 @@ const css = String.raw`
   .aegean-page .rstop::before{ content:""; position:absolute; top:0; left:2px; width:12px; height:12px;
     border-radius:50%; background:var(--accent-2);
     box-shadow:0 0 0 4px color-mix(in oklab, var(--accent-2) 18%, transparent); }
-  .aegean-page .rstop .time{ font-family:var(--display); font-size:.95rem; letter-spacing:.06em; color:var(--accent-2); }
+  .aegean-page .rstop .time{ font-family:var(--display); font-size:.95rem; letter-spacing:.06em; color:var(--label-2); }
   .aegean-page .rstop h3{ font-family:var(--display); font-weight:400; font-size:1.25rem; color:var(--ink); margin-top:.5rem; }
   .aegean-page .rstop p{ color:var(--muted); font-size:.95rem; margin-top:.35rem; }
   @media(max-width:820px){
@@ -188,15 +231,15 @@ const css = String.raw`
   }
 
   /* ---- countdown at sea ---- */
-  .aegean-page .sea-band .label{ color:oklch(0.84 0.05 240); }
+  .aegean-page .sea-band .label{ color:oklch(0.88 0.04 240); }
   .aegean-page .sea-band h2.head{ color:#fff; }
   .aegean-page .count{ display:flex; flex-wrap:wrap; justify-content:center; align-items:flex-end;
     gap:clamp(1.5rem,5vw,3.5rem); margin-top:2.6rem; }
-  .aegean-page .cd-unit{ display:flex; flex-direction:column; align-items:center; }
+  .aegean-page .cd-unit{ display:flex; flex-direction:column; align-items:center; min-width:0; }
   .aegean-page .cd-unit .n{ font-family:var(--display); font-size:clamp(2.6rem,6vw,3.6rem); line-height:1; color:#fff;
     font-variant-numeric:lining-nums tabular-nums; }
   .aegean-page .cd-unit .l{ margin-top:.6rem; font-size:.7rem; letter-spacing:.34em; text-transform:uppercase;
-    color:oklch(0.8 0.045 240); }
+    color:oklch(0.88 0.035 240); }
   @media(max-width:560px){
     .aegean-page .count{ display:grid; grid-template-columns:1fr 1fr; gap:2.4rem 1rem;
       justify-items:center; text-align:center; max-width:20rem; margin:2.2rem auto 0; }
@@ -207,7 +250,7 @@ const css = String.raw`
   .aegean-page .rope{ position:absolute; z-index:1; top:0; left:-2%; right:-2%; height:44px; pointer-events:none; }
   .aegean-page .rope svg{ width:100%; height:100%; display:block; }
   .aegean-page .rope path{ stroke:oklch(0.55 0.05 70); stroke-width:2.5; fill:none; }
-  .aegean-page .pins{ position:relative; z-index:2; display:grid; grid-template-columns:repeat(3,1fr);
+  .aegean-page .pins{ position:relative; z-index:2; display:grid; grid-template-columns:repeat(3,minmax(0,1fr));
     gap:clamp(1.2rem,3vw,2.6rem); padding-top:10px; }
   .aegean-page .pin{ position:relative; }
   .aegean-page .pin:nth-child(2){ margin-top:22px; }
@@ -217,7 +260,15 @@ const css = String.raw`
   .aegean-page .polar{ background:#fffdf9; border:1px solid var(--line); padding:10px 10px 0; margin-top:8px;
     box-shadow:0 28px 50px -30px oklch(.3 .06 250 / .55);
     transform:rotate(var(--tilt,0deg)); transform-origin:50% -14px; }
-  .aegean-page .pin:hover .polar{ animation:swing 1.5s ease-in-out; }
+  /* polaroids idle-sway on the line all the time; hovering swings them harder */
+  .aegean-page .polar{ animation:idlesway 6.5s ease-in-out infinite; }
+  .aegean-page .pin:nth-child(1) .polar{ animation-delay:-1.1s; }
+  .aegean-page .pin:nth-child(2) .polar{ animation-delay:-3.6s; }
+  .aegean-page .pin:nth-child(3) .polar{ animation-delay:-5.2s; }
+  @keyframes idlesway{
+    0%,100%{ transform:rotate(calc(var(--tilt,0deg) - .9deg)); }
+    50%{ transform:rotate(calc(var(--tilt,0deg) + .9deg)); } }
+  .aegean-page .pin:hover .polar{ animation:swing 1.5s ease-in-out infinite; animation-delay:0s; }
   @keyframes swing{
     0%,100%{ transform:rotate(var(--tilt,0deg)); }
     30%{ transform:rotate(calc(var(--tilt,0deg) + 2.6deg)); }
@@ -248,10 +299,10 @@ const css = String.raw`
   .aegean-page .postcard{ position:relative; max-width:56rem; margin:0 auto; background:#fffdf8;
     border:1px solid var(--line); border-radius:6px;
     box-shadow:0 40px 70px -42px oklch(.3 .06 250 / .6);
-    display:grid; grid-template-columns:1.15fr .85fr; }
-  .aegean-page .pc-left{ padding:clamp(1.6rem,4vw,2.6rem); }
+    display:grid; grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr); }
+  .aegean-page .pc-left{ padding:clamp(1.3rem,4vw,2.6rem); min-width:0; }
   .aegean-page .pc-right{ position:relative; border-left:1.5px dashed var(--line);
-    padding:clamp(1.6rem,4vw,2.6rem); display:flex; flex-direction:column; gap:1.4rem; }
+    padding:clamp(1.3rem,4vw,2.6rem); display:flex; flex-direction:column; gap:1.4rem; }
   .aegean-page .stamp{ align-self:flex-end; width:78px; padding:8px; background:#fff;
     border:1px dashed var(--line); text-align:center; }
   .aegean-page .stamp .val{ display:block; font-family:var(--display); font-size:.6rem; letter-spacing:.14em;
@@ -268,18 +319,19 @@ const css = String.raw`
   .aegean-page .addr .ln.name{ font-family:var(--display); color:var(--ink); font-size:1.05rem;
     display:flex; align-items:flex-end; padding-bottom:.3rem; }
   @media(max-width:820px){
-    .aegean-page .postcard{ grid-template-columns:1fr; }
+    .aegean-page .postcard{ grid-template-columns:minmax(0,1fr); }
     .aegean-page .pc-right{ border-left:0; border-top:1.5px dashed var(--line); }
     .aegean-page .postmark{ right:auto; left:22px; }
   }
   .aegean-page form.rsvp{ display:flex; flex-direction:column; gap:1.55rem; }
   .aegean-page .rsvp label{ display:block; font-family:var(--display); font-size:.68rem; letter-spacing:.32em;
-    text-transform:uppercase; color:var(--accent); margin-bottom:.4rem; }
-  .aegean-page .field{ width:100%; border:0; border-bottom:1px solid var(--line); background:transparent;
+    text-transform:uppercase; color:var(--label); margin-bottom:.4rem; }
+  .aegean-page .field{ width:100%; min-height:44px; border:0; border-bottom:1px solid var(--line); background:transparent;
     padding:.55rem .1rem; color:var(--ink); font-family:var(--serif); font-size:1.08rem;
-    transition:border-color .3s; outline:none; }
-  .aegean-page .field::placeholder{ color:oklch(0.49 0.04 250 / .6); }
+    transition:border-color .3s, box-shadow .3s; outline:none; border-radius:0; }
+  .aegean-page .field::placeholder{ color:oklch(0.45 0.04 250 / .75); }
   .aegean-page .field:focus{ border-color:var(--accent-2); }
+  .aegean-page .field:focus-visible{ border-color:var(--label-2); box-shadow:0 1px 0 0 var(--label-2); }
   .aegean-page select.field{ appearance:none; padding-right:1.8rem; cursor:pointer;
     background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path d='M1 1.5l5 5 5-5' fill='none' stroke='%233a6ea5' stroke-width='1.4'/></svg>");
     background-repeat:no-repeat; background-position:right .3rem center; }
@@ -287,65 +339,66 @@ const css = String.raw`
   .aegean-page .two{ display:grid; gap:1.55rem; }
   @media(min-width:560px){ .aegean-page .two{ grid-template-columns:1fr 1fr; } }
   .aegean-page .send{ align-self:flex-start; display:inline-flex; align-items:center; gap:.8rem; margin-top:.3rem;
-    border:1px solid var(--accent); background:transparent; padding:.9rem 2.2rem;
+    min-height:48px; border:1px solid var(--accent); background:transparent; padding:.9rem 2.2rem;
     font-family:var(--display); font-size:.76rem; letter-spacing:.3em; text-transform:uppercase;
     color:var(--ink); cursor:pointer; transition:all .35s; }
   .aegean-page .send::after{ content:"\2192"; font-family:var(--serif); font-size:1rem; line-height:1;
     transition:transform .35s; }
   .aegean-page .send:hover{ background:var(--accent); color:var(--bg); }
   .aegean-page .send:hover::after{ transform:translateX(5px); }
-  .aegean-page .send:disabled{ opacity:.5; }
+  .aegean-page .send:disabled{ opacity:.5; cursor:progress; }
+  @media(max-width:420px){ .aegean-page .send{ align-self:stretch; justify-content:center; padding:.9rem 1.2rem; } }
 
   .aegean-page footer{ position:relative; z-index:5; text-align:center; padding:5rem 1.5rem 4rem;
     background:var(--bg-deep); }
-  .aegean-page footer .mono{ font-family:var(--display); letter-spacing:.5em; color:var(--accent); font-size:.85rem; }
+  .aegean-page footer .mono{ font-family:var(--display); letter-spacing:.5em; color:var(--label); font-size:.85rem; }
   .aegean-page footer .q{ font-family:var(--script); font-style:italic; color:var(--muted); font-size:1.15rem;
     max-width:30rem; margin:1.3rem auto 0; line-height:1.5; }
   .aegean-page footer .nazar{ margin-top:1.6rem; display:flex; justify-content:center; opacity:.9; }
 
   #toast{ position:fixed; left:50%; bottom:2rem; transform:translateX(-50%) translateY(20px);
-    z-index:60; min-width:280px; max-width:90vw; background:var(--bg); border:1px solid var(--accent);
+    z-index:60; width:max-content; min-width:min(280px, calc(100vw - 2rem)); max-width:calc(100vw - 2rem); background:var(--bg); border:1px solid var(--accent);
     color:var(--ink); padding:1rem 1.25rem; box-shadow:0 24px 55px -24px oklch(.32 .06 250 / .5);
     opacity:0; pointer-events:none; transition:opacity .4s, transform .4s; }
   #toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
   #toast .tt{ font-family:var(--display); letter-spacing:.04em; }
   #toast .td{ margin-top:.3rem; font-family:var(--script); font-style:italic; color:var(--muted); }
 
-  .aegean-page .reveal{ opacity:0; transform:translateY(34px); transition:opacity .9s cubic-bezier(.16,1,.3,1), transform .9s cubic-bezier(.16,1,.3,1); }
-  .aegean-page .reveal.in{ opacity:1; transform:none; }
-  @media(prefers-reduced-motion:reduce){
-    .aegean-page .reveal{ opacity:1; transform:none; }
-    .aegean-page .scroll-cue::after{ animation:none; }
-    .aegean-page .vinner{ animation:none; }
-    .aegean-page .pin:hover .polar{ animation:none; }
-  }
+  /* ===== Scroll reveals =====
+     Content is only hidden once JS has armed the observer (.rv on the root),
+     so a script failure can never leave text invisible. */
+  .aegean-page .reveal{ transition:opacity .8s cubic-bezier(.16,1,.3,1), transform .8s cubic-bezier(.16,1,.3,1); }
+  .aegean-page.rv .reveal{ opacity:0; transform:translateY(34px); }
+  .aegean-page.rv .reveal.in{ opacity:1; transform:none; }
 
-  /* ===== Added: hero entrance, polaroid develop reveal, rolling countdown ===== */
-  @keyframes archIn{ from{ opacity:0; translate:0 34px; scale:.96; } }
-  .aegean-page .arch-frame{ animation:archIn 1.15s cubic-bezier(.16,1,.3,1) .1s backwards; }
+  /* ===== Hero entrance (starts on mount, settles within ~1.2s) ===== */
+  @keyframes archIn{ from{ opacity:0; translate:0 30px; scale:.97; } }
+  .aegean-page .arch-frame{ animation:archIn .9s cubic-bezier(.16,1,.3,1) backwards; }
   @keyframes heroRise{ from{ opacity:0; translate:0 18px; } }
-  .aegean-page .arch-frame .label{ animation:heroRise .9s cubic-bezier(.16,1,.3,1) .5s backwards; }
-  .aegean-page .arch-frame .names{ animation:heroRise .9s cubic-bezier(.16,1,.3,1) .64s backwards; }
-  .aegean-page .arch-frame .hero-meta{ animation:heroRise .9s cubic-bezier(.16,1,.3,1) .8s backwards; }
-  .aegean-page .hero-actions{ animation:heroRise .9s cubic-bezier(.16,1,.3,1) .95s backwards; }
+  .aegean-page .arch-frame .label{ animation:heroRise .7s cubic-bezier(.16,1,.3,1) .12s backwards; }
+  .aegean-page .arch-frame .names{ animation:heroRise .7s cubic-bezier(.16,1,.3,1) .22s backwards; }
+  .aegean-page .arch-frame .hero-meta{ animation:heroRise .7s cubic-bezier(.16,1,.3,1) .34s backwards; }
+  .aegean-page .hero-actions{ animation:heroRise .7s cubic-bezier(.16,1,.3,1) .45s backwards; }
 
-  .aegean-page .washline.reveal .pin{ opacity:0; translate:0 30px;
-    transition:opacity .9s cubic-bezier(.16,1,.3,1), translate .9s cubic-bezier(.16,1,.3,1); }
-  .aegean-page .washline.reveal .polar img{ filter:blur(10px) saturate(.5) brightness(1.18);
-    transition:filter 1.5s ease .15s; }
-  .aegean-page .washline.reveal.in .pin{ opacity:1; translate:0 0; }
-  .aegean-page .washline.reveal.in .polar img{ filter:blur(0) saturate(1) brightness(1); }
-  .aegean-page .washline.reveal.in .pin:nth-child(2){ transition-delay:.15s; }
-  .aegean-page .washline.reveal.in .pin:nth-child(3){ transition-delay:.3s; }
-  .aegean-page .washline.reveal.in .pin:nth-child(2) .polar img{ transition-delay:.35s; }
-  .aegean-page .washline.reveal.in .pin:nth-child(3) .polar img{ transition-delay:.5s; }
+  .aegean-page.rv .washline.reveal{ opacity:1; transform:none; }
+  .aegean-page.rv .washline.reveal .pin{ opacity:0; translate:0 30px;
+    transition:opacity .8s cubic-bezier(.16,1,.3,1), translate .8s cubic-bezier(.16,1,.3,1); }
+  .aegean-page.rv .washline.reveal .polar img{ filter:blur(10px) saturate(.5) brightness(1.18);
+    transition:filter 1.1s ease .1s; }
+  .aegean-page.rv .washline.reveal.in .pin{ opacity:1; translate:0 0; }
+  .aegean-page.rv .washline.reveal.in .polar img{ filter:none; }
+  .aegean-page.rv .washline.reveal.in .pin:nth-child(2){ transition-delay:.12s; }
+  .aegean-page.rv .washline.reveal.in .pin:nth-child(3){ transition-delay:.24s; }
+  .aegean-page.rv .washline.reveal.in .pin:nth-child(2) .polar img{ transition-delay:.25s; }
+  .aegean-page.rv .washline.reveal.in .pin:nth-child(3) .polar img{ transition-delay:.38s; }
 
-  .aegean-page .count.reveal .cd-unit{ opacity:0; translate:0 18px;
+  .aegean-page.rv .count.reveal{ opacity:1; transform:none; }
+  .aegean-page.rv .count.reveal .cd-unit{ opacity:0; translate:0 18px;
     transition:opacity .7s cubic-bezier(.16,1,.3,1), translate .7s cubic-bezier(.16,1,.3,1); }
-  .aegean-page .count.reveal.in .cd-unit{ opacity:1; translate:0 0; }
-  .aegean-page .count.reveal.in .cd-unit:nth-child(2){ transition-delay:.08s; }
-  .aegean-page .count.reveal.in .cd-unit:nth-child(3){ transition-delay:.16s; }
-  .aegean-page .count.reveal.in .cd-unit:nth-child(4){ transition-delay:.24s; }
+  .aegean-page.rv .count.reveal.in .cd-unit{ opacity:1; translate:0 0; }
+  .aegean-page.rv .count.reveal.in .cd-unit:nth-child(2){ transition-delay:.08s; }
+  .aegean-page.rv .count.reveal.in .cd-unit:nth-child(3){ transition-delay:.16s; }
+  .aegean-page.rv .count.reveal.in .cd-unit:nth-child(4){ transition-delay:.24s; }
 
   .aegean-page .cd-unit .n{ display:inline-grid; overflow:hidden; justify-items:center; }
   .aegean-page .cd-unit .n .roll{ grid-area:1/1; }
@@ -354,22 +407,78 @@ const css = String.raw`
   @keyframes rollOut{ to{ translate:0 -85%; opacity:0; } }
   @keyframes rollIn{ from{ translate:0 85%; opacity:0; } }
 
+  /* reduced motion: everything is shown immediately, nothing loops */
   @media(prefers-reduced-motion:reduce){
+    html{ scroll-behavior:auto; }
+    .aegean-page .reveal, .aegean-page .reveal *{ transition:none !important; }
+    .aegean-page.rv .reveal, .aegean-page.rv .washline.reveal .pin, .aegean-page.rv .count.reveal .cd-unit{ opacity:1; transform:none; translate:0 0; }
+    .aegean-page.rv .washline.reveal .polar img{ filter:none; }
     .aegean-page .arch-frame, .aegean-page .arch-frame .label, .aegean-page .arch-frame .names,
     .aegean-page .arch-frame .hero-meta, .aegean-page .hero-actions{ animation:none; }
-    .aegean-page .washline.reveal .pin{ opacity:1; translate:0 0; }
-    .aegean-page .washline.reveal .polar img{ filter:none; }
-    .aegean-page .count.reveal .cd-unit{ opacity:1; translate:0 0; }
+    .aegean-page .scroll-cue::after, .aegean-page .vinner, .aegean-page .polar, .aegean-page .pin:hover .polar{ animation:none; }
+    #sea .tide, #sea .foam.f2, #sparkle, #boat, #boat .bob{ animation:none; }
     .aegean-page .cd-unit .n .roll.out, .aegean-page .cd-unit .n .roll.in{ animation:none; }
+    .aegean-page .cd-unit .n .roll.out{ display:none; }
   }
 `
 
-const WAVE_PATH = 'M0,30 C120,16 240,16 360,30 C480,44 600,44 720,30 C840,16 960,16 1080,30 C1200,44 1320,44 1440,30 C1560,16 1680,16 1800,30 C1920,44 2040,44 2160,30 C2280,16 2400,16 2520,30 C2640,44 2760,44 2880,30 L2880,100 L0,100 Z'
 const DIVIDER_PATH = 'M0,26 C240,44 480,4 720,20 C960,36 1200,10 1440,26 L1440,44 L0,44 Z'
+
+/* ---------- helpers ---------- */
+
+const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+/** Robust scroll reveal: IntersectionObserver plus a scroll/resize sweep that
+ *  reveals anything already at or above the viewport (fast scrolls, anchor
+ *  jumps, late IO callbacks). Reduced motion or no IO → show everything. */
+function setupReveals(root, signal) {
+  const els = [...root.querySelectorAll('.reveal')]
+  const showAll = () => els.forEach(el => el.classList.add('in'))
+  if (reducedMotion() || !('IntersectionObserver' in window)) { showAll(); return }
+  root.classList.add('rv')
+  const pending = new Set(els)
+  let raf = 0
+  const reveal = el => {
+    if (!pending.delete(el)) return
+    el.classList.add('in'); io.unobserve(el)
+  }
+  const io = new IntersectionObserver(entries => {
+    for (const e of entries) if (e.isIntersecting) reveal(e.target)
+  }, { rootMargin: '0px 0px -6% 0px', threshold: 0 })
+  els.forEach(el => io.observe(el))
+  const sweep = () => {
+    raf = 0
+    const limit = window.innerHeight * 0.96
+    for (const el of pending) if (el.getBoundingClientRect().top < limit) reveal(el)
+  }
+  const queue = () => { if (!raf && pending.size) raf = requestAnimationFrame(sweep) }
+  window.addEventListener('scroll', queue, { passive: true, signal })
+  window.addEventListener('resize', queue, { signal })
+  queue()
+  signal.addEventListener('abort', () => {
+    io.disconnect(); cancelAnimationFrame(raf)
+    root.classList.remove('rv')
+  })
+}
+
+function downloadIcs() {
+  const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')
+  const ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Elif & Deniz//Dugun//TR', 'CALSCALE:GREGORIAN',
+    'BEGIN:VEVENT', `UID:${WEDDING.uid}`, `DTSTAMP:${stamp}`,
+    `DTSTART:${WEDDING.icsStart}`, `DTEND:${WEDDING.icsEnd}`,
+    'SUMMARY:Elif & Deniz — Bir Ege Düğünü',
+    'LOCATION:Zeytinlik Koyu\\, Alaçatı\\, Çeşme\\, İzmir',
+    'DESCRIPTION:Nikâh saat 17.00 zeytinlerin altında\\; ardından gün batımı kokteyli ve uzun masa.',
+    'END:VEVENT', 'END:VCALENDAR'].join('\r\n')
+  const url = URL.createObjectURL(new Blob([ics], { type: 'text/calendar;charset=utf-8' }))
+  const a = document.createElement('a'); a.href = url; a.download = 'elif-deniz-dugun.ics'
+  document.body.appendChild(a); a.click(); a.remove()
+  setTimeout(() => URL.revokeObjectURL(url), 1000)
+}
 
 function NazarSvg({ size = 26 }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 26 26">
+    <svg width={size} height={size} viewBox="0 0 26 26" aria-hidden="true" focusable="false">
       <circle cx="13" cy="13" r="12" fill="#1d4e89" />
       <circle cx="13" cy="13" r="8" fill="#eaf3fb" />
       <circle cx="13" cy="13" r="5" fill="#3f8ac9" />
@@ -378,18 +487,32 @@ function NazarSvg({ size = 26 }) {
   )
 }
 
+/* ---------- page ---------- */
+
 export default function AegeanWeddingPage() {
   const rootRef = useRef(null)
+  const timersRef = useRef([])
+  const [sending, setSending] = useState(false)
+  const [toast, setToast] = useState({ show: false, title: '', text: '' })
+
+  // Arm reveals before first paint so nothing flashes in then hides.
+  useLayoutEffect(() => {
+    const root = rootRef.current; if (!root) return
+    const ac = new AbortController()
+    setupReveals(root, ac.signal)
+    return () => ac.abort()
+  }, [])
 
   useEffect(() => {
+    const root = rootRef.current; if (!root) return
     const ac = new AbortController()
     const { signal } = ac
-    let alive = true
-    const timers = []
+    const $ = sel => root.querySelector(sel)
+    const reduce = reducedMotion()
 
     /* ===== Twin bougainvillea vines, grown in JS ===== */
     ;(function () {
-      const hosts = [...document.querySelectorAll('.vinehost .vinner')]; if (!hosts.length) return
+      const hosts = [...root.querySelectorAll('.vinehost .vinner')]; if (!hosts.length) return
       const PET = ['#d81b7f', '#e5399b', '#c2186f', '#f06bb4', '#ee4f9e', '#b1135f']
       const rnd = (a, b) => a + Math.random() * (b - a)
       function grow(host) {
@@ -401,6 +524,7 @@ export default function AegeanWeddingPage() {
         host.appendChild(svg)
         const density = Math.min(1, innerWidth / 1200)
         const NB = Math.max(5, Math.round(8 * Math.max(.6, density)))
+        const frag = document.createDocumentFragment()
         for (let b = 0; b < NB; b++) {
           const x0 = rnd(W * 0.7, W * 0.99), y0 = rnd(-24, 4)
           const x2 = rnd(W * 0.02, W * 0.74), y2 = rnd(H * 0.26, H * 0.97)
@@ -421,7 +545,7 @@ export default function AegeanWeddingPage() {
               const l = document.createElement('i'); l.className = 'vleaf'
               l.style.left = (pt.x + rnd(-11, 11)).toFixed(1) + 'px'; l.style.top = (pt.y + rnd(-11, 11)).toFixed(1) + 'px'
               l.style.transform = `rotate(${rnd(0, 360).toFixed(0)}deg) scale(${rnd(.7, 1.35).toFixed(2)})`
-              host.appendChild(l)
+              frag.appendChild(l)
             }
             if (t > 0.22 && Math.random() < 0.85) {
               const cx = pt.x + rnd(-10, 10), cy = pt.y + rnd(-10, 10)
@@ -429,216 +553,161 @@ export default function AegeanWeddingPage() {
               const swell = 0.8 + t * 0.5 /* clusters swell toward the branch tip */
               for (let k = 0; k < n; k++) {
                 const p = document.createElement('i'); p.className = 'petal-shape'
-                p.style.position = 'absolute'
                 p.style.setProperty('--p0', base)
                 p.style.left = (cx + rnd(-10, 10)).toFixed(1) + 'px'; p.style.top = (cy + rnd(-9, 9)).toFixed(1) + 'px'
                 p.style.transform = `rotate(${rnd(0, 360).toFixed(0)}deg) scale(${(rnd(.85, 1.5) * swell).toFixed(2)})`
-                host.appendChild(p)
+                frag.appendChild(p)
               }
               const c = document.createElement('i'); c.className = 'vheart'
               c.style.left = cx.toFixed(1) + 'px'; c.style.top = cy.toFixed(1) + 'px'
-              host.appendChild(c)
+              frag.appendChild(c)
             }
           }
         }
+        host.appendChild(frag)
       }
       hosts.forEach(grow)
-      let rt = 0
-      addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { if (alive) hosts.forEach(grow) }, 250) }, { signal })
-      timers.push({ clear: () => clearTimeout(rt) })
+      // regrow only when the width really changes (mobile URL-bar resizes keep the same vines)
+      let rt = 0, lastW = innerWidth
+      addEventListener('resize', () => {
+        clearTimeout(rt)
+        rt = setTimeout(() => { if (innerWidth !== lastW) { lastW = innerWidth; hosts.forEach(grow) } }, 250)
+      }, { signal })
+      signal.addEventListener('abort', () => { clearTimeout(rt); hosts.forEach(h => { h.innerHTML = '' }) })
     })()
 
-    /* ===== Falling petals ===== */
+    /* ===== Kıyı etkileşimi: suyun üstünde gezinince dalgacıklar yayılır ===== */
     ;(function () {
-      const layer = document.getElementById('leaves'); if (!layer) return
-      layer.innerHTML = ''
-      const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches
-      const COLORS = ['#d81b7f', '#e5399b', '#c2186f', '#f06bb4', '#ee4f9e', '#b1135f', '#f78cc2']
-      const N = reduce ? 22 : Math.min(95, Math.round(innerWidth / 17))
-      const leaves = []
-      function makeEl(color) {
-        const w = document.createElement('div'); w.className = 'dom-leaf'
-        const i = document.createElement('i'); i.className = 'petal-shape'
-        i.style.setProperty('--p0', color); w.appendChild(i)
-        return w
+      const sea = $('#sea'); if (!sea || reduce) return
+      /* shoreline runs diagonally from ~43.5% (top) to ~29.7% (bottom) of the width */
+      const inWater = (x, y, r) => {
+        const yf = (y - r.top) / r.height
+        const xf = (x - r.left) / r.width
+        return xf > 0.435 + (0.297 - 0.435) * yf
       }
-      function reset(p, initial) {
-        p.x = Math.random() * innerWidth
-        p.y = initial ? Math.random() * innerHeight : -60 - Math.random() * 120
-        p.depth = .45 + Math.random() * .55
-        p.vy = (24 + Math.random() * 40) * p.depth
-        p.sway = 20 + Math.random() * 42
-        p.swPhase = Math.random() * Math.PI * 2
-        p.swSpeed = .4 + Math.random() * 1.1
-        p.rot = Math.random() * 360
-        p.vr = (Math.random() - .5) * (reduce ? 14 : 80)
-        p.scale = (0.7 + Math.random() * 0.9) * p.depth
+      const spawn = (x, y, cls) => {
+        const r = sea.getBoundingClientRect()
+        const el = document.createElement('span'); el.className = cls
+        el.style.left = (x - r.left) + 'px'; el.style.top = (y - r.top) + 'px'
+        el.addEventListener('animationend', () => el.remove(), { once: true })
+        sea.appendChild(el)
       }
-      for (let i = 0; i < N; i++) {
-        const el = makeEl(COLORS[i % COLORS.length])
-        const a = (0.72 + Math.random() * 0.28)
-        el.style.opacity = a.toFixed(2)
-        layer.appendChild(el)
-        const p = { el, alpha0: a, float: false, fvx: 0, ft: 0, bob: 0 }; reset(p, true); leaves.push(p)
-      }
-      const sea = document.getElementById('sea')
-      let last = performance.now()
-      let wind = 0, px = -9999, py = -9999
-      function blow(x, y) { wind = (x / innerWidth - 0.5); px = x; py = y }
-      addEventListener('pointermove', e => blow(e.clientX, e.clientY), { passive: true, signal })
-      addEventListener('touchmove', e => { const t = e.touches[0]; if (t) blow(t.clientX, t.clientY) }, { passive: true, signal })
-      addEventListener('touchend', () => { px = -9999; py = -9999 }, { passive: true, signal })
-      addEventListener('touchcancel', () => { px = -9999; py = -9999 }, { passive: true, signal })
-      /* tap the water: a ripple spreads and nudges whatever floats there */
+      let lastRip = 0
+      addEventListener('pointermove', e => {
+        const r = sea.getBoundingClientRect()
+        if (r.top > innerHeight || r.bottom < 0) return
+        if (e.clientY < r.top || e.clientY > r.bottom) return
+        if (!inWater(e.clientX, e.clientY, r)) return
+        const now = performance.now()
+        if (now - lastRip < 130) return
+        lastRip = now
+        spawn(e.clientX, e.clientY, 'ripple mini')
+      }, { passive: true, signal })
+      /* tap the water: a bigger ripple spreads */
       addEventListener('pointerdown', e => {
-        if (!sea) return
         const r = sea.getBoundingClientRect()
         if (e.clientY < r.top - 6 || e.clientY > r.bottom + 6 || r.top > innerHeight || r.bottom < 0) return
-        const el = document.createElement('span'); el.className = 'ripple'
-        el.style.left = (e.clientX - r.left) + 'px'; el.style.top = (e.clientY - r.top) + 'px'
-        sea.appendChild(el); setTimeout(() => el.remove(), 1350)
-        for (const p of leaves) {
-          if (!p.float) continue
-          const dx = p.x - e.clientX
-          if (Math.abs(dx) < 160) { p.fvx += (dx >= 0 ? 1 : -1) * (60 + Math.random() * 110); p.bob = 9 }
-        }
+        if (!inWater(e.clientX, e.clientY, r)) return
+        spawn(e.clientX, e.clientY, 'ripple')
       }, { passive: true, signal })
-      function frame(now) {
-        if (!alive) return
-        const dt = Math.min(.05, (now - last) / 1000); last = now; const t = now / 1000
-        wind *= Math.max(0, 1 - 0.6 * dt)
-        const sr = sea ? sea.getBoundingClientRect() : null
-        const seaOn = sr && sr.top < innerHeight && sr.bottom > 0
-        const waterY = seaOn ? sr.bottom - Math.min(46, sr.height * 0.42) : Infinity
-        for (const p of leaves) {
-          if (p.float) {
-            if (!seaOn) { p.float = false; p.el.style.opacity = p.alpha0.toFixed(2); reset(p, false); continue }
-            p.ft += dt; p.fvx *= Math.pow(0.5, dt); p.bob *= Math.pow(0.35, dt)
-            p.x += (13 + wind * 34) * dt + p.fvx * dt
-            p.rot += Math.sin(t * 1.2 + p.swPhase) * 22 * dt
-            const y = waterY + Math.sin(t * 1.7 + p.swPhase) * (3.5 + p.bob)
-            p.el.style.opacity = Math.max(0, p.alpha0 * (1 - p.ft / 7)).toFixed(2)
-            p.el.style.transform = `translate3d(${p.x.toFixed(1)}px, ${y.toFixed(1)}px, 0) rotate(${p.rot.toFixed(1)}deg) scale(${p.scale.toFixed(2)})`
-            if (p.ft > 7 || p.x > innerWidth + 70 || p.x < -70) { p.float = false; p.el.style.opacity = p.alpha0.toFixed(2); reset(p, false) }
-            continue
-          }
-          p.y += p.vy * dt; p.rot += p.vr * dt
-          p.x += wind * 46 * p.depth * dt * 60 * 0.016
-          const dx = p.x - px, dy = p.y - py, d2 = dx * dx + dy * dy
-          if (d2 < 14000) { const d = Math.sqrt(d2) || 1, f = (1 - d / 118) * 60 * dt; p.x += dx / d * f; p.y += dy / d * f * 0.5; p.rot += f * 2 }
-          if (p.y >= waterY) { p.float = true; p.ft = 0; p.fvx = 0; p.bob = 0; continue }
-          if (p.y > innerHeight + 40 || p.x < -120 || p.x > innerWidth + 120) reset(p, false)
-          const sx = Math.sin(t * p.swSpeed + p.swPhase) * p.sway
-          p.el.style.transform = `translate3d(${(p.x + sx).toFixed(1)}px, ${p.y.toFixed(1)}px, 0) rotate(${p.rot.toFixed(1)}deg) scale(${p.scale.toFixed(2)})`
-        }
-        requestAnimationFrame(frame)
-      }
-      requestAnimationFrame(frame)
+      signal.addEventListener('abort', () => sea.querySelectorAll('.ripple').forEach(el => el.remove()))
     })()
 
-    /* ===== Vine parallax ===== */
+    /* ===== Ekran dışındaki bölümlerin döngüsel animasyonlarını duraklat ===== */
     ;(function () {
-      const vines = [...document.querySelectorAll('.vinehost')]; if (!vines.length) return
-      if (matchMedia('(prefers-reduced-motion: reduce)').matches) return
-      let ticking = false
-      addEventListener('scroll', () => {
-        if (ticking) return; ticking = true
-        requestAnimationFrame(() => {
-          const y = (scrollY * 0.12).toFixed(1)
-          vines.forEach(v => { v.style.translate = `0 ${y}px` })
-          ticking = false
-        })
-      }, { passive: true, signal })
+      const targets = [$('.hero'), $('.washline')].filter(Boolean)
+      if (!targets.length || !('IntersectionObserver' in window)) return
+      const io = new IntersectionObserver(entries => {
+        for (const e of entries) e.target.classList.toggle('is-off', !e.isIntersecting)
+      }, { rootMargin: '60px 0px' })
+      targets.forEach(t => io.observe(t))
+      signal.addEventListener('abort', () => { io.disconnect(); targets.forEach(t => t.classList.remove('is-off')) })
+    })()
+
+    /* ===== Vine parallax (only while the hero is in view) ===== */
+    ;(function () {
+      const vines = [...root.querySelectorAll('.vinehost')]; if (!vines.length || reduce) return
+      let raf = 0
+      const update = () => {
+        raf = 0
+        if (scrollY > innerHeight * 1.5) return
+        const y = (scrollY * 0.12).toFixed(1)
+        vines.forEach(v => { v.style.translate = `0 ${y}px` })
+      }
+      addEventListener('scroll', () => { if (!raf) raf = requestAnimationFrame(update) }, { passive: true, signal })
+      signal.addEventListener('abort', () => cancelAnimationFrame(raf))
     })()
 
     /* ===== Geri sayım (rakamlar kayarak değişir) ===== */
     ;(function () {
-      const TARGET = new Date('2027-06-19T17:00:00+03:00').getTime()
-      const d = cd('cd-d'), h = cd('cd-h'), m = cd('cd-m'), s = cd('cd-s')
-      function cd(id) { return document.getElementById(id) }
-      function pad(n) { return String(Math.max(0, n)).padStart(2, '0') }
+      const TARGET = new Date(WEDDING.target).getTime()
+      const els = ['#cd-d', '#cd-h', '#cd-m', '#cd-s'].map($)
+      if (els.some(el => !el)) return
+      const [d, h, m, s] = els
+      const pad = n => String(Math.max(0, n)).padStart(2, '0')
       function roll(el, v) {
         if (el.dataset.v === v) return
         const old = el.dataset.v
         el.dataset.v = v
-        if (old === undefined) { el.textContent = v; return }
-        el.innerHTML = `<span class="roll out">${old}</span><span class="roll in">${v}</span>`
+        if (old === undefined || document.hidden) { el.textContent = v; return }
+        el.innerHTML = `<span class="roll out" aria-hidden="true">${old}</span><span class="roll in">${v}</span>`
       }
       function tick() {
         const diff = Math.max(0, TARGET - Date.now())
         roll(d, pad(Math.floor(diff / 864e5))); roll(h, pad(Math.floor(diff % 864e5 / 36e5)))
         roll(m, pad(Math.floor(diff % 36e5 / 6e4))); roll(s, pad(Math.floor(diff % 6e4 / 1e3)))
       }
-      tick(); timers.push(setInterval(tick, 1000))
+      tick()
+      const id = setInterval(tick, 1000)
+      signal.addEventListener('abort', () => clearInterval(id))
     })()
 
     /* ===== Galeri slider noktaları (mobil) ===== */
     ;(function () {
-      const gal = document.querySelector('.pins'), dots = document.getElementById('galleryDots')
+      const gal = $('.pins'), dots = $('#galleryDots')
       if (!gal || !dots) return
       const frames = [...gal.querySelectorAll('.pin')], pips = [...dots.children]
-      let ticking = false
+      let raf = 0
       gal.addEventListener('scroll', () => {
-        if (ticking) return; ticking = true
-        requestAnimationFrame(() => {
+        if (raf) return
+        raf = requestAnimationFrame(() => {
+          raf = 0
           const mid = gal.scrollLeft + gal.clientWidth / 2
           let best = 0, bd = Infinity
           frames.forEach((f, i) => { const c = f.offsetLeft + f.offsetWidth / 2, d = Math.abs(c - mid); if (d < bd) { bd = d; best = i } })
           pips.forEach((p, i) => p.classList.toggle('on', i === best))
-          ticking = false
         })
       }, { passive: true, signal })
+      signal.addEventListener('abort', () => cancelAnimationFrame(raf))
     })()
 
-    /* ===== Takvime ekle (.ics) ===== */
-    ;(function () {
-      const btn = document.getElementById('icsBtn'); if (!btn) return
-      btn.addEventListener('click', e => {
-        e.preventDefault()
-        const ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Elif & Deniz//Dugun//TR',
-          'BEGIN:VEVENT', 'UID:elif-deniz-20270619@dugun', 'DTSTAMP:20260101T000000Z',
-          'DTSTART:20270619T140000Z', 'DTEND:20270619T210000Z',
-          'SUMMARY:Elif & Deniz — Bir Ege Düğünü',
-          'LOCATION:Zeytinlik Koyu\\, Alaçatı\\, Çeşme\\, İzmir',
-          'DESCRIPTION:Nikâh saat 17.00 zeytinlerin altında\\; ardından gün batımı kokteyli ve uzun masa.',
-          'END:VEVENT', 'END:VCALENDAR'].join('\r\n')
-        const url = URL.createObjectURL(new Blob([ics], { type: 'text/calendar' }))
-        const a = document.createElement('a'); a.href = url; a.download = 'elif-deniz-dugun.ics'
-        document.body.appendChild(a); a.click(); a.remove()
-        setTimeout(() => URL.revokeObjectURL(url), 1000)
-      }, { signal })
-    })()
-
-    /* ===== Reveals + LCV ===== */
-    const io = new IntersectionObserver(es => { for (const e of es) if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target) } }, { threshold: .18 })
-    document.querySelectorAll('.aegean-page .reveal').forEach(el => io.observe(el))
-    const form = document.getElementById('rsvpForm'), toast = document.getElementById('toast')
-    const btn = form.querySelector('.send'), lbl = form.querySelector('.btn-label'); let tm = 0
-    form.addEventListener('submit', e => {
-      e.preventDefault()
-      const name = new FormData(form).get('name') || 'dostumuz'
-      btn.disabled = true; lbl.textContent = 'Gönderiliyor…'
-      setTimeout(() => {
-        if (!alive) return
-        btn.disabled = false; lbl.textContent = 'Gönder'
-        toast.querySelector('.tt').textContent = 'Teşekkürler — kartpostalınız yola çıktı'
-        toast.querySelector('.td').textContent = `Seninle kutlamak için sabırsızlanıyoruz, ${name}.`
-        toast.classList.add('show'); clearTimeout(tm); tm = setTimeout(() => toast.classList.remove('show'), 5000); form.reset()
-      }, 800)
-    }, { signal })
-
-    return () => {
-      alive = false
-      ac.abort()
-      io.disconnect()
-      timers.forEach(t => (typeof t === 'number' ? clearInterval(t) : t.clear()))
-      clearTimeout(tm)
-    }
+    return () => ac.abort()
   }, [])
 
+  useEffect(() => {
+    const timers = timersRef.current
+    return () => { timers.forEach(clearTimeout); timers.length = 0 }
+  }, [])
+
+  function handleSubmit(e) {
+    e.preventDefault()
+    const form = e.currentTarget
+    const name = String(new FormData(form).get('name') || '').trim()
+    setSending(true)
+    timersRef.current.push(setTimeout(() => {
+      setSending(false)
+      setToast({
+        show: true,
+        title: 'Teşekkürler — kartpostalınız yola çıktı',
+        text: name ? `Sizinle kutlamak için sabırsızlanıyoruz, ${name}.` : 'Sizinle kutlamak için sabırsızlanıyoruz.',
+      })
+      form.reset()
+      timersRef.current.push(setTimeout(() => setToast(t => ({ ...t, show: false })), 5000))
+    }, 800))
+  }
+
   return (
-    <div ref={rootRef} className="aegean-page">
-      <title>Elif &amp; Deniz — Bir Ege Düğünü</title>
+    <div ref={rootRef} className="aegean-page" lang="tr">
       <meta name="description" content="Elif & Deniz'in Alaçatı'daki Ege düğününe davetlisiniz." />
       <link rel="preconnect" href="https://fonts.googleapis.com" />
       <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
@@ -649,9 +718,8 @@ export default function AegeanWeddingPage() {
       />
       <style>{css}</style>
 
-      <div id="ground"></div>
-      <div id="grain"></div>
-      <div id="leaves" aria-hidden="true"></div>
+      <div id="ground" aria-hidden="true"></div>
+      <div id="grain" aria-hidden="true"></div>
 
       <main>
         {/* HERO */}
@@ -659,31 +727,50 @@ export default function AegeanWeddingPage() {
           <div id="vine-r" className="vinehost" aria-hidden="true"><div className="vinner"></div></div>
           <div id="vine-l" className="vinehost" aria-hidden="true"><div className="vinner"></div></div>
           <div id="sea" aria-hidden="true">
-            <svg className="wl w1" viewBox="0 0 2880 100" preserveAspectRatio="none"><path d={WAVE_PATH} /></svg>
-            <div id="boat"><div className="bob"><svg width="54" height="46" viewBox="0 0 54 46"><path d="M28 4 v28" stroke="#20344d" strokeWidth="2" /><path d="M28 6 C41 14 43 25 28 31 Z" fill="#f7f3ea" /><path d="M26 9 C16 16 15 25 26 31 Z" fill="#e9e2d2" /><path d="M6 34 h42 l-8 8 H14 Z" fill="#20344d" /></svg></div></div>
-            <svg className="wl w2" viewBox="0 0 2880 100" preserveAspectRatio="none"><path d={WAVE_PATH} /></svg>
-            <svg className="wl w3" viewBox="0 0 2880 100" preserveAspectRatio="none"><path d={WAVE_PATH} /></svg>
+            <svg className="shoreSvg" viewBox="0 0 1440 360" preserveAspectRatio="none" focusable="false">
+              <defs>
+                <linearGradient id="agWater" x1="0" y1="0.1" x2="1" y2="0">
+                  <stop offset="0" stopColor="#c9efe9" />
+                  <stop offset="0.16" stopColor="#8fd8d2" />
+                  <stop offset="0.42" stopColor="#3fa4c6" />
+                  <stop offset="0.72" stopColor="#1d7ac2" />
+                  <stop offset="1" stopColor="#14549b" />
+                </linearGradient>
+              </defs>
+              {/* wet sand left behind by the retreating wave */}
+              <path className="wetline" d="M626,-12 C548,110 496,235 428,372" fill="none" stroke="oklch(0.74 0.065 70)" strokeWidth="48" opacity=".45" />
+              {/* foam trace fading on the sand */}
+              <path className="foam f2" d="M604,-12 C526,110 474,235 406,372" fill="none" stroke="#ffffff" strokeWidth="4.5" opacity=".5" />
+              {/* the sea itself washes in and out */}
+              <g className="tide">
+                <path className="water" d="M626,-12 C548,110 496,235 428,372 L1500,372 L1500,-12 Z" fill="url(#agWater)" />
+                <path className="foam f1" d="M626,-12 C548,110 496,235 428,372" fill="none" stroke="#ffffff" strokeWidth="9" strokeLinecap="round" opacity=".85" />
+                <path className="foam f3" d="M668,-12 C590,110 538,235 470,372" fill="none" stroke="#eafcf8" strokeWidth="3.5" opacity=".35" />
+              </g>
+            </svg>
+            <div id="sparkle"></div>
+            <div id="boat"><div className="bob"><svg width="54" height="46" viewBox="0 0 54 46" focusable="false"><path d="M28 4 v28" stroke="#20344d" strokeWidth="2" /><path d="M28 6 C41 14 43 25 28 31 Z" fill="#f7f3ea" /><path d="M26 9 C16 16 15 25 26 31 Z" fill="#e9e2d2" /><path d="M6 34 h42 l-8 8 H14 Z" fill="#20344d" /></svg></div></div>
           </div>
           <div className="shell">
             <div className="arch-frame">
               <span className="label">Bir Ege Düğünü</span>
-              <h1 className="names">Elif<span className="amp">ve</span>Deniz</h1>
+              <h1 className="names">Elif<span className="amp"> ve </span>Deniz</h1>
               <div className="hero-meta">
-                <p className="when">Cumartesi · 19 Haziran 2027</p>
+                <p className="when">{WEDDING.heroLine}</p>
                 <p className="where">Zeytinlik Koyu — Alaçatı, Çeşme</p>
               </div>
             </div>
             <div className="hero-actions">
-              <a className="ghost" href="#" id="icsBtn">Takvime Ekle</a>
-              <span className="dot">·</span>
-              <a className="ghost" href="https://maps.google.com/?q=Ala%C3%A7at%C4%B1,+%C3%87e%C5%9Fme,+%C4%B0zmir" target="_blank" rel="noopener noreferrer">Yol Tarifi</a>
+              <button type="button" className="ghost" onClick={downloadIcs}>Takvime Ekle</button>
+              <span className="dot" aria-hidden="true">·</span>
+              <a className="ghost" href="https://maps.google.com/?q=Ala%C3%A7at%C4%B1,+%C3%87e%C5%9Fme,+%C4%B0zmir" target="_blank" rel="noopener noreferrer">Yol Tarifi<span className="sr-only"> (yeni sekmede açılır)</span></a>
             </div>
           </div>
           <a className="scroll-cue" href="#davet">Kaydır</a>
         </section>
 
         {/* DAVET */}
-        <div className="wave deep" aria-hidden="true"><svg viewBox="0 0 1440 44" preserveAspectRatio="none"><path d={DIVIDER_PATH} /></svg></div>
+        <div className="wave deep" aria-hidden="true"><svg viewBox="0 0 1440 44" preserveAspectRatio="none" focusable="false"><path d={DIVIDER_PATH} /></svg></div>
         <section className="band order" id="davet" data-screen-label="02 Davet" style={{ marginTop: '-1px' }}>
           <div className="shell">
             <div className="eyrow reveal"><span className="label">Davet</span></div>
@@ -694,7 +781,7 @@ export default function AegeanWeddingPage() {
             </div>
           </div>
         </section>
-        <div className="wave deep flip" aria-hidden="true"><svg viewBox="0 0 1440 44" preserveAspectRatio="none"><path d={DIVIDER_PATH} /></svg></div>
+        <div className="wave deep flip" aria-hidden="true"><svg viewBox="0 0 1440 44" preserveAspectRatio="none" focusable="false"><path d={DIVIDER_PATH} /></svg></div>
 
         {/* GÜNÜN AKIŞI — sahil rotası */}
         <section className="band" data-screen-label="03 Günün Akışı">
@@ -702,17 +789,17 @@ export default function AegeanWeddingPage() {
             <div className="eyrow reveal"><span className="label">Günün Akışı</span></div>
             <h2 className="head reveal">Ağır bir yaz ikindisi,<br />masmavi bir geceye.</h2>
             <div className="route">
-              <div className="rstop reveal"><span className="time">16:30</span><h3>Karşılama</h3><p>Ev yapımı limonata &amp; zeytinlikte gölge keyfi.</p></div>
-              <div className="rstop reveal"><span className="time">17:00</span><h3>Nikâh</h3><p>Asırlık zeytinin altında, denize karşı.</p></div>
-              <div className="rstop reveal"><span className="time">18:30</span><h3>Gün Batımı</h3><p>Kokteyl, fotoğraflar ve ufka batan güneş.</p></div>
-              <div className="rstop reveal"><span className="time">20:00</span><h3>Akşam Yemeği</h3><p>Taş avluda mum ışığında uzun masa.</p></div>
+              <div className="rstop reveal"><span className="time">16.30</span><h3>Karşılama</h3><p>Ev yapımı limonata &amp; zeytinlikte gölge keyfi.</p></div>
+              <div className="rstop reveal"><span className="time">17.00</span><h3>Nikâh</h3><p>Asırlık zeytinin altında, denize karşı.</p></div>
+              <div className="rstop reveal"><span className="time">18.30</span><h3>Gün Batımı</h3><p>Kokteyl, fotoğraflar ve ufka batan güneş.</p></div>
+              <div className="rstop reveal"><span className="time">20.00</span><h3>Akşam Yemeği</h3><p>Taş avluda mum ışığında uzun masa.</p></div>
               <div className="rstop reveal"><span className="time">Gece</span><h3>Dans &amp; Yıldızlar</h3><p>Deniz sesi eşliğinde, yıldızların altında.</p></div>
             </div>
           </div>
         </section>
 
         {/* GERİ SAYIM — denizde */}
-        <div className="wave sea" aria-hidden="true"><svg viewBox="0 0 1440 44" preserveAspectRatio="none"><path d={DIVIDER_PATH} /></svg></div>
+        <div className="wave sea" aria-hidden="true"><svg viewBox="0 0 1440 44" preserveAspectRatio="none" focusable="false"><path d={DIVIDER_PATH} /></svg></div>
         <section className="band sea-band" data-screen-label="04 Geri Sayım" style={{ marginTop: '-1px' }}>
           <div className="shell">
             <div className="eyrow reveal"><span className="label">Geri Sayım</span></div>
@@ -725,7 +812,7 @@ export default function AegeanWeddingPage() {
             </div>
           </div>
         </section>
-        <div className="wave sea2 flip" aria-hidden="true"><svg viewBox="0 0 1440 44" preserveAspectRatio="none"><path d={DIVIDER_PATH} /></svg></div>
+        <div className="wave sea2 flip" aria-hidden="true"><svg viewBox="0 0 1440 44" preserveAspectRatio="none" focusable="false"><path d={DIVIDER_PATH} /></svg></div>
 
         {/* FOTOĞRAFLAR — çamaşır ipi */}
         <section className="band" data-screen-label="05 İkimiz">
@@ -733,12 +820,12 @@ export default function AegeanWeddingPage() {
             <div className="eyrow reveal"><span className="label">İkimiz</span></div>
             <h2 className="head reveal">Avluda kurusun<br />birkaç güzel yaz.</h2>
             <div className="washline reveal">
-              <div className="rope" aria-hidden="true"><svg viewBox="0 0 1440 44" preserveAspectRatio="none"><path d="M0,8 Q720,44 1440,8" /></svg></div>
+              <div className="rope" aria-hidden="true"><svg viewBox="0 0 1440 44" preserveAspectRatio="none" focusable="false"><path d="M0,8 Q720,44 1440,8" /></svg></div>
               <div className="pins">
                 {/* Kendi fotoğrafını eklemek için src="..." değerini değiştir */}
-                <figure className="pin" style={{ '--tilt': '-2.4deg' }}><span className="peg"></span><div className="polar"><img src={couple1} alt="" /><figcaption className="cap">her şeyin başladığı yer</figcaption></div></figure>
-                <figure className="pin" style={{ '--tilt': '1.8deg' }}><span className="peg"></span><div className="polar"><img src={couple2} alt="" /><figcaption className="cap">o soru</figcaption></div></figure>
-                <figure className="pin" style={{ '--tilt': '-1.4deg' }}><span className="peg"></span><div className="polar"><img src={couple3} alt="" /><figcaption className="cap">geçen eylül</figcaption></div></figure>
+                <div className="pin" style={{ '--tilt': '-2.4deg' }}><span className="peg" aria-hidden="true"></span><figure className="polar"><img src={couple1} alt="Elif ile Deniz, her şeyin başladığı yerde" loading="lazy" decoding="async" /><figcaption className="cap">her şeyin başladığı yer</figcaption></figure></div>
+                <div className="pin" style={{ '--tilt': '1.8deg' }}><span className="peg" aria-hidden="true"></span><figure className="polar"><img src={couple2} alt="Elif ile Deniz, evlilik teklifi günü" loading="lazy" decoding="async" /><figcaption className="cap">o soru</figcaption></figure></div>
+                <div className="pin" style={{ '--tilt': '-1.4deg' }}><span className="peg" aria-hidden="true"></span><figure className="polar"><img src={couple3} alt="Elif ile Deniz, geçen eylül" loading="lazy" decoding="async" /><figcaption className="cap">geçen eylül</figcaption></figure></div>
               </div>
             </div>
             <div className="gallery-dots" id="galleryDots" aria-hidden="true"><i className="on"></i><i></i><i></i></div>
@@ -746,33 +833,33 @@ export default function AegeanWeddingPage() {
         </section>
 
         {/* LCV — kartpostal */}
-        <div className="wave deep" aria-hidden="true"><svg viewBox="0 0 1440 44" preserveAspectRatio="none"><path d={DIVIDER_PATH} /></svg></div>
+        <div className="wave deep" aria-hidden="true"><svg viewBox="0 0 1440 44" preserveAspectRatio="none" focusable="false"><path d={DIVIDER_PATH} /></svg></div>
         <section className="band order" id="rsvp" data-screen-label="06 LCV" style={{ marginTop: '-1px' }}>
           <div className="shell">
             <div className="eyrow reveal"><span className="label">LCV</span></div>
             <div className="rsvp-lead reveal">
               <p className="lead">Bizimle denize karşı kadeh kaldırır mısınız?</p>
-              <p>Sofranızı ayırabilmemiz için lütfen 15 Mayıs 2027'ye kadar haber verin.</p>
+              <p>Sofranızı ayırabilmemiz için lütfen en geç {WEDDING.rsvpBy} gününe kadar haber verin.</p>
             </div>
             <div className="postcard reveal">
               <div className="pc-left">
-                <form className="rsvp" id="rsvpForm">
+                <form className="rsvp" onSubmit={handleSubmit} aria-busy={sending}>
                   <div>
-                    <label>Adınız</label>
-                    <input className="field" name="name" required placeholder="Size nasıl seslenelim?" autoComplete="off" />
+                    <label htmlFor="ag-name">Adınız</label>
+                    <input className="field" id="ag-name" name="name" required placeholder="Size nasıl seslenelim?" autoComplete="name" />
                   </div>
                   <div className="two">
                     <div>
-                      <label>Katılım</label>
-                      <select className="field" name="attendance" required defaultValue="">
-                        <option value="">— seçiniz —</option>
+                      <label htmlFor="ag-attendance">Katılım</label>
+                      <select className="field" id="ag-attendance" name="attendance" required defaultValue="">
+                        <option value="" disabled>— seçiniz —</option>
                         <option value="geliyorum">Seve seve geliyorum</option>
                         <option value="gelemiyorum">Ne yazık ki gelemiyorum</option>
                       </select>
                     </div>
                     <div>
-                      <label>Yemek</label>
-                      <select className="field" name="meal" defaultValue="">
+                      <label htmlFor="ag-meal">Yemek</label>
+                      <select className="field" id="ag-meal" name="meal" defaultValue="">
                         <option value="">— seçiniz —</option>
                         <option>Izgara deniz mahsulleri</option>
                         <option>Zeytinlikten (vejetaryen)</option>
@@ -782,18 +869,18 @@ export default function AegeanWeddingPage() {
                     </div>
                   </div>
                   <div>
-                    <label>Çifte notunuz</label>
-                    <textarea className="field" name="message" rows={3} placeholder="Bir dilek, bir anı, bir şarkı isteği…"></textarea>
+                    <label htmlFor="ag-message">Çifte notunuz</label>
+                    <textarea className="field" id="ag-message" name="message" rows={3} placeholder="Bir dilek, bir anı, bir şarkı isteği…"></textarea>
                   </div>
-                  <button type="submit" className="send"><span className="btn-label">Gönder</span></button>
+                  <button type="submit" className="send" disabled={sending}><span className="btn-label">{sending ? 'Gönderiliyor…' : 'Gönder'}</span></button>
                 </form>
               </div>
-              <div className="pc-right">
-                <div className="stamp" aria-hidden="true">
+              <div className="pc-right" aria-hidden="true">
+                <div className="stamp">
                   <NazarSvg size={34} />
-                  <span className="val">EGE · 2027</span>
+                  <span className="val">EGE · {WEDDING.year}</span>
                 </div>
-                <div className="postmark" aria-hidden="true"><span>Alaçatı<br />19 · 06 · 2027<br />Çeşme</span></div>
+                <div className="postmark"><span>Alaçatı<br />{WEDDING.postmark}<br />Çeşme</span></div>
                 <div className="addr">
                   <p className="to">Kime:</p>
                   <div className="ln name">Elif &amp; Deniz</div>
@@ -814,7 +901,9 @@ export default function AegeanWeddingPage() {
         </footer>
       </main>
 
-      <div id="toast"><div className="tt"></div><div className="td"></div></div>
+      <div id="toast" className={toast.show ? 'show' : ''} role="status" aria-live="polite">
+        <div className="tt">{toast.title}</div><div className="td">{toast.text}</div>
+      </div>
     </div>
   )
 }

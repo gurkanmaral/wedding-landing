@@ -1,0 +1,122 @@
+.invitation-intro {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: var(--intro-bg);
+  color: var(--intro-text);
+  font-family: var(--intro-font);
+  opacity: 1;
+  transition: opacity 0.85s ease;
+  overflow: hidden;
+  touch-action: none;
+}
+
+.invitation-intro[data-stage='leaving'] {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.invitation-intro__stage {
+  position: absolute;
+  inset: 0;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.9s ease;
+}
+
+.invitation-intro:not([data-stage='loading']) .invitation-intro__stage {
+  opacity: 1;
+}
+
+.invitation-intro[data-stage='opening'] .invitation-intro__stage {
+  cursor: default;
+}
+
+.invitation-intro__actions {
+  position: absolute;
+  left: 50%;
+  bottom: max(7svh, 2.5rem);
+  transform: translateX(-50%);
+  display: grid;
+  justify-items: center;
+  gap: 0.75rem;
+  width: max-content;
+  max-width: calc(100% - 2rem);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.invitation-intro[data-stage='loading'] .invitation-intro__actions,
+.invitation-intro[data-stage='opening'] .invitation-intro__actions,
+.invitation-intro[data-stage='leaving'] .invitation-intro__actions {
+  opacity: 0;
+  transform: translate(-50%, 0.75rem);
+  pointer-events: none;
+}
+
+.invitation-intro__open {
+  min-height: 48px;
+  padding: 0.85rem 1.9rem;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--intro-text) 8%, transparent);
+  color: inherit;
+  font: inherit;
+  font-size: 1.1rem;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  transition: background-color 0.25s ease, color 0.25s ease;
+  animation: invitation-intro-breathe 2.6s ease-in-out infinite;
+}
+
+.invitation-intro__open:hover {
+  background: var(--intro-text);
+  color: var(--intro-hover-text);
+}
+
+.invitation-intro__open:focus-visible,
+.invitation-intro__skip:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 4px;
+}
+
+.invitation-intro__hint {
+  margin: 0;
+  font-size: 0.85rem;
+  opacity: 0.7;
+}
+
+.invitation-intro__skip {
+  position: absolute;
+  top: max(1rem, env(safe-area-inset-top));
+  right: 1rem;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0.5rem 1rem;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 0.95rem;
+  opacity: 0.75;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.invitation-intro__skip:hover {
+  opacity: 1;
+}
+
+.invitation-intro[data-stage='leaving'] .invitation-intro__skip {
+  opacity: 0;
+}
+
+@keyframes invitation-intro-breathe {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--intro-text) 25%, transparent); }
+  50% { box-shadow: 0 0 0 10px color-mix(in srgb, var(--intro-text) 0%, transparent); }
+}
+
+@media (hover: none) {
+  .invitation-intro__hint { display: none; }
+}

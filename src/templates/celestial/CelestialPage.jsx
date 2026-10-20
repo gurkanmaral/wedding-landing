@@ -1,12 +1,16 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import * as THREE from 'three'
-import { Body, Equator, GeoMoon, HelioDistance, Horizon, Illumination, KM_PER_AU, MoonPhase, Observer } from 'astronomy-engine'
+import { Body, Equator, GeoMoon, HelioDistance, Horizon, Illumination, KM_PER_AU, MoonPhase, Observer, SearchRiseSet } from 'astronomy-engine'
 
 gsap.registerPlugin(ScrollTrigger)
 
-const EVENT_DATE = new Date('2026-09-12T17:30:00-07:00')
+// Saturday 11 September 2027, 5:30 pm Pacific (PDT). Everything date- and
+// sky-related on the page (countdown, moon phase, copy) is derived from this.
+const EVENT_DATE = new Date('2027-09-11T17:30:00-07:00')
+// RSVP + room-block deadline, six weeks before the wedding.
+const RSVP_DEADLINE = new Date('2027-07-31T23:59:00-07:00')
 const EVENT_LOCATION = {
   label: 'Napa Valley',
   region: 'Napa Valley, California',
@@ -60,7 +64,7 @@ const venueDetails = [
   },
   {
     key: 'Stay',
-    value: 'Room block held under "Aurora & Elias" until 1 August 2026.',
+    value: `Room block held under "Aurora & Elias" until ${formatEventDate(RSVP_DEADLINE, { day: 'numeric', month: 'long', year: 'numeric' })}.`,
   },
 ]
 
@@ -111,8 +115,40 @@ function getMoonPhaseName(angle) {
 }
 
 function getCardinalDirection(azimuth) {
-  const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
-  return directions[Math.round((((azimuth % 360) + 360) % 360) / 45) % 8]
+  const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW']
+  return directions[Math.round((((azimuth % 360) + 360) % 360) / 22.5) % 16]
+}
+
+const DIRECTION_WORDS = { N: 'north', S: 'south', E: 'east', W: 'west' }
+function describeDirection(code) {
+  // 'ESE' -> 'east-southeast', 'SW' -> 'southwest'
+  if (code.length === 1) return DIRECTION_WORDS[code]
+  const word = (part) => [...part].map((c) => DIRECTION_WORDS[c]).join('')
+  return code.length === 2 ? word(code) : `${word(code[0])}-${word(code.slice(1))}`
+}
+
+/* Plain-language sentence about the Moon on the wedding evening, computed
+   from the real ephemeris so it stays correct when EVENT_DATE changes. */
+function getMoonStory(date, location) {
+  const angle = MoonPhase(date)
+  const illumination = Math.round(Illumination(Body.Moon, date).phase_fraction * 100)
+  const phaseName = getMoonPhaseName(angle).toLowerCase()
+  const article = /^[aeiou]/.test(phaseName) ? 'an' : 'a'
+  let sentence = `On the wedding evening the Moon is ${article} ${phaseName}, about ${illumination}% lit`
+  try {
+    const observer = new Observer(location.latitude, location.longitude, location.elevationMeters)
+    const dayStart = new Date(date.getTime() - 12 * 36e5)
+    const rise = SearchRiseSet(Body.Moon, observer, +1, dayStart, 1)
+    if (rise && Math.abs(rise.date.getTime() - date.getTime()) < 4 * 36e5) {
+      const eq = Equator(Body.Moon, rise.date, observer, true, true)
+      const hor = Horizon(rise.date, observer, eq.ra, eq.dec, 'normal')
+      const time = formatEventDate(rise.date, { hour: 'numeric', minute: '2-digit' }).toLowerCase()
+      sentence += `, rising in the ${describeDirection(getCardinalDirection(hor.azimuth))} at ${time}`
+    }
+  } catch {
+    // Phase-only sentence if rise/set math is unavailable.
+  }
+  return `${sentence}. Mercury gets its own marker, while the star field keeps the invitation feeling celestial and personal.`
 }
 
 function getMoonViewingNote(angle, date, location) {
@@ -182,18 +218,15 @@ function getMoonViewingNote(angle, date, location) {
   }
 }
 
-function getMoonShadowStyle(date) {
+/* SVG path of the sunlit part of the Moon (100x100 box), as seen from the
+   northern hemisphere: waxing = lit on the right, waning = lit on the left. */
+function getMoonLitPath(date) {
   const angle = MoonPhase(date)
-  const illumination = Illumination(Body.Moon, date).phase_fraction * 100
-
-  if (illumination >= 95) return { opacity: 0 }
-  if (illumination <= 5) return { inset: '-1px', opacity: 0.92 }
-
-  if (angle < 180) {
-    return { inset: '-1px 16% -1px -1px', opacity: 1 }
-  }
-
-  return { inset: '-1px -1px -1px 16%', opacity: 1 }
+  const fraction = Illumination(Body.Moon, date).phase_fraction
+  const rx = Math.abs(1 - 2 * fraction) * 50
+  const gibbous = fraction > 0.5 ? 1 : 0
+  const path = `M50 0 A50 50 0 0 1 50 100 A${rx.toFixed(2)} 50 0 0 ${gibbous} 50 0 Z`
+  return { path, waning: angle >= 180, fraction }
 }
 
 function getSkySnapshot(date, location) {
@@ -228,6 +261,7 @@ function getSkySnapshot(date, location) {
 }
 
 function getCountdownParts() {
+  // Days are zero-padded to three digits so the grid never reflows.
   let diff = Math.max(0, EVENT_DATE.getTime() - Date.now())
   const days = Math.floor(diff / 864e5)
   diff -= days * 864e5
@@ -270,6 +304,70 @@ function PhotoSlot({ label, className = '' }) {
   )
 }
 
+/* Splits text into per-character spans for the GSAP heading reveal. Words stay
+   unbreakable units with real spaces between them, so long headings still wrap
+   on narrow screens. Rendered by React (no innerHTML), so StrictMode and
+   re-renders are safe; the parent heading carries the accessible name. */
+function SplitChars({ text }) {
+  const words = text.split(' ')
+  return words.map((word, wi) => (
+    <span key={wi}>
+      <span className="cw-word" aria-hidden="true">
+        {[...word].map((char, ci) => (
+          <span className="cw-char" key={ci}>{char}</span>
+        ))}
+      </span>
+      {wi < words.length - 1 ? ' ' : null}
+    </span>
+  ))
+}
+
+/* Countdown lives in its own component so the per-second tick re-renders
+   only these four cells, not the whole page. */
+function Countdown() {
+  const [countdown, setCountdown] = useState(getCountdownParts)
+
+  useEffect(() => {
+    const interval = window.setInterval(() => setCountdown(getCountdownParts()), 1000)
+    return () => window.clearInterval(interval)
+  }, [])
+
+  return (
+    <div className="cw-count-grid cw-reveal cw-d1" role="timer" aria-live="off">
+      {countdown.map((item, index) => (
+        <div className="cw-count-cell" key={item.label}>
+          <div className="cw-count-orbit" aria-hidden="true" />
+          <span
+            className="cw-count-dot"
+            aria-hidden="true"
+            style={{ animationDuration: `${10 + index * 3}s` }}
+          />
+          <div className="cw-count-num">{item.value}</div>
+          <div className="cw-count-label">{item.label}</div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function MoonPhaseDisc({ lit, label }) {
+  return (
+    <div className="cw-sky-moon-phase" role="img" aria-label={label}>
+      <svg viewBox="0 0 100 100" aria-hidden="true">
+        <defs>
+          <radialGradient id="cw-moon-lit" cx="40%" cy="38%" r="70%">
+            <stop offset="0%" stopColor="oklch(0.95 0.018 88)" />
+            <stop offset="100%" stopColor="oklch(0.68 0.028 82)" />
+          </radialGradient>
+        </defs>
+        <g transform={lit.waning ? 'translate(100 0) scale(-1 1)' : undefined}>
+          <path d={lit.path} fill="url(#cw-moon-lit)" />
+        </g>
+      </svg>
+    </div>
+  )
+}
+
 function disposeObject3D(object) {
   object.traverse((child) => {
     if (child.geometry) child.geometry.dispose()
@@ -285,8 +383,7 @@ function disposeObject3D(object) {
 
 export default function CelestialWeddingPage() {
   const rootRef = useRef(null)
-  const canvasRef = useRef(null)
-  const [countdown, setCountdown] = useState(getCountdownParts)
+  const starHostRef = useRef(null)
   const [attending, setAttending] = useState('yes')
   const [formState, setFormState] = useState({ name: '', email: '' })
   const [errors, setErrors] = useState({})
@@ -297,10 +394,15 @@ export default function CelestialWeddingPage() {
     [formState.name],
   )
   const skySnapshot = useMemo(() => getSkySnapshot(EVENT_DATE, EVENT_LOCATION), [])
-  const moonShadowStyle = useMemo(() => getMoonShadowStyle(EVENT_DATE), [])
+  const moonLit = useMemo(() => getMoonLitPath(EVENT_DATE), [])
+  const moonStory = useMemo(() => getMoonStory(EVENT_DATE, EVENT_LOCATION), [])
   const moonPhaseLabel = skySnapshot.find((item) => item.label === 'Moon phase')?.value ?? 'Moon phase'
   const eventDateLong = useMemo(
-    () => formatEventDate(EVENT_DATE, { day: 'numeric', month: 'long', year: 'numeric' }),
+    () => formatEventDate(EVENT_DATE, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }),
+    [],
+  )
+  const rsvpDeadline = useMemo(
+    () => formatEventDate(RSVP_DEADLINE, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }),
     [],
   )
   const eventDateShort = useMemo(
@@ -313,11 +415,6 @@ export default function CelestialWeddingPage() {
   )
 
   useEffect(() => {
-    const interval = window.setInterval(() => setCountdown(getCountdownParts()), 1000)
-    return () => window.clearInterval(interval)
-  }, [])
-
-  useEffect(() => {
     document.documentElement.classList.add('celestial-native-scroll')
     document.body.classList.add('celestial-native-scroll')
 
@@ -327,17 +424,18 @@ export default function CelestialWeddingPage() {
     }
   }, [])
 
-  useEffect(() => {
+  // Layout effect: GSAP hides the reveal targets before the first paint, so
+  // there is no flash of content that then disappears.
+  useLayoutEffect(() => {
     const root = rootRef.current
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     const isMobile = window.matchMedia('(max-width: 820px)').matches
 
-    if (reduceMotion) {
-      root.querySelectorAll('.cw-reveal').forEach((target) => target.classList.add('in'))
-      return undefined
-    }
+    // Reduced motion: everything is visible by default (CSS), nothing to do.
+    if (reduceMotion) return undefined
 
     const hoverCleanups = []
+    const revealTimelines = []
     const ctx = gsap.context(() => {
       const revealY = isMobile ? 20 : 46
       const charDuration = isMobile ? 0.34 : 0.44
@@ -345,24 +443,7 @@ export default function CelestialWeddingPage() {
       const itemStagger = isMobile ? 0.035 : 0.065
       const sectionStart = isMobile ? 'top 84%' : 'top 74%'
 
-      const splitTargets = gsap.utils.toArray(
-        '.cw-section-head h2, .cw-story-copy h2, .cw-venue-info h2, .cw-footer-names',
-      )
-
-      splitTargets.forEach((target) => {
-        if (target.dataset.split) return
-        const text = target.textContent
-        target.dataset.split = 'true'
-        target.setAttribute('aria-label', text)
-        target.innerHTML = text
-          .split('')
-          .map((char) => {
-            const value = char === ' ' ? '&nbsp;' : char
-            return `<span class="cw-char" aria-hidden="true">${value}</span>`
-          })
-          .join('')
-      })
-
+      // Headings are split into .cw-char spans by <SplitChars> at render time.
       gsap.set('.cw-reveal:not(.in)', { autoAlpha: 0, y: revealY })
       gsap.set('.cw-section-head', { autoAlpha: 1, y: 0 })
       gsap.set('.cw-count-grid, .cw-timeline, .cw-gallery-grid', { autoAlpha: 1, y: 0 })
@@ -379,8 +460,8 @@ export default function CelestialWeddingPage() {
       gsap.set('.cw-section-head h2, .cw-story-copy h2, .cw-venue-info h2', { y: 0 })
 
       const revealHeading = (selector, trigger, start = 'top 76%') => {
-        const chars = document.querySelectorAll(`${selector} .cw-char`)
-        return gsap.to(chars, {
+        const chars = root.querySelectorAll(`${selector} .cw-char`)
+        const tween = gsap.to(chars, {
           autoAlpha: 1,
           yPercent: 0,
           rotate: 0,
@@ -390,9 +471,11 @@ export default function CelestialWeddingPage() {
           scrollTrigger: {
             trigger,
             start,
-            toggleActions: 'restart none restart none',
+            toggleActions: 'play none none none',
           },
         })
+        revealTimelines.push(tween)
+        return tween
       }
 
       if (!isMobile) {
@@ -418,6 +501,7 @@ export default function CelestialWeddingPage() {
           start: 'top top',
           end: 'bottom bottom',
           scrub: 0.45,
+          invalidateOnRefresh: true,
         },
       })
 
@@ -437,10 +521,8 @@ export default function CelestialWeddingPage() {
 
       const heroTl = gsap.timeline({ defaults: { ease: 'power4.out' } })
       heroTl
-        .from('.cw-moon', {
-          autoAlpha: 0,
-          scale: 0.62,
-          rotate: -18,
+        .from('.cw-moon-stage', {
+          opacity: 0,
           duration: 1.25,
         })
         .fromTo(
@@ -467,20 +549,6 @@ export default function CelestialWeddingPage() {
           '-=.35',
         )
 
-      if (!isMobile) {
-        gsap.to('.cw-moon', {
-          y: -24,
-          scale: 0.94,
-          ease: 'none',
-          scrollTrigger: {
-            trigger: '.cw-hero',
-            start: 'top top',
-            end: 'bottom top',
-            scrub: 0.55,
-          },
-        })
-      }
-
       gsap.to('.cw-starfield', {
         yPercent: isMobile ? 4 : 10,
         opacity: 0.62,
@@ -498,7 +566,7 @@ export default function CelestialWeddingPage() {
         scrollTrigger: {
           trigger: '.cw-countdown',
           start: isMobile ? 'top 84%' : 'top 72%',
-          toggleActions: 'restart none restart none',
+          toggleActions: 'play none none none',
         },
       })
       countdownTl
@@ -546,7 +614,7 @@ export default function CelestialWeddingPage() {
         scrollTrigger: {
           trigger: '.cw-sky',
           start: sectionStart,
-          toggleActions: 'restart none restart none',
+          toggleActions: 'play none none none',
         },
       })
       skyTl
@@ -605,7 +673,7 @@ export default function CelestialWeddingPage() {
         scrollTrigger: {
           trigger: '.cw-story',
           start: isMobile ? 'top 86%' : 'top 78%',
-          toggleActions: 'restart none restart none',
+          toggleActions: 'play none none none',
         },
       })
       storyTl
@@ -677,7 +745,7 @@ export default function CelestialWeddingPage() {
         scrollTrigger: {
           trigger: '.cw-schedule',
           start: sectionStart,
-          toggleActions: 'restart none restart none',
+          toggleActions: 'play none none none',
         },
       })
       scheduleTl
@@ -727,7 +795,7 @@ export default function CelestialWeddingPage() {
         scrollTrigger: {
           trigger: '.cw-venue',
           start: isMobile ? 'top 84%' : 'top 76%',
-          toggleActions: 'restart none restart none',
+          toggleActions: 'play none none none',
         },
       })
       venueTl
@@ -813,7 +881,7 @@ export default function CelestialWeddingPage() {
         scrollTrigger: {
           trigger: '.cw-gallery',
           start: sectionStart,
-          toggleActions: 'restart none restart none',
+          toggleActions: 'play none none none',
         },
       })
       galleryTl
@@ -855,7 +923,7 @@ export default function CelestialWeddingPage() {
         scrollTrigger: {
           trigger: '.cw-rsvp',
           start: sectionStart,
-          toggleActions: 'restart none restart none',
+          toggleActions: 'play none none none',
         },
       })
       rsvpTl
@@ -897,6 +965,8 @@ export default function CelestialWeddingPage() {
           0.44,
         )
 
+      revealTimelines.push(countdownTl, skyTl, storyTl, scheduleTl, venueTl, galleryTl, rsvpTl)
+
       gsap.to('.cw-footer-names', {
         autoAlpha: 1,
         y: 0,
@@ -905,7 +975,7 @@ export default function CelestialWeddingPage() {
         scrollTrigger: {
           trigger: '.cw-footer',
           start: 'top 80%',
-          toggleActions: 'restart none restart none',
+          toggleActions: 'play none none none',
         },
       })
 
@@ -918,7 +988,7 @@ export default function CelestialWeddingPage() {
         scrollTrigger: {
           trigger: '.cw-footer',
           start: 'top 80%',
-          toggleActions: 'restart none restart none',
+          toggleActions: 'play none none none',
         },
       })
 
@@ -953,32 +1023,76 @@ export default function CelestialWeddingPage() {
       }
     }, root)
 
+    /* Safety net: a reveal must never leave content hidden. Whenever scrolling
+       settles (or the layout changes), any reveal whose trigger is already on
+       or above the screen but has not played yet is played / finished. Covers
+       fast flings, anchor jumps, scroll restoration, late fonts and resizes. */
+    const ensureRevealed = () => {
+      const vh = window.innerHeight
+      revealTimelines.forEach((anim) => {
+        const el = anim.scrollTrigger?.trigger
+        if (!el || anim.progress() === 1) return
+        const rect = el.getBoundingClientRect()
+        if (rect.bottom < 0) anim.progress(1)
+        else if (rect.top < vh && !anim.isActive()) anim.play()
+      })
+    }
+    ScrollTrigger.addEventListener('scrollEnd', ensureRevealed)
+    ScrollTrigger.addEventListener('refresh', ensureRevealed)
+    const safetyTimer = window.setTimeout(ensureRevealed, 1600)
+    let fontsAlive = true
+    document.fonts?.ready.then(() => { if (fontsAlive) ScrollTrigger.refresh() })
+
     return () => {
+      fontsAlive = false
+      window.clearTimeout(safetyTimer)
+      ScrollTrigger.removeEventListener('scrollEnd', ensureRevealed)
+      ScrollTrigger.removeEventListener('refresh', ensureRevealed)
       hoverCleanups.forEach((cleanup) => cleanup())
       ctx.revert()
     }
   }, [])
 
   useEffect(() => {
-    const canvas = canvasRef.current
+    const host = starHostRef.current
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     const isMobile = window.matchMedia('(max-width: 820px)').matches
-    const renderer = new THREE.WebGLRenderer({
-      alpha: true,
-      antialias: true,
-      canvas,
-    })
+
+    // The canvas is created here (not in JSX) so every mount owns a fresh
+    // WebGL context that can be fully released on unmount — StrictMode's
+    // double mount never ends up with two renderers sharing one canvas.
+    const canvas = document.createElement('canvas')
+    canvas.className = 'cw-starfield-canvas'
+    canvas.setAttribute('aria-hidden', 'true')
+    host.appendChild(canvas)
+
+    let renderer
+    try {
+      renderer = new THREE.WebGLRenderer({
+        alpha: true,
+        antialias: !isMobile,
+        canvas,
+        powerPreference: isMobile ? 'low-power' : 'default',
+      })
+    } catch {
+      // No WebGL: the CSS night-sky background still carries the hero.
+      canvas.remove()
+      return undefined
+    }
     const scene = new THREE.Scene()
     const camera = new THREE.PerspectiveCamera(55, 1, 1, 1200)
     const starField = new THREE.Group()
     const moonGroup = new THREE.Group()
     const pointer = new THREE.Vector2(0, 0)
     const targetPointer = new THREE.Vector2(0, 0)
-    const clock = new THREE.Clock()
+    let lastTime = performance.now()
     let frame = 0
+    let elapsed = 0
     let width = 1
     let height = 1
     let moonBaseY = 118
+    let onScreen = true
+    let disposed = false
 
     camera.position.z = 420
     scene.add(starField)
@@ -986,19 +1100,16 @@ export default function CelestialWeddingPage() {
 
     const makeStarLayer = ({ count, depth, size, color, spread, opacity }) => {
       const positions = new Float32Array(count * 3)
-      const phases = new Float32Array(count)
 
       for (let index = 0; index < count; index += 1) {
         const i3 = index * 3
         positions[i3] = (Math.random() - 0.5) * spread
         positions[i3 + 1] = (Math.random() - 0.5) * spread * 0.62
         positions[i3 + 2] = depth + (Math.random() - 0.5) * 90
-        phases[index] = Math.random() * Math.PI * 2
       }
 
       const geometry = new THREE.BufferGeometry()
       geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
-      geometry.setAttribute('phase', new THREE.BufferAttribute(phases, 1))
 
       const material = new THREE.PointsMaterial({
         color,
@@ -1016,9 +1127,10 @@ export default function CelestialWeddingPage() {
       return points
     }
 
+    const starScale = isMobile ? 0.55 : 1
     const farStars = makeStarLayer({
       color: '#e9ecff',
-      count: 260,
+      count: Math.round(260 * starScale),
       depth: -170,
       opacity: 0.52,
       size: 1.45,
@@ -1026,7 +1138,7 @@ export default function CelestialWeddingPage() {
     })
     const nearStars = makeStarLayer({
       color: '#f4d38a',
-      count: 80,
+      count: Math.round(80 * starScale),
       depth: 40,
       opacity: 0.72,
       size: 2.1,
@@ -1034,7 +1146,7 @@ export default function CelestialWeddingPage() {
     })
     const dustStars = makeStarLayer({
       color: '#ffffff',
-      count: 140,
+      count: Math.round(140 * starScale),
       depth: -20,
       opacity: 0.28,
       size: 0.95,
@@ -1053,13 +1165,19 @@ export default function CelestialWeddingPage() {
     const meteor = new THREE.Line(meteorGeometry, meteorMaterial)
     scene.add(meteor)
 
+    // Render on demand when the loop is not running (reduced motion / paused)
+    const renderOnce = () => {
+      if (!disposed) renderer.render(scene, camera)
+    }
     const textureLoader = new THREE.TextureLoader()
-    const moonTexture = textureLoader.load('/assets/moon/lroc_color_2k.jpg')
-    const moonElevation = textureLoader.load('/assets/moon/ldem_3_8bit.jpg')
+    const moonTexture = textureLoader.load('/assets/moon/lroc_color_2k.jpg', renderOnce)
+    const moonElevation = textureLoader.load('/assets/moon/ldem_3_8bit.jpg', renderOnce)
+    const anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy())
     moonTexture.colorSpace = THREE.SRGBColorSpace
-    moonTexture.anisotropy = 8
-    moonElevation.anisotropy = 8
-    const moonGeometry = new THREE.SphereGeometry(52, 160, 160)
+    moonTexture.anisotropy = anisotropy
+    moonElevation.anisotropy = anisotropy
+    const moonSegments = isMobile ? 96 : 160
+    const moonGeometry = new THREE.SphereGeometry(52, moonSegments, moonSegments)
     const moonMaterial = new THREE.MeshStandardMaterial({
       bumpMap: moonElevation,
       bumpScale: 2.6,
@@ -1073,7 +1191,7 @@ export default function CelestialWeddingPage() {
       roughness: 1,
     })
     const moon = new THREE.Mesh(moonGeometry, moonMaterial)
-    const moonGlowGeometry = new THREE.SphereGeometry(64, 72, 72)
+    const moonGlowGeometry = new THREE.SphereGeometry(64, 48, 48)
     const moonGlowMaterial = new THREE.MeshBasicMaterial({
       color: '#dfe5ff',
       opacity: 0.12,
@@ -1090,12 +1208,16 @@ export default function CelestialWeddingPage() {
     moon.rotation.set(0.08, -1.35, -0.05)
     moonGlow.scale.setScalar(1.08)
     moonGroup.add(moonGlow, moon)
-    moonKeyLight.position.set(-130, 180, 260)
+    // Light the 3D moon with the real phase on the wedding evening:
+    // phase angle 0 = new (sun behind the moon), 180 = full (sun behind us);
+    // waxing lights the right limb, waning the left.
+    const phaseRad = (MoonPhase(EVENT_DATE) * Math.PI) / 180
+    moonKeyLight.position.set(Math.sin(phaseRad) * 300, 40, -Math.cos(phaseRad) * 300)
     moonFillLight.position.set(180, -120, 120)
     scene.add(moonKeyLight, moonFillLight, ambientLight)
 
     const resize = () => {
-      const rect = canvas.getBoundingClientRect()
+      const rect = host.getBoundingClientRect()
       width = Math.max(1, rect.width)
       height = Math.max(1, rect.height)
       renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, isMobile ? 1.35 : 2))
@@ -1105,16 +1227,19 @@ export default function CelestialWeddingPage() {
       const moonScale = width < 600 ? 0.84 : width < 900 ? 1.28 : 2.05
       moonBaseY = width < 600 ? -8 : width < 900 ? -12 : -18
       moonGroup.scale.setScalar(moonScale)
+      moonGroup.position.y = moonBaseY
+      if (!frame) renderOnce()
     }
 
     const onPointerMove = (event) => {
-      const rect = canvas.getBoundingClientRect()
+      if (event.pointerType !== 'mouse') return
+      const rect = host.getBoundingClientRect()
       targetPointer.x = ((event.clientX - rect.left) / rect.width - 0.5) * 2
       targetPointer.y = -(((event.clientY - rect.top) / rect.height - 0.5) * 2)
     }
 
     const launchMeteor = () => {
-      if (reduceMotion) return
+      if (reduceMotion || !frame) return
       meteor.position.set(
         (Math.random() - 0.5) * 380,
         150 + Math.random() * 120,
@@ -1136,8 +1261,10 @@ export default function CelestialWeddingPage() {
     }
 
     const animate = () => {
-      const elapsed = clock.getElapsedTime()
-      pointer.lerp(targetPointer, reduceMotion ? 0.03 : 0.075)
+      const now = performance.now()
+      elapsed += Math.min((now - lastTime) / 1000, 0.05)
+      lastTime = now
+      pointer.lerp(targetPointer, 0.075)
 
       starField.rotation.y = pointer.x * 0.055
       starField.rotation.x = pointer.y * 0.035
@@ -1147,7 +1274,7 @@ export default function CelestialWeddingPage() {
       moonGroup.rotation.x = pointer.y * 0.07
       moonGroup.position.x = pointer.x * 10
       moonGroup.position.y = moonBaseY + pointer.y * 6 + Math.sin(elapsed * 0.7) * 1.8
-      moon.rotation.y += reduceMotion ? 0.0008 : 0.0018
+      moon.rotation.y += 0.0018
       moonGlow.material.opacity = 0.13 + Math.sin(elapsed * 1.2) * 0.025
 
       farStars.position.x = pointer.x * -16
@@ -1160,28 +1287,54 @@ export default function CelestialWeddingPage() {
       starField.children.forEach((layer, index) => {
         layer.rotation.z = elapsed * layer.userData.floatSpeed * (index % 2 ? -1 : 1)
         layer.material.opacity =
-          layer.userData.baseOpacity +
-          Math.sin(elapsed * 1.1 + index) * (reduceMotion ? 0.015 : 0.08)
+          layer.userData.baseOpacity + Math.sin(elapsed * 1.1 + index) * 0.08
       })
 
       renderer.render(scene, camera)
       frame = window.requestAnimationFrame(animate)
     }
 
-    resize()
-    animate()
+    // The loop only runs while the hero is on screen and the tab is visible.
+    // With reduced motion the scene is rendered as a still (on demand).
+    const start = () => {
+      if (frame || reduceMotion || disposed || !onScreen || document.hidden) return
+      lastTime = performance.now()
+      frame = window.requestAnimationFrame(animate)
+    }
+    const stop = () => {
+      if (frame) window.cancelAnimationFrame(frame)
+      frame = 0
+    }
+    const onVisibility = () => (document.hidden ? stop() : start())
 
-    const meteorTimer = isMobile ? 0 : window.setInterval(launchMeteor, 4200)
-    const firstMeteor = isMobile ? 0 : window.setTimeout(launchMeteor, 1300)
+    const visibilityObserver = new IntersectionObserver(([entry]) => {
+      onScreen = entry.isIntersecting
+      if (onScreen) start()
+      else stop()
+    })
+    visibilityObserver.observe(host)
+
+    resize()
+    renderOnce()
+    start()
+
+    const meteorTimer = isMobile || reduceMotion ? 0 : window.setInterval(launchMeteor, 4200)
+    const firstMeteor = isMobile || reduceMotion ? 0 : window.setTimeout(launchMeteor, 1300)
     window.addEventListener('resize', resize)
-    window.addEventListener('pointermove', onPointerMove)
+    window.addEventListener('pointermove', onPointerMove, { passive: true })
+    document.addEventListener('visibilitychange', onVisibility)
 
     return () => {
-      window.cancelAnimationFrame(frame)
+      disposed = true
+      stop()
+      visibilityObserver.disconnect()
       if (meteorTimer) window.clearInterval(meteorTimer)
       if (firstMeteor) window.clearTimeout(firstMeteor)
+      gsap.killTweensOf(meteor.position)
+      gsap.killTweensOf(meteorMaterial)
       window.removeEventListener('resize', resize)
       window.removeEventListener('pointermove', onPointerMove)
+      document.removeEventListener('visibilitychange', onVisibility)
       disposeObject3D(starField)
       disposeObject3D(moonGroup)
       moonTexture.dispose()
@@ -1189,6 +1342,8 @@ export default function CelestialWeddingPage() {
       meteorGeometry.dispose()
       meteorMaterial.dispose()
       renderer.dispose()
+      renderer.forceContextLoss()
+      canvas.remove()
     }
   }, [])
 
@@ -1205,7 +1360,11 @@ export default function CelestialWeddingPage() {
     }
 
     setErrors(nextErrors)
-    if (Object.keys(nextErrors).length) return
+    if (Object.keys(nextErrors).length) {
+      const firstInvalid = nextErrors.name ? 'in-name' : 'in-email'
+      rootRef.current?.querySelector(`#${firstInvalid}`)?.focus()
+      return
+    }
     setSubmitted(true)
   }
 
@@ -1228,7 +1387,16 @@ export default function CelestialWeddingPage() {
           background: var(--night-0);
           color: var(--starlight);
           font-family: "Cormorant Garamond", Georgia, serif;
-          overflow-x: hidden;
+          overflow-x: clip;
+        }
+        .celestial-page .cw-sr-only {
+          position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+          overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+        }
+        .celestial-page a:focus-visible,
+        .celestial-page button:focus-visible {
+          outline: 2px solid var(--gold);
+          outline-offset: 3px;
         }
         html.celestial-native-scroll {
           scroll-behavior: auto;
@@ -1270,7 +1438,6 @@ export default function CelestialWeddingPage() {
           font-weight: 400;
           line-height: 1.05;
           letter-spacing: 0;
-          will-change: clip-path, transform;
         }
         .cw-section-head h2 {
           margin: 18px 0 0;
@@ -1301,17 +1468,13 @@ export default function CelestialWeddingPage() {
           fill: currentColor;
           filter: drop-shadow(0 0 8px oklch(0.84 0.1 84 / .35));
         }
-        .cw-reveal {
-          opacity: 0;
-          transform: translateY(28px);
-          transition: none;
-          will-change: opacity, transform;
-        }
-        .cw-reveal.in { opacity: 1; transform: none; }
+        /* Content is visible by default; GSAP hides it only once it has
+           taken over (see the reveal effect), so a script failure or a
+           missed trigger can never leave text invisible. */
+        .cw-word { display: inline-block; white-space: nowrap; }
         .cw-char {
           display: inline-block;
           transform-origin: 50% 100%;
-          will-change: opacity, transform;
         }
         .cw-motion-rail {
           position: fixed;
@@ -1368,7 +1531,8 @@ export default function CelestialWeddingPage() {
           background: linear-gradient(180deg, transparent, oklch(0.10 0.03 268 / .56));
           z-index: 1;
         }
-        .cw-starfield { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; }
+        .cw-starfield { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+        .cw-starfield-canvas { display: block; width: 100%; height: 100%; }
         .cw-hero-inner {
           position: relative;
           z-index: 2;
@@ -1393,43 +1557,13 @@ export default function CelestialWeddingPage() {
           z-index: 0;
           pointer-events: none;
         }
-        .cw-moon-stage::before,
-        .cw-moon-stage::after {
+        .cw-moon-stage::before {
           content: "";
           position: absolute;
           inset: 4%;
           border: 1px solid oklch(0.84 0.1 84 / .18);
           border-radius: 50%;
           box-shadow: inset 0 0 38px oklch(0.72 0.05 260 / .08);
-        }
-        .cw-moon-stage::after {
-          display: none;
-        }
-        .cw-moon {
-          width: 56%;
-          height: 56%;
-          position: relative;
-          border-radius: 50%;
-          background: transparent;
-          box-shadow: none;
-          will-change: opacity, transform;
-        }
-        .cw-moon::after {
-          display: none;
-        }
-        .cw-moon-halo {
-          display: none;
-        }
-        .cw-moon-halo::before {
-          content: "";
-          position: absolute;
-          top: -3px;
-          left: 50%;
-          width: 5px;
-          height: 5px;
-          border-radius: 50%;
-          background: var(--gold);
-          box-shadow: 0 0 10px var(--gold);
         }
         .cw-hero .cw-eyebrow,
         .cw-hero-names,
@@ -1444,21 +1578,18 @@ export default function CelestialWeddingPage() {
           backdrop-filter: blur(10px);
         }
         @keyframes cw-spin { to { transform: rotate(360deg); } }
-        @keyframes cw-orbit-spin {
-          from { transform: rotateX(62deg) rotateZ(18deg); }
-          to { transform: rotateX(62deg) rotateZ(378deg); }
-        }
         .cw-hero-names {
           max-width: 780px;
           margin: clamp(10px, 2vh, 16px) 0 0;
           color: oklch(0.98 0.008 90);
           font-size: clamp(4.2rem, 11vw, 8.7rem);
           font-weight: 400;
-          line-height: .84;
+          line-height: .9;
+          overflow-wrap: anywhere;
           letter-spacing: 0;
           text-shadow: 0 16px 60px oklch(0.04 0.02 270 / .45);
         }
-        .cw-hero-names span {
+        .cw-hero-names .cw-and {
           display: block;
           margin: .11em 0 .08em;
           color: var(--gold);
@@ -1658,17 +1789,13 @@ export default function CelestialWeddingPage() {
           width: clamp(86px, 15vw, 132px);
           aspect-ratio: 1;
           border-radius: 50%;
-          background: radial-gradient(circle at 35% 35%, oklch(0.93 0.018 88), oklch(0.65 0.028 82) 72%);
-          box-shadow: 0 0 34px oklch(0.82 0.08 84 / .25);
+          /* unlit disc (earthshine); the lit part is an SVG computed from the
+             real illuminated fraction on the wedding date */
+          background: radial-gradient(circle at 35% 35%, oklch(0.2 0.04 268), oklch(0.12 0.035 270) 72%);
+          box-shadow: 0 0 34px oklch(0.82 0.08 84 / .25), inset 0 0 0 1px oklch(0.84 0.1 84 / .12);
           transform: translate(-50%, -50%);
         }
-        .cw-sky-moon-phase span {
-          position: absolute;
-          inset: -1px 16% -1px -1px;
-          border-radius: 50%;
-          background: linear-gradient(90deg, oklch(0.11 0.04 270) 6%, oklch(0.16 0.044 266) 72%);
-          box-shadow: inset -8px 0 18px oklch(0.04 0.02 270 / .45);
-        }
+        .cw-sky-moon-phase svg { display: block; width: 100%; height: 100%; }
         .cw-sky-planet {
           position: absolute;
           left: 70%;
@@ -1699,7 +1826,7 @@ export default function CelestialWeddingPage() {
           z-index: 2;
           color: var(--mist);
           font-family: Inter, ui-sans-serif, system-ui, sans-serif;
-          font-size: .58rem;
+          font-size: .62rem;
           letter-spacing: .16em;
           text-transform: uppercase;
           transform: translate(-50%, -50%);
@@ -2001,6 +2128,8 @@ export default function CelestialWeddingPage() {
         .cw-field select,
         .cw-field textarea {
           width: 100%;
+          min-height: 46px;
+          border-radius: 0;
           border: 1px solid var(--line);
           background: oklch(0.12 0.03 268);
           color: var(--starlight);
@@ -2012,21 +2141,28 @@ export default function CelestialWeddingPage() {
         }
         .cw-field input:focus,
         .cw-field select:focus,
-        .cw-field textarea:focus { border-color: var(--gold); box-shadow: 0 0 0 3px oklch(0.84 0.1 84 / .12); }
-        .cw-field textarea { min-height: 54px; resize: vertical; }
-        .cw-field.err input { border-color: oklch(0.6 0.14 25); }
+        .cw-field textarea:focus { border-color: var(--gold); box-shadow: 0 0 0 2px oklch(0.84 0.1 84 / .55); }
+        .cw-field textarea { min-height: 76px; resize: vertical; }
+        .cw-field input::placeholder,
+        .cw-field textarea::placeholder { color: var(--mist-dim); opacity: 1; }
+        .cw-field.err input { border-color: oklch(0.68 0.15 25); }
         .cw-msg {
           display: none;
           margin-top: 6px;
-          color: oklch(0.72 0.13 28);
+          color: oklch(0.76 0.13 28);
           font-family: Inter, ui-sans-serif, system-ui, sans-serif;
-          font-size: .66rem;
+          font-size: .74rem;
           letter-spacing: .1em;
         }
         .cw-field.err .cw-msg { display: block; }
         .cw-row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-        .cw-attend { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
-        .cw-attend input { display: none; }
+        .cw-attend { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 0 0 14px; padding: 0; border: 0; min-width: 0; }
+        /* visually hidden but still focusable / operable with the keyboard */
+        .cw-attend input {
+          position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
+          overflow: hidden; clip: rect(0 0 0 0); border: 0; opacity: 0;
+        }
+        .cw-attend input:focus-visible + label { outline: 2px solid var(--gold); outline-offset: 3px; }
         .cw-attend label {
           display: flex;
           align-items: center;
@@ -2049,7 +2185,14 @@ export default function CelestialWeddingPage() {
         }
         .cw-submit { width: 100%; margin-top: 8px; }
         .cw-thanks { padding: 30px 10px; animation: cw-fadein .8s both; }
-        .cw-thanks .cw-moon { width: 72px; height: 72px; margin: 0 auto 10px; }
+        .cw-thanks-moon {
+          width: 72px;
+          height: 72px;
+          margin: 0 auto 10px;
+          border-radius: 50%;
+          background: radial-gradient(circle at 35% 35%, oklch(0.95 0.018 88), oklch(0.7 0.03 82) 72%);
+          box-shadow: 0 0 34px oklch(0.82 0.08 84 / .3);
+        }
         .cw-thanks-title { margin: 18px 0 10px; color: var(--gold-soft); font-size: 2.8rem; }
         .cw-thanks p { color: var(--mist); font-size: 1.2rem; }
         @keyframes cw-fadein { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
@@ -2060,7 +2203,7 @@ export default function CelestialWeddingPage() {
           text-align: center;
         }
         .cw-footer-names { color: var(--starlight); font-size: 2.4rem; font-style: italic; }
-        .cw-footer-names span { color: var(--gold); }
+        .cw-footer-names .cw-amp { color: var(--gold); }
         .cw-footer-meta {
           margin-top: 18px;
           color: var(--mist-dim);
@@ -2075,7 +2218,17 @@ export default function CelestialWeddingPage() {
           .cw-hero-inner { min-height: calc(100svh - 108px); }
           .cw-moon-stage { width: min(112vw, 480px); top: 45%; opacity: .58; }
           .cw-hero .cw-eyebrow { font-size: .62rem; letter-spacing: .34em; }
-          .cw-hero-names { font-size: clamp(3.6rem, 19vw, 6.2rem); }
+          .cw-hero-names { font-size: clamp(3.2rem, 17vw, 6.2rem); }
+          .cw-count-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 34px 18px;
+            max-width: 360px;
+            margin-left: auto;
+            margin-right: auto;
+          }
+          .cw-count-cell { width: auto; }
+          .cw-section-head h2 { font-size: clamp(1.9rem, 8.6vw, 2.6rem); }
           .cw-hero-meta { gap: 8px; }
           .cw-hero-chip { min-height: 32px; font-size: .62rem; letter-spacing: .18em; padding: 8px 12px; }
           .cw-sky-grid,
@@ -2092,16 +2245,23 @@ export default function CelestialWeddingPage() {
           .g-b, .g-d, .g-e, .g-f { grid-column: span 1; grid-row: span 1; }
           .cw-row2 { grid-template-columns: 1fr; }
           .cw-attend { grid-template-columns: 1fr; }
+          .cw-detail-key { width: 80px; letter-spacing: .18em; }
+          .cw-footer-meta { letter-spacing: .18em; line-height: 1.8; }
+        }
+        @media (max-width: 380px) {
+          .cw-wrap, .cw-section > .cw-wrap { width: calc(100% - 32px); }
+          .cw-hero { padding-left: 16px; padding-right: 16px; }
+          .cw-hero .cw-eyebrow { letter-spacing: .26em; }
+          .cw-hero-chip { letter-spacing: .12em; }
+          .cw-sky-star { font-size: .56rem; letter-spacing: .1em; }
         }
         @media (prefers-reduced-motion: reduce) {
-          .cw-reveal { opacity: 1; transform: none; transition: none; }
-          .cw-section-head h2,
-          .cw-story-copy h2,
-          .cw-venue-info h2 { clip-path: none !important; }
-          .cw-moon-halo,
           .cw-count-dot,
           .cw-photo-orbit,
+          .cw-pin-dot,
+          .cw-thanks,
           .cw-scroll-cue span:last-child { animation: none; }
+          .cw-btn, .cw-gallery-cell .cw-photo-slot { transition: none; }
         }
       `}</style>
       <div className="cw-motion-rail" aria-hidden="true">
@@ -2110,25 +2270,22 @@ export default function CelestialWeddingPage() {
       </div>
 
       <section className="cw-hero" id="hero">
-        <canvas className="cw-starfield" ref={canvasRef} aria-hidden="true" />
+        {/* three.js canvas is created inside this host by the effect */}
+        <div className="cw-starfield" ref={starHostRef} aria-hidden="true" />
         <div className="cw-hero-inner">
-          <div className="cw-moon-stage" aria-hidden="true">
-            <div className="cw-moon">
-              <div className="cw-moon-halo" />
-            </div>
-          </div>
+          <div className="cw-moon-stage" aria-hidden="true" />
           <div className="cw-eyebrow cw-reveal in">Together with their families</div>
           <h1 className="cw-hero-names cw-reveal in cw-d1">
-            Aurora<span>and</span>Elias
+            Aurora <span className="cw-and">and</span> Elias
           </h1>
           <div className="cw-hero-line cw-reveal in cw-d2" aria-hidden="true" />
           <div className="cw-hero-meta cw-reveal in cw-d2">
             <div className="cw-hero-chip cw-hero-sub">Wedding Celebration</div>
-            <div className="cw-hero-chip strong cw-hero-date">{eventDateLong}</div>
+            <time className="cw-hero-chip strong cw-hero-date" dateTime={EVENT_DATE.toISOString()}>{eventDateLong}</time>
             <div className="cw-hero-chip">{EVENT_LOCATION.label}</div>
           </div>
         </div>
-        <div className="cw-scroll-cue">
+        <div className="cw-scroll-cue" aria-hidden="true">
           <span>Scroll</span>
           <span />
         </div>
@@ -2141,23 +2298,12 @@ export default function CelestialWeddingPage() {
             <div className="cw-eyebrow dim" style={{ marginTop: 18 }}>
               Counting down to forever
             </div>
-            <h2>
-              Until we say <span className="cw-script">I do</span>
+            <h2 aria-label="Until we say I do">
+              <SplitChars text="Until we say" />{' '}
+              <span className="cw-script"><SplitChars text="I do" /></span>
             </h2>
           </div>
-          <div className="cw-count-grid cw-reveal cw-d1">
-            {countdown.map((item, index) => (
-              <div className="cw-count-cell" key={item.label}>
-                <div className="cw-count-orbit" />
-                <span
-                  className="cw-count-dot"
-                  style={{ animationDuration: `${10 + index * 3}s` }}
-                />
-                <div className="cw-count-num">{item.value}</div>
-                <div className="cw-count-label">{item.label}</div>
-              </div>
-            ))}
-          </div>
+          <Countdown />
         </div>
       </section>
 
@@ -2168,7 +2314,7 @@ export default function CelestialWeddingPage() {
             <div className="cw-eyebrow dim" style={{ marginTop: 18 }}>
               Wedding sky snapshot
             </div>
-            <h2>Ay ve yıldızların konumu</h2>
+            <h2 aria-label="The moon and stars that night"><SplitChars text="The moon & stars that night" /></h2>
             <p className="cw-lead">
               A stylized look at the Moon, Mercury and the evening stars over {EVENT_LOCATION.label}
               on {eventDateLong}.
@@ -2176,15 +2322,17 @@ export default function CelestialWeddingPage() {
           </div>
           <div className="cw-sky-grid">
             <div className="cw-sky-map cw-reveal">
-              <div className="cw-sky-orbit o1" />
-              <div className="cw-sky-orbit o2" />
-              <div className="cw-sky-moon-phase" aria-label={moonPhaseLabel}>
-                <span style={moonShadowStyle} />
-              </div>
-              <div className="cw-sky-planet">Mercury</div>
+              <div className="cw-sky-orbit o1" aria-hidden="true" />
+              <div className="cw-sky-orbit o2" aria-hidden="true" />
+              <MoonPhaseDisc
+                lit={moonLit}
+                label={`${moonPhaseLabel} moon, about ${Math.round(moonLit.fraction * 100)}% illuminated, on the wedding evening`}
+              />
+              <div className="cw-sky-planet" aria-hidden="true">Mercury</div>
               {skyStars.map((star) => (
                 <div
                   className="cw-sky-star"
+                  aria-hidden="true"
                   key={star.name}
                   style={{ '--x': star.x, '--y': star.y, '--star-size': `${star.size}px` }}
                 >
@@ -2195,11 +2343,7 @@ export default function CelestialWeddingPage() {
             <div className="cw-sky-body cw-reveal cw-d1">
               <div className="cw-eyebrow">{eventDateShort} • {EVENT_LOCATION.label}</div>
               <h3>The sky above the vows</h3>
-              <p>
-                On the wedding evening, the Moon is shown as a slim waxing crescent.
-                Mercury gets its own marker, while the star field keeps the invitation
-                feeling celestial and personal.
-              </p>
+              <p>{moonStory}</p>
               <div className="cw-sky-card-grid">
                 {skySnapshot.map((item) => (
                   <div className="cw-sky-card" key={item.label}>
@@ -2218,12 +2362,12 @@ export default function CelestialWeddingPage() {
         <div className="cw-wrap">
           <div className="cw-story-grid">
             <div className="cw-story-photo cw-reveal">
-              <div className="cw-frame-ring" />
+              <div className="cw-frame-ring" aria-hidden="true" />
               <PhotoSlot label="Drop your favorite photo" />
             </div>
             <div className="cw-story-copy cw-reveal cw-d1">
               <div className="cw-eyebrow">Our Story</div>
-              <h2>Written in the stars</h2>
+              <h2 aria-label="Written in the stars"><SplitChars text="Written in the stars" /></h2>
               <p>
                 We met on a rooftop in late autumn, both of us pretending to know
                 the constellations. <span className="hl">Elias</span> pointed at a
@@ -2259,7 +2403,7 @@ export default function CelestialWeddingPage() {
             <div className="cw-eyebrow dim" style={{ marginTop: 18 }}>
               The Order of Events
             </div>
-            <h2>An evening under the sky</h2>
+            <h2 aria-label="An evening under the sky"><SplitChars text="An evening under the sky" /></h2>
             <p className="cw-lead">
               Follow the moon through the night - from first light at the ceremony
               to the last dance beneath the stars.
@@ -2293,7 +2437,7 @@ export default function CelestialWeddingPage() {
             <div className="cw-eyebrow dim" style={{ marginTop: 18 }}>
               Where to find us
             </div>
-            <h2>The Observatory Estate</h2>
+            <h2 aria-label="The Observatory Estate"><SplitChars text="The Observatory Estate" /></h2>
           </div>
           <div className="cw-venue-grid">
             <div className="cw-starmap cw-reveal">
@@ -2317,14 +2461,14 @@ export default function CelestialWeddingPage() {
                   <circle cx="300" cy="360" r="2" />
                 </g>
               </svg>
-              <div className="cw-pin">
+              <div className="cw-pin" aria-hidden="true">
                 <div className="cw-pin-dot" />
                 <div className="cw-pin-tag">Lumiere Estate</div>
               </div>
             </div>
             <div className="cw-venue-info cw-reveal cw-d1">
               <div className="cw-eyebrow">The Celebration</div>
-              <h2>Lumiere Estate</h2>
+              <h2 aria-label="Lumiere Estate"><SplitChars text="Lumiere Estate" /></h2>
               <div className="cw-address">1700 Stargrove Lane, Napa Valley, California</div>
               {venueDetails.map((detail) => (
                 <div className="cw-detail-row" key={detail.key}>
@@ -2339,6 +2483,7 @@ export default function CelestialWeddingPage() {
                 rel="noopener noreferrer"
               >
                 Get directions
+                <span className="cw-sr-only"> (opens in a new tab)</span>
               </a>
             </div>
           </div>
@@ -2352,7 +2497,7 @@ export default function CelestialWeddingPage() {
             <div className="cw-eyebrow dim" style={{ marginTop: 18 }}>
               Moments, collected
             </div>
-            <h2>Our constellation</h2>
+            <h2 aria-label="Our constellation"><SplitChars text="Our constellation" /></h2>
             <p className="cw-lead">
               A few of our favorite nights so far - drop in your own photos to make
               it yours.
@@ -2375,18 +2520,18 @@ export default function CelestialWeddingPage() {
             <div className="cw-eyebrow dim" style={{ marginTop: 18 }}>
               Kindly Reply
             </div>
-            <h2>Will you join us?</h2>
-            <p className="cw-lead">Please respond by the first of August, 2026.</p>
+            <h2 aria-label="Will you join us?"><SplitChars text="Will you join us?" /></h2>
+            <p className="cw-lead">Please respond by {rsvpDeadline}.</p>
           </div>
           <div className="cw-rsvp-card cw-reveal cw-d1">
-            <span className="cw-corner tl" />
-            <span className="cw-corner tr" />
-            <span className="cw-corner bl" />
-            <span className="cw-corner br" />
+            <span className="cw-corner tl" aria-hidden="true" />
+            <span className="cw-corner tr" aria-hidden="true" />
+            <span className="cw-corner bl" aria-hidden="true" />
+            <span className="cw-corner br" aria-hidden="true" />
 
             {submitted ? (
-              <div className="cw-thanks">
-                <div className="cw-moon" />
+              <div className="cw-thanks" role="status">
+                <div className="cw-thanks-moon" aria-hidden="true" />
                 <div className="cw-thanks-title cw-script">
                   {attending === 'yes' ? 'See you under the stars!' : "We'll miss you"}
                 </div>
@@ -2401,7 +2546,8 @@ export default function CelestialWeddingPage() {
               </div>
             ) : (
               <form onSubmit={onSubmit} noValidate>
-                <div className="cw-attend">
+                <fieldset className="cw-attend">
+                  <legend className="cw-sr-only">Will you attend?</legend>
                   <input
                     checked={attending === 'yes'}
                     id="att-yes"
@@ -2420,12 +2566,16 @@ export default function CelestialWeddingPage() {
                     value="no"
                   />
                   <label htmlFor="att-no">Regretfully declines</label>
-                </div>
+                </fieldset>
 
                 <div className={`cw-field ${errors.name ? 'err' : ''}`}>
                   <label htmlFor="in-name">Full name</label>
                   <input
                     id="in-name"
+                    name="name"
+                    autoComplete="name"
+                    aria-invalid={errors.name ? 'true' : undefined}
+                    aria-describedby={errors.name ? 'in-name-msg' : undefined}
                     onChange={(event) =>
                       setFormState((current) => ({ ...current, name: event.target.value }))
                     }
@@ -2433,7 +2583,7 @@ export default function CelestialWeddingPage() {
                     type="text"
                     value={formState.name}
                   />
-                  <div className="cw-msg">Please let us know who is coming.</div>
+                  <div className="cw-msg" id="in-name-msg">Please let us know who is coming.</div>
                 </div>
 
                 <div className="cw-row2">
@@ -2441,6 +2591,10 @@ export default function CelestialWeddingPage() {
                     <label htmlFor="in-email">Email</label>
                     <input
                       id="in-email"
+                      name="email"
+                      autoComplete="email"
+                      aria-invalid={errors.email ? 'true' : undefined}
+                      aria-describedby={errors.email ? 'in-email-msg' : undefined}
                       onChange={(event) =>
                         setFormState((current) => ({ ...current, email: event.target.value }))
                       }
@@ -2448,12 +2602,12 @@ export default function CelestialWeddingPage() {
                       type="email"
                       value={formState.email}
                     />
-                    <div className="cw-msg">A valid email, please.</div>
+                    <div className="cw-msg" id="in-email-msg">A valid email, please.</div>
                   </div>
                   {attending === 'yes' && (
                     <div className="cw-field">
                       <label htmlFor="in-guests">Number of guests</label>
-                      <select id="in-guests" defaultValue="1">
+                      <select id="in-guests" name="guests" defaultValue="1">
                         <option value="1">1 - just me</option>
                         <option value="2">2</option>
                         <option value="3">3</option>
@@ -2466,7 +2620,7 @@ export default function CelestialWeddingPage() {
                 {attending === 'yes' && (
                   <div className="cw-field">
                     <label htmlFor="in-meal">Menu preference</label>
-                    <select id="in-meal" defaultValue="">
+                    <select id="in-meal" name="meal" defaultValue="">
                       <option value="">Select an option</option>
                       <option>Garden vegetarian</option>
                       <option>Land beef short rib</option>
@@ -2480,6 +2634,7 @@ export default function CelestialWeddingPage() {
                   <label htmlFor="in-note">A note for the couple</label>
                   <textarea
                     id="in-note"
+                    name="note"
                     placeholder="Leave a wish, a song request, or a memory"
                   />
                 </div>
@@ -2494,8 +2649,8 @@ export default function CelestialWeddingPage() {
 
       <footer className="cw-footer">
         <Divider mark="star" />
-        <div className="cw-footer-names">
-          Aurora <span>&amp;</span> Elias
+        <div className="cw-footer-names" role="heading" aria-level={2} aria-label="Aurora and Elias">
+          <SplitChars text="Aurora" /> <span className="cw-amp"><SplitChars text="&" /></span> <SplitChars text="Elias" />
         </div>
         <div className="cw-footer-meta">{eventDateNumeric} - {EVENT_LOCATION.region}</div>
       </footer>

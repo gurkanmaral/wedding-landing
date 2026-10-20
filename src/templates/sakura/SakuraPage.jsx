@@ -18,6 +18,8 @@ const css = String.raw`
     --ink: oklch(0.18 0.03 40);
     --gold: oklch(0.58 0.16 70);
     --gold-soft: oklch(0.7 0.13 75);
+    /* darker gold for small letter-spaced labels: >=4.5:1 on the pink/ivory paper */
+    --gold-text: oklch(0.47 0.12 62);
     --sakura: oklch(0.85 0.08 15);
     --sakura-deep: oklch(0.7 0.14 10);
     --font-display: "Yuji Syuku", "Shippori Mincho", serif;
@@ -26,6 +28,9 @@ const css = String.raw`
   }
 
   .sakura-page, .sakura-page *{box-sizing:border-box;margin:0;padding:0}
+  .sakura-page{ overflow-x:clip; }
+  .sakura-page .sr-only{ position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+  .sakura-page :focus-visible{ outline:2px solid var(--gold-text); outline-offset:3px; }
   html{scroll-behavior:smooth}
   body{
     background-color: var(--background);
@@ -76,7 +81,7 @@ const css = String.raw`
 
   /* HERO */
   .sakura-page .hero{
-    position:relative; min-height:100vh;
+    position:relative; min-height:100vh; min-height:100svh;
     display:flex; flex-direction:column; align-items:center; justify-content:center;
     padding:1.5rem; text-align:center;
   }
@@ -93,18 +98,20 @@ const css = String.raw`
   }
   .sakura-page .eyebrow{
     font-family: var(--font-display);
-    font-size:.875rem; letter-spacing:.6em; color: var(--gold);
+    font-size:.875rem; letter-spacing:.6em; color: var(--gold-text);
   }
   .sakura-page .hero h1{
     font-family: var(--font-display);
     font-weight:400;
     font-size: clamp(3.75rem, 12vw, 8rem);
     line-height:.95; color: var(--ink);
+    max-width:100%;
   }
+  .sakura-page .hero h1 .nm{ display:inline-block; white-space:nowrap; }
   .sakura-page .hero h1 .amp{
     display:inline-block; vertical-align:middle;
     margin:0 1.5rem; font-size: clamp(1.875rem, 4vw, 2.5rem);
-    color: var(--gold);
+    color: var(--gold-text);
   }
   .sakura-page .hero .poem{
     font-family: var(--font-serif);
@@ -117,13 +124,13 @@ const css = String.raw`
   }
   .sakura-page .scroll-cue{
     position:absolute; bottom:2.5rem; left:50%; transform:translateX(-50%);
-    font-family: var(--font-display); font-size:.75rem; letter-spacing:.4em; color: var(--gold);
+    font-family: var(--font-display); font-size:.75rem; letter-spacing:.4em; color: var(--gold-text);
     animation: floaty 2.4s ease-in-out infinite;
   }
   @keyframes floaty{ 0%,100%{transform:translateX(-50%) translateY(0)} 50%{transform:translateX(-50%) translateY(10px)} }
 
   .sakura-page .center{ text-align:center; }
-  .sakura-page .kicker{ font-family: var(--font-display); font-size:.75rem; letter-spacing:.5em; color: var(--gold); }
+  .sakura-page .kicker{ font-family: var(--font-display); font-size:.75rem; letter-spacing:.5em; color: var(--gold-text); }
   .sakura-page .kicker.lg{ font-size:.875rem; }
   .sakura-page h2.section{
     margin-top:1.5rem; font-family: var(--font-display);
@@ -154,9 +161,9 @@ const css = String.raw`
   .sakura-page .cd-cell .corner.tr{ top:0; right:0; border-right:1px solid var(--gold); border-top:1px solid var(--gold); }
   .sakura-page .cd-cell .corner.bl{ bottom:0; left:0; border-left:1px solid var(--gold); border-bottom:1px solid var(--gold); }
   .sakura-page .cd-cell .corner.br{ bottom:0; right:0; border-right:1px solid var(--gold); border-bottom:1px solid var(--gold); }
-  .sakura-page .cd-cell .jp{ position:absolute; top:.25rem; right:.5rem; font-family:var(--font-display); font-size:.75rem; color: oklch(0.58 0.16 70 / .8); }
+  .sakura-page .cd-cell .jp{ position:absolute; top:.25rem; right:.5rem; font-family:var(--font-display); font-size:.75rem; color: var(--gold-text); }
   .sakura-page .cd-num{ font-family: var(--font-display); font-size: clamp(3rem,6vw,3.75rem); color: var(--ink); font-variant-numeric: lining-nums; line-height:1; }
-  .sakura-page .cd-label{ margin-top:.25rem; font-size:.65rem; text-transform:uppercase; letter-spacing:.4em; color: var(--muted-foreground); }
+  .sakura-page .cd-label{ margin-top:.25rem; font-size:.65rem; text-transform:uppercase; letter-spacing:.4em; color: oklch(0.38 0.04 45); }
 
   /* DETAILS */
   .sakura-page .details{ display:grid; gap:4rem; }
@@ -169,29 +176,37 @@ const css = String.raw`
 
   /* RSVP */
   .sakura-page form.rsvp{ margin:3.5rem auto 0; width:100%; max-width:36rem; display:flex; flex-direction:column; gap:1.75rem; text-align:left; }
-  .sakura-page .rsvp label{ display:block; font-family: var(--font-display); font-size:.75rem; text-transform:uppercase; letter-spacing:.4em; color: var(--gold); margin-bottom:.25rem; }
+  .sakura-page .rsvp label{ display:block; font-family: var(--font-display); font-size:.75rem; text-transform:uppercase; letter-spacing:.4em; color: var(--gold-text); margin-bottom:.25rem; }
   .sakura-page .field{
     width:100%; border:0; border-bottom:1px solid oklch(0.58 0.16 70 / .4);
     background:transparent; padding:.75rem .25rem; color: var(--ink);
     font-family: var(--font-serif); font-size:1.125rem;
-    transition: border-color .3s ease; outline:none;
+    transition: border-color .3s ease, box-shadow .3s ease; outline:none;
+    min-height:44px; border-radius:0;
   }
-  .sakura-page .field::placeholder{ color: oklch(0.45 0.04 50 / .7); }
-  .sakura-page .field:focus{ border-color: var(--gold); }
-  .sakura-page select.field{ appearance:none; }
+  .sakura-page .field::placeholder{ color: oklch(0.45 0.04 50 / .85); }
+  .sakura-page .field:focus{ border-color: var(--gold-text); }
+  .sakura-page .field:focus-visible{ outline:none; border-color: var(--gold-text); box-shadow: 0 2px 0 0 var(--gold-text); }
+  .sakura-page select.field{
+    appearance:none; -webkit-appearance:none; cursor:pointer; padding-right:2rem;
+    background-image: linear-gradient(45deg, transparent 50%, var(--gold-text) 50%), linear-gradient(135deg, var(--gold-text) 50%, transparent 50%);
+    background-position: calc(100% - 14px) 55%, calc(100% - 9px) 55%;
+    background-size: 5px 5px, 5px 5px; background-repeat:no-repeat;
+  }
   .sakura-page textarea.field{ resize:none; }
   .sakura-page .rsvp .two{ display:grid; gap:1.75rem; }
   @media(min-width:768px){ .sakura-page .rsvp .two{ grid-template-columns: repeat(2,1fr); } }
   .sakura-page .send-btn{
-    display:inline-flex; align-items:center; gap:.75rem;
-    border:1px solid var(--gold); background:transparent;
+    display:inline-flex; align-items:center; justify-content:center; gap:.75rem;
+    min-height:48px; max-width:100%; flex-wrap:wrap;
+    border:1px solid var(--gold-text); background:transparent;
     padding:1rem 2.5rem; font-family: var(--font-display);
     font-size:.875rem; text-transform:uppercase; letter-spacing:.35em; color: var(--ink);
     cursor:pointer; transition: all .35s ease;
   }
-  .sakura-page .send-btn:hover{ background: var(--gold); color: var(--primary-foreground); }
+  .sakura-page .send-btn:hover, .sakura-page .send-btn:focus-visible{ background: var(--gold-text); color: var(--primary-foreground); }
   .sakura-page .send-btn .jp{ font-family: var(--font-brush); font-size:1rem; text-transform:none; letter-spacing:0; }
-  .sakura-page .send-btn:disabled{ opacity:.5; }
+  .sakura-page .send-btn:disabled{ opacity:.6; cursor:progress; }
 
   .sakura-page footer{ position:relative; z-index:20; padding:5rem 1.5rem; text-align:center; }
 
@@ -295,6 +310,8 @@ const css = String.raw`
   @keyframes rollIn{ from{ translate:0 85%; opacity:0; } }
 
   @media(prefers-reduced-motion:reduce){
+    .sakura-page .reveal, .sakura-page .stag > *{ opacity:1; transform:none; transition:none; }
+    .sakura-page .cd-num .roll.out{ display:none; }
     .sakura-page .hero-inner > *, .sakura-page .scroll-cue, .sakura-page .hero h1 .hl{ animation:none; }
     .sakura-page .reveal .photo{ opacity:1; translate:0 0; scale:1; clip-path:none; }
     .sakura-page .cd-num .roll.out, .sakura-page .cd-num .roll.in{ animation:none; }
@@ -306,29 +323,88 @@ const css = String.raw`
   @media(max-width:520px){
     .sakura-page .wrap{ padding:5.5rem 1.25rem; }
     .sakura-page .panel{ padding:2.4rem 1.4rem; }
-    .sakura-page .hero h1{ font-size:clamp(2.8rem,15vw,3.75rem); }
-    .sakura-page .hero h1 .amp{ margin:0 .8rem; }
+    .sakura-page .hero h1{ font-size:clamp(2.5rem,13.5vw,3.75rem); }
+    .sakura-page .hero h1 .amp{ margin:0 .6rem; }
     .sakura-page .eyebrow{ letter-spacing:.42em; }
     .sakura-page .hero .when{ letter-spacing:.28em; }
     .sakura-page .photo{ height:min(78vw,380px); }
     .sakura-page .lede{ font-size:1.05rem; line-height:1.7; }
+    .sakura-page .kicker{ letter-spacing:.38em; }
+    .sakura-page .reveal.in .panel > .kicker{ letter-spacing:.38em; }
+    .sakura-page .cd-grid{ gap:.75rem; }
+    .sakura-page .cd-label{ letter-spacing:.25em; }
+    .sakura-page .detail{ padding-left:1.25rem; }
+    .sakura-page .send-btn{ padding:1rem 1.5rem; letter-spacing:.25em; width:100%; }
   }
 `
 
+/* ===== Wedding facts — edit here ===== */
+// Saturday 3 April 2027, 4 pm JST — peak cherry-blossom season in Kyoto.
+const WEDDING_ISO = '2027-04-03T16:00:00+09:00'
+const HERO_DATE = '3 · APRIL · 2027'
+const LONG_DATE = 'Saturday, 3 April 2027'
+const RSVP_BY = 'Saturday, 20 February 2027'
+
+/* Heading whose characters rise one by one when its section reveals.
+   Rendered by React (not by innerHTML) so StrictMode / re-renders stay safe. */
+function SplitHeading({ text }) {
+  let index = 0
+  const words = text.split(' ')
+  return (
+    <h2 className="section" aria-label={text}>
+      {words.map((word, wi) => (
+        <span key={wi}>
+          <span className="w" aria-hidden="true">
+            {[...word].map((c) => {
+              const i = index++
+              return <span key={i} className="ch" style={{ '--i': i }}>{c}</span>
+            })}
+          </span>
+          {wi < words.length - 1 ? ' ' : null}
+        </span>
+      ))}
+    </h2>
+  )
+}
+
+function CountCell({ jp, label, numRef }) {
+  return (
+    <div className="cd-cell-wrap">
+      <div className="cd-cell">
+        <span className="corner tl"></span><span className="corner tr"></span>
+        <span className="corner bl"></span><span className="corner br"></span>
+        <span className="jp" aria-hidden="true">{jp}</span>
+        {/* content is written imperatively by the countdown (no React children) */}
+        <span className="cd-num" ref={numRef} aria-hidden="true"></span>
+        <span className="cd-label">{label}</span>
+      </div>
+    </div>
+  )
+}
+
 export default function SakuraWeddingPage() {
   const rootRef = useRef(null)
+  const canvasRef = useRef(null)
+  const bgRef = useRef(null)
+  const formRef = useRef(null)
+  const toastRef = useRef(null)
+  const dRef = useRef(null), hRef = useRef(null), mRef = useRef(null), sRef = useRef(null)
+  const cdSrRef = useRef(null)
 
   useEffect(() => {
+    const root = rootRef.current
     const ac = new AbortController()
     const { signal } = ac
     let alive = true
+    let rafId = 0
     const timers = []
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
     /* =====================================================================
-       SakuraCanvas — ported from src/components/SakuraCanvas.tsx
-       Tree is an uploaded watercolor image; petals are physics-driven.
+       SakuraCanvas — tree is an uploaded watercolor image; petals are
+       physics-driven. One canvas, owned by React; loop cancelled on unmount.
        ===================================================================== */
-    const canvas = document.getElementById('bg')
+    const canvas = canvasRef.current
     const ctx = canvas.getContext('2d')
     const mouse = { x: 0.5, y: 0.5 }
     let dpr = Math.min(window.devicePixelRatio || 1, 2)
@@ -336,9 +412,12 @@ export default function SakuraWeddingPage() {
     const petals = []
 
     const treeImg = new Image()
-    treeImg.src = sakuraTree
     let treeReady = false
-    treeImg.onload = () => { treeReady = true }
+    treeImg.onload = () => {
+      treeReady = true
+      if (reduceMotion) drawStatic()
+    }
+    treeImg.src = sakuraTree
 
     function spawnPetal(initial) {
       const depth = 0.3 + Math.random() * 0.7
@@ -358,18 +437,26 @@ export default function SakuraWeddingPage() {
         swaySpeed: 0.5 + Math.random() * 1.2,
       }
     }
+    function petalCount() {
+      const mobile = W < 768
+      const n = Math.floor((W * H) / (mobile ? 16000 : 14000)) + (mobile ? 40 : 80)
+      return Math.min(mobile ? 70 : 190, n)
+    }
     function buildPetals() {
       petals.length = 0
-      const count = Math.floor((W * H) / 14000) + 80
+      const count = petalCount()
       for (let i = 0; i < count; i++) petals.push(spawnPetal(true))
     }
+    let lastBuiltW = -1
     function resize() {
       dpr = Math.min(window.devicePixelRatio || 1, 2)
       W = window.innerWidth; H = window.innerHeight
-      canvas.width = W * dpr; canvas.height = H * dpr
+      canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr)
       canvas.style.width = W + 'px'; canvas.style.height = H + 'px'
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
-      buildPetals()
+      // Mobile URL-bar show/hide only changes height: keep the petals in flight.
+      if (W !== lastBuiltW) { lastBuiltW = W; buildPetals() }
+      if (reduceMotion) drawStatic()
     }
 
     function drawPetal(x, y, size, rot, hue, opacity) {
@@ -395,18 +482,24 @@ export default function SakuraWeddingPage() {
 
     function drawTree(t) {
       if (!treeReady) return
-      const reveal = Math.min(1, t / 1.4)
+      const reveal = reduceMotion ? 1 : Math.min(1, t / 1.4)
       const iw = treeImg.naturalWidth, ih = treeImg.naturalHeight
-      const scale = Math.max((W * 0.7) / iw, H / ih)
+      const portrait = W / H < 1
+      // Landscape: tree fills the left of the screen. Portrait (phones/tablets):
+      // the canopy hangs from the top instead of covering the whole column of
+      // text, and is softened so copy over it stays legible.
+      const scale = portrait
+        ? Math.max((W * 1.2) / iw, (H * 0.4) / ih)
+        : Math.max((W * 0.7) / iw, H / ih)
       const dw = iw * scale, dh = ih * scale
       const dx = -dw * 0.04, dy = 0
       ctx.save()
-      ctx.globalAlpha = reveal
+      ctx.globalAlpha = reveal * (portrait ? 0.78 : 1)
       ctx.drawImage(treeImg, dx, dy, dw, dh)
       ctx.restore()
     }
 
-    let start = performance.now()
+    const start = performance.now()
     let lastT = start
     let gustTimer = 0, gustStrength = 0
 
@@ -428,7 +521,15 @@ export default function SakuraWeddingPage() {
       drawPetal(p.x, p.y, p.size, p.rot, p.hue, p.opacity * (0.5 + p.depth * 0.5))
     }
 
+    function drawStatic() {
+      ctx.clearRect(0, 0, W, H)
+      for (const p of petals) if (p.depth < 0.5) drawPetal(p.x, p.y, p.size, p.rot, p.hue, p.opacity * (0.5 + p.depth * 0.5))
+      drawTree(99)
+      for (const p of petals) if (p.depth >= 0.5) drawPetal(p.x, p.y, p.size, p.rot, p.hue, p.opacity * (0.5 + p.depth * 0.5))
+    }
+
     function frame(now) {
+      rafId = 0
       if (!alive) return
       const t = (now - start) / 1000
       const dt = Math.min(0.05, (now - lastT) / 1000)
@@ -449,26 +550,39 @@ export default function SakuraWeddingPage() {
           }
         }
       }
-      requestAnimationFrame(frame)
+      rafId = requestAnimationFrame(frame)
+    }
+    function startLoop() {
+      if (reduceMotion || !alive || rafId || document.hidden) return
+      lastT = performance.now()
+      rafId = requestAnimationFrame(frame)
+    }
+    function stopLoop() {
+      if (rafId) cancelAnimationFrame(rafId)
+      rafId = 0
     }
 
     window.addEventListener('resize', resize, { signal })
-    window.addEventListener('mousemove', (e) => {
+    window.addEventListener('pointermove', (e) => {
+      if (e.pointerType !== 'mouse') return
       mouse.x = e.clientX / window.innerWidth
       mouse.y = e.clientY / window.innerHeight
+    }, { signal, passive: true })
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) stopLoop(); else startLoop()
     }, { signal })
     resize()
-    requestAnimationFrame(frame)
+    startLoop()
 
     /* =====================================================================
        Scroll-driven background gradient (dawn → ivory → golden dusk)
        ===================================================================== */
-    const bgEl = document.getElementById('bgGradient')
+    const bgEl = bgRef.current
     // [topL,topC,topH, botL,botC,botH] for three keyframes at 0, 0.45, 1
     const KF = [
       [0.94, 0.045, 20, 0.96, 0.03, 60],
       [0.97, 0.02, 80, 0.95, 0.035, 70],
-      [0.88, 0.09, 65, 0.72, 0.13, 45],
+      [0.88, 0.09, 65, 0.76, 0.12, 48],
     ]
     const stops = [0, 0.45, 1]
     function lerp(a, b, t) { return a + (b - a) * t }
@@ -480,68 +594,82 @@ export default function SakuraWeddingPage() {
       const v = a.map((x, k) => lerp(x, b[k], Math.max(0, Math.min(1, t))))
       return `linear-gradient(180deg, oklch(${v[0].toFixed(3)} ${v[1].toFixed(3)} ${v[2].toFixed(1)}) 0%, oklch(${v[3].toFixed(3)} ${v[4].toFixed(3)} ${v[5].toFixed(1)}) 100%)`
     }
+
+    /* =====================================================================
+       Scroll reveals. IntersectionObserver does the normal work; a scroll /
+       resize sweep also reveals anything already above or inside the
+       viewport, so fast flings, anchor jumps and scroll restoration never
+       leave a section at opacity 0.
+       ===================================================================== */
+    const revealEls = [...root.querySelectorAll('.reveal, .stag')]
+    const reveal = (el) => { el.classList.add('in'); io?.unobserve(el) }
+    const io = 'IntersectionObserver' in window
+      ? new IntersectionObserver((entries) => {
+        for (const e of entries) if (e.isIntersecting) reveal(e.target)
+      }, { threshold: 0, rootMargin: '0px 0px -12% 0px' })
+      : null
+    function sweep() {
+      const limit = window.innerHeight * 0.92
+      for (const el of revealEls) {
+        if (el.classList.contains('in')) continue
+        if (el.getBoundingClientRect().top < limit) reveal(el)
+      }
+    }
+    if (reduceMotion || !io) revealEls.forEach(reveal)
+    else revealEls.forEach((el) => io.observe(el))
+
+    let scrollRaf = 0
     function onScroll() {
-      const max = document.documentElement.scrollHeight - window.innerHeight
-      const p = max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0
-      bgEl.style.background = mix(p)
+      if (scrollRaf) return
+      scrollRaf = requestAnimationFrame(() => {
+        scrollRaf = 0
+        const max = document.documentElement.scrollHeight - window.innerHeight
+        const p = max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0
+        bgEl.style.background = mix(p)
+        sweep()
+      })
     }
     window.addEventListener('scroll', onScroll, { passive: true, signal })
     window.addEventListener('resize', onScroll, { signal })
     onScroll()
+    // Safety net for an observer that fires late (e.g. during layout shifts).
+    timers.push(setTimeout(sweep, 1200))
 
     /* =====================================================================
-       Countdown — ported from Countdown.tsx (digits roll on change)
+       Countdown (digits roll on change)
        ===================================================================== */
-    // Original target was 2026-04-12; kept the date, advanced the year so the
-    // countdown stays live. Change freely.
-    const TARGET = new Date('2027-04-12T16:00:00+09:00').getTime()
-    const d = document.getElementById('cd-d'), h = document.getElementById('cd-h'),
-      m = document.getElementById('cd-m'), s = document.getElementById('cd-s')
+    const TARGET = new Date(WEDDING_ISO).getTime()
+    const d = dRef.current, h = hRef.current, m = mRef.current, s = sRef.current
+    const sr = cdSrRef.current
     function pad(n) { return String(Math.max(0, n)).padStart(2, '0') }
     function roll(el, v) {
       if (el.dataset.v === v) return
       const old = el.dataset.v
       el.dataset.v = v
-      if (old === undefined) { el.textContent = v; return }
+      if (old === undefined || reduceMotion) { el.textContent = v; return }
       el.innerHTML = `<span class="roll out">${old}</span><span class="roll in">${v}</span>`
     }
+    let lastSrDay = ''
     function tick() {
       const diff = Math.max(0, TARGET - Date.now())
-      roll(d, pad(Math.floor(diff / 86400000)))
+      const days = pad(Math.floor(diff / 86400000))
+      roll(d, days)
       roll(h, pad(Math.floor((diff % 86400000) / 3600000)))
       roll(m, pad(Math.floor((diff % 3600000) / 60000)))
       roll(s, pad(Math.floor((diff % 60000) / 1000)))
+      // Screen readers get a calm, once-a-day summary instead of ticking digits
+      if (days !== lastSrDay) {
+        lastSrDay = days
+        sr.textContent = diff > 0 ? `${Number(days)} days until the wedding on ${LONG_DATE}.` : 'Today is the day.'
+      }
     }
     tick(); timers.push(setInterval(tick, 1000))
 
     /* =====================================================================
-       Scroll reveals (framer whileInView) + RSVP form
+       RSVP form (demo — no backend)
        ===================================================================== */
-    // Split section headings into characters so they can rise one by one
-    document.querySelectorAll('.sakura-page h2.section').forEach((heading) => {
-      if (heading.dataset.split) return
-      heading.dataset.split = '1'
-      heading.setAttribute('aria-label', heading.textContent)
-      let index = 0
-      heading.innerHTML = heading.textContent
-        .split(' ')
-        .map((word) =>
-          '<span class="w" aria-hidden="true">' +
-          [...word].map((c) => `<span class="ch" style="--i:${index++}">${c}</span>`).join('') +
-          '</span>',
-        )
-        .join(' ')
-    })
-
-    const io = new IntersectionObserver((entries) => {
-      for (const e of entries) {
-        if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target) }
-      }
-    }, { threshold: 0.25 })
-    document.querySelectorAll('.sakura-page .reveal, .sakura-page .stag').forEach((el) => io.observe(el))
-
-    const form = document.getElementById('rsvpForm')
-    const toast = document.getElementById('toast')
+    const form = formRef.current
+    const toast = toastRef.current
     const btn = form.querySelector('.send-btn')
     const btnLabel = form.querySelector('.btn-label')
     let toastTimer = 0
@@ -549,7 +677,7 @@ export default function SakuraWeddingPage() {
       e.preventDefault()
       const name = new FormData(form).get('name') || 'friend'
       btn.disabled = true; btnLabel.textContent = 'Sending…'
-      setTimeout(() => {
+      timers.push(setTimeout(() => {
         if (!alive) return
         btn.disabled = false; btnLabel.textContent = 'Send Reply'
         toast.querySelector('.t-title').textContent = 'ありがとう — your reply has been received'
@@ -558,22 +686,25 @@ export default function SakuraWeddingPage() {
         clearTimeout(toastTimer)
         toastTimer = setTimeout(() => toast.classList.remove('show'), 5000)
         form.reset()
-      }, 900)
+      }, 900))
     }, { signal })
 
     return () => {
       alive = false
+      stopLoop()
+      if (scrollRaf) cancelAnimationFrame(scrollRaf)
       ac.abort()
-      io.disconnect()
-      timers.forEach(clearInterval)
+      io?.disconnect()
+      timers.forEach((t) => { clearInterval(t); clearTimeout(t) })
       clearTimeout(toastTimer)
+      treeImg.onload = null
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
     }
   }, [])
 
   return (
     <div ref={rootRef} className="sakura-page">
-      <title>Hiro &amp; Aiko — A Sakura Wedding</title>
-      <meta name="description" content="Join us beneath the cherry blossoms — an invitation to the wedding of Hiro & Aiko." />
+      <meta name="description" content="Join us beneath the cherry blossoms — an invitation to the wedding of Hiro & Aiko, Saturday 3 April 2027, Kyoto." />
       <link rel="preconnect" href="https://fonts.googleapis.com" />
       <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
       <link
@@ -583,36 +714,40 @@ export default function SakuraWeddingPage() {
       />
       <style>{css}</style>
 
-      <div id="bgGradient"></div>
-      <div id="vignette"></div>
-      <canvas id="bg" aria-hidden="true"></canvas>
+      <div id="bgGradient" ref={bgRef} aria-hidden="true"></div>
+      <div id="vignette" aria-hidden="true"></div>
+      <canvas id="bg" ref={canvasRef} aria-hidden="true"></canvas>
 
       <main>
         {/* HERO */}
         <section className="hero" data-screen-label="01 Hero">
           <div className="hero-inner">
-            <p className="eyebrow">· 結 婚 式 ·</p>
+            <p className="eyebrow" lang="ja">· 結 婚 式 ·</p>
             <h1 className="font-display" aria-label="Hiro & Aiko">
-              {'Hiro'.split('').map((c, i) => (
-                <span key={`h${i}`} className="hl" aria-hidden="true" style={{ '--i': i }}>{c}</span>
-              ))}
+              <span className="nm" aria-hidden="true">
+                {'Hiro'.split('').map((c, i) => (
+                  <span key={`h${i}`} className="hl" style={{ '--i': i }}>{c}</span>
+                ))}
+              </span>
               <span className="amp hl" aria-hidden="true" style={{ '--i': 4 }}>&amp;</span>
-              {'Aiko'.split('').map((c, i) => (
-                <span key={`a${i}`} className="hl" aria-hidden="true" style={{ '--i': i + 5 }}>{c}</span>
-              ))}
+              <span className="nm" aria-hidden="true">
+                {'Aiko'.split('').map((c, i) => (
+                  <span key={`a${i}`} className="hl" style={{ '--i': i + 5 }}>{c}</span>
+                ))}
+              </span>
             </h1>
             <div className="ink-divider" style={{ maxWidth: '18rem', margin: '0 auto' }}></div>
             <p className="poem">Beneath a thousand falling blossoms,<br />two paths become one.</p>
-            <p className="when">12 · APRIL · 2026 &nbsp;·&nbsp; KYOTO</p>
+            <p className="when"><time dateTime={WEDDING_ISO}>{HERO_DATE}</time> &nbsp;·&nbsp; KYOTO</p>
           </div>
-          <div className="scroll-cue font-display">scroll · 下へ</div>
+          <div className="scroll-cue font-display" aria-hidden="true">scroll · 下へ</div>
         </section>
 
         {/* INVITATION */}
         <section className="wrap center reveal" data-screen-label="02 Invitation">
           <div className="panel">
-            <p className="kicker">ご 招 待</p>
-            <h2 className="section">An Invitation</h2>
+            <p className="kicker" lang="ja">ご 招 待</p>
+            <SplitHeading text="An Invitation" />
             <div className="ink-divider divider-sm"></div>
             <p className="lede">
               With the warmth of the season and the blessing of our families, we invite you
@@ -625,14 +760,15 @@ export default function SakuraWeddingPage() {
         {/* COUNTDOWN */}
         <section className="wrap center reveal" data-screen-label="03 Countdown">
           <div className="panel">
-            <p className="kicker">残 り 時 間</p>
-            <h2 className="section">Until the Blossoms Fall</h2>
+            <p className="kicker" lang="ja">残 り 時 間</p>
+            <SplitHeading text="Until the Blossoms Fall" />
             <div className="ink-divider divider-sm"></div>
-            <div className="cd-grid" id="cd">
-              <div className="cd-cell-wrap"><div className="cd-cell"><span className="corner tl"></span><span className="corner tr"></span><span className="corner bl"></span><span className="corner br"></span><span className="jp">日</span><span className="cd-num" id="cd-d">00</span><span className="cd-label">Days</span></div></div>
-              <div className="cd-cell-wrap"><div className="cd-cell"><span className="corner tl"></span><span className="corner tr"></span><span className="corner bl"></span><span className="corner br"></span><span className="jp">時</span><span className="cd-num" id="cd-h">00</span><span className="cd-label">Hours</span></div></div>
-              <div className="cd-cell-wrap"><div className="cd-cell"><span className="corner tl"></span><span className="corner tr"></span><span className="corner bl"></span><span className="corner br"></span><span className="jp">分</span><span className="cd-num" id="cd-m">00</span><span className="cd-label">Minutes</span></div></div>
-              <div className="cd-cell-wrap"><div className="cd-cell"><span className="corner tl"></span><span className="corner tr"></span><span className="corner bl"></span><span className="corner br"></span><span className="jp">秒</span><span className="cd-num" id="cd-s">00</span><span className="cd-label">Seconds</span></div></div>
+            <p className="sr-only" ref={cdSrRef}></p>
+            <div className="cd-grid" aria-hidden="true">
+              <CountCell jp="日" label="Days" numRef={dRef} />
+              <CountCell jp="時" label="Hours" numRef={hRef} />
+              <CountCell jp="分" label="Minutes" numRef={mRef} />
+              <CountCell jp="秒" label="Seconds" numRef={sRef} />
             </div>
           </div>
         </section>
@@ -640,14 +776,14 @@ export default function SakuraWeddingPage() {
         {/* PHOTOS */}
         <section className="wrap center reveal" data-screen-label="04 Our Story">
           <div className="panel">
-            <p className="kicker">思 い 出</p>
-            <h2 className="section">The Two of Us</h2>
+            <p className="kicker" lang="ja">思 い 出</p>
+            <SplitHeading text="The Two of Us" />
             <div className="ink-divider divider-sm"></div>
             <div className="photo-grid">
-              {/* Kendi fotoğrafını eklemek için src="..." değerini değiştir */}
-              <img className="photo" src={couple1} alt="" />
-              <img className="photo mid" src={couple2} alt="" />
-              <img className="photo" src={couple3} alt="" />
+              {/* Replace src="..." with the couple's own photos */}
+              <img className="photo" src={couple1} alt="Hiro and Aiko beneath the cherry blossoms" loading="lazy" decoding="async" width="600" height="760" />
+              <img className="photo mid" src={couple2} alt="Hiro and Aiko together in spring" loading="lazy" decoding="async" width="600" height="760" />
+              <img className="photo" src={couple3} alt="Hiro and Aiko smiling in Kyoto" loading="lazy" decoding="async" width="600" height="760" />
             </div>
           </div>
         </section>
@@ -659,7 +795,7 @@ export default function SakuraWeddingPage() {
               <div className="detail">
                 <span className="kicker">式 · CEREMONY</span>
                 <h3>Heian Shrine</h3>
-                <p>平安神宮 · Sakyō-ku, Kyoto<br />Four o'clock in the afternoon<br /><span className="sub">arrive in soft colors</span></p>
+                <p>平安神宮 · Sakyō-ku, Kyoto<br /><time dateTime={WEDDING_ISO}>{LONG_DATE}</time><br />Four o'clock in the afternoon<br /><span className="sub">arrive in soft colors</span></p>
               </div>
               <div className="detail">
                 <span className="kicker">宴 · RECEPTION</span>
@@ -673,28 +809,28 @@ export default function SakuraWeddingPage() {
         {/* RSVP */}
         <section className="wrap center reveal" id="rsvp" data-screen-label="06 RSVP">
           <div className="panel">
-            <p className="kicker">お 返 事</p>
-            <h2 className="section">Reply by the First Bloom</h2>
-            <p className="lede" style={{ marginTop: '1rem', fontStyle: 'italic', color: 'var(--muted-foreground)' }}>kindly respond before March 1st, 2026</p>
+            <p className="kicker" lang="ja">お 返 事</p>
+            <SplitHeading text="Reply by the First Bloom" />
+            <p className="lede" style={{ marginTop: '1rem', fontStyle: 'italic', color: 'var(--muted-foreground)' }}>kindly respond by {RSVP_BY}</p>
             <div className="ink-divider divider-sm"></div>
 
-            <form className="rsvp stag" id="rsvpForm">
+            <form className="rsvp stag" ref={formRef}>
               <div>
-                <label>Your Name · 御名前</label>
-                <input className="field" name="name" required placeholder="As you wish to be greeted" autoComplete="off" />
+                <label htmlFor="sk-name">Your Name · 御名前</label>
+                <input id="sk-name" className="field" name="name" required placeholder="As you wish to be greeted" autoComplete="name" />
               </div>
               <div className="two">
                 <div>
-                  <label>Attendance</label>
-                  <select className="field" name="attendance" required defaultValue="">
-                    <option value="">— select —</option>
+                  <label htmlFor="sk-attendance">Attendance</label>
+                  <select id="sk-attendance" className="field" name="attendance" required defaultValue="">
+                    <option value="" disabled>— select —</option>
                     <option value="joyfully">Joyfully attending</option>
                     <option value="regret">Regretfully unable</option>
                   </select>
                 </div>
                 <div>
-                  <label>Meal Preference</label>
-                  <select className="field" name="meal" defaultValue="">
+                  <label htmlFor="sk-meal">Meal Preference</label>
+                  <select id="sk-meal" className="field" name="meal" defaultValue="">
                     <option value="">— select —</option>
                     <option>Kaiseki (omnivore)</option>
                     <option>Shōjin ryōri (vegetarian)</option>
@@ -704,11 +840,11 @@ export default function SakuraWeddingPage() {
                 </div>
               </div>
               <div>
-                <label>A message for the couple</label>
-                <textarea className="field" name="message" rows={4} placeholder="A wish, a memory, a verse…"></textarea>
+                <label htmlFor="sk-message">A message for the couple</label>
+                <textarea id="sk-message" className="field" name="message" rows={4} placeholder="A wish, a memory, a verse…"></textarea>
               </div>
               <div style={{ paddingTop: '.5rem' }}>
-                <button type="submit" className="send-btn"><span className="btn-label">Send Reply</span><span className="jp">送る</span></button>
+                <button type="submit" className="send-btn"><span className="btn-label">Send Reply</span><span className="jp" aria-hidden="true">送る</span></button>
               </div>
             </form>
           </div>
@@ -722,7 +858,7 @@ export default function SakuraWeddingPage() {
         </footer>
       </main>
 
-      <div id="toast"><div className="t-title"></div><div className="t-desc"></div></div>
+      <div id="toast" ref={toastRef} role="status" aria-live="polite"><div className="t-title"></div><div className="t-desc"></div></div>
     </div>
   )
 }

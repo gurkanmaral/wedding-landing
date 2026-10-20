@@ -1,17 +1,59 @@
-# React + Vite
+# Wedfolio — wedding invitation websites
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React 19 + Vite + Tailwind v4 + GSAP + three.js.
 
-Currently, two official plugins are available:
+```
+npm run dev      # http://localhost:5173
+npm run build
+npm run lint
+```
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Structure
 
-## React Compiler
+```
+src/
+  main.jsx                 entry
+  app/
+    Router.jsx             path → template; lazy-loads each page, plays the 3D intro first
+    ErrorBoundary.jsx      fallback if a page crashes
+    openedFlag.js          skips the intro when the landing page already opened the envelope
+  landing/                 the Wedfolio landing page (hero envelope, collection, how it works)
+    previews/<slug>.jpg    hero screenshots used on the collection cards
+  shared/intro/            the 3D envelope intro shared by every template
+    InvitationIntro.jsx    full-screen overlay + buttons
+    envelopeScene.js       three.js scene: envelope, wax seal, card, particles, open timeline
+    textures.js            canvas-drawn paper, liner patterns, card, seal and particles
+    fonts.js               waits for the card/seal fonts before drawing
+  templates/
+    registry.js            every template: route, couple, date, price, landing copy, intro colours
+    <slug>/<Name>Page.jsx  one folder per template, with its own assets/
+  styles/index.css         Tailwind + the Art Deco and Storybook themes
+public/assets/<slug>/      large images loaded by URL (trees, couple photos, moon textures)
+archive/                   old drafts and unused images, kept out of the build and lint
+```
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Routes
 
-## Expanding the ESLint configuration
+| Route | Template |
+| --- | --- |
+| `/` | Landing |
+| `/celestial` | Celestial — Aurora & Elias |
+| `/artdeco` | Art Deco — Elena & Marcus |
+| `/gilded-rome` | Sunny Storybook — Sofia & Luca |
+| `/sakura` | Sakura — Hiro & Aiko |
+| `/autumn` | Autumn Falls — Nazlı & Bahadır |
+| `/aegean` | Ege Zeytin — Elif & Deniz (Turkish) |
+| `/spark` (also `/sole-mare`, `/meditteraean`) | Sole & Mare (Turkish) |
+| `/royal` | Royal Garden — Charlotte & Henry |
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
-# wedding-landing
+Add `?intro=off` to any template URL to skip the envelope while working on a page.
+The intro is also skipped for visitors with reduced motion turned on.
+
+## Adding a template
+
+1. Create `src/templates/<slug>/<Name>Page.jsx` with a default export.
+2. Add an entry to `src/templates/registry.js` (route, couple, date, `load`, and the `intro` colours:
+   paper, liner + pattern, card, ink, seal, particles, font).
+3. Add a hero screenshot as `src/landing/previews/<slug>.jpg`.
+
+The router, intro and landing page pick it up from the registry.

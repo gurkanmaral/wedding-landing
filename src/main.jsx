@@ -1,41 +1,10 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import './index.css'
-import App from './App.jsx'
-import MedDreamSparkPage from './MedDreamSparkPage.jsx'
-import RoyalWeddingPage from './RoyalWeddingPage.jsx'
-import MedDreamSparkTemplatePage from './MedDreamSparkTemplatePage.jsx'
-import CelestialWeddingPage from './CelestialWeddingPage.jsx'
-import MedDreamSparkArtDecoTemplatePage from './MedDreamSparkArtDecoTemplatePage.jsx'
-import GildedRomeTemplatePage from './GildedRomeTemplatePage.jsx'
-import SakuraWeddingPage from './SakuraWeddingPage.jsx'
-import AutumnFallsPage from './AutumnFallsPage.jsx'
-import AegeanWeddingPage from './AegeanWeddingPage.jsx'
-
-const currentPath = window.location.pathname
-const Page =
-  currentPath === '/meditteraean'
-    ? MedDreamSparkPage
-    : currentPath === '/spark'
-      ? MedDreamSparkTemplatePage
-    : currentPath === '/artdeco'
-      ? MedDreamSparkArtDecoTemplatePage
-    : currentPath === '/gilded-rome'
-      ? GildedRomeTemplatePage
-    : currentPath === '/royal'
-      ? RoyalWeddingPage
-    : currentPath === '/celestial'
-      ? CelestialWeddingPage
-    : currentPath === '/sakura'
-      ? SakuraWeddingPage
-    : currentPath === '/autumn'
-      ? AutumnFallsPage
-    : currentPath === '/aegean'
-      ? AegeanWeddingPage
-      : App
+import './styles/index.css'
+import Router from './app/Router.jsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <Page />
+    <Router />
   </StrictMode>,
 )
