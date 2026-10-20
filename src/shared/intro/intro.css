@@ -55,35 +55,28 @@
 
 .invitation-intro__open {
   min-height: 48px;
-  padding: 0.85rem 1.9rem;
-  border: 1px solid currentColor;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--intro-text) 8%, transparent);
+  padding: 0.75rem 1.4rem;
+  border: 0;
+  background: transparent;
   color: inherit;
   font: inherit;
-  font-size: 1.1rem;
-  letter-spacing: 0.04em;
+  font-size: clamp(0.95rem, 2.6vw, 1.1rem);
+  letter-spacing: 0.08em;
   cursor: pointer;
-  backdrop-filter: blur(6px);
-  transition: background-color 0.25s ease, color 0.25s ease;
-  animation: invitation-intro-breathe 2.6s ease-in-out infinite;
+  text-shadow: 0 1px 12px rgb(0 0 0 / 0.25);
+  animation: invitation-intro-breathe 2.8s ease-in-out infinite;
 }
 
-.invitation-intro__open:hover {
-  background: var(--intro-text);
-  color: var(--intro-hover-text);
+.invitation-intro__open:disabled {
+  cursor: default;
+  animation: none;
+  opacity: 0.6;
 }
 
 .invitation-intro__open:focus-visible,
 .invitation-intro__skip:focus-visible {
   outline: 2px solid currentColor;
   outline-offset: 4px;
-}
-
-.invitation-intro__hint {
-  margin: 0;
-  font-size: 0.85rem;
-  opacity: 0.7;
 }
 
 .invitation-intro__skip {
@@ -113,10 +106,37 @@
 }
 
 @keyframes invitation-intro-breathe {
-  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--intro-text) 25%, transparent); }
-  50% { box-shadow: 0 0 0 10px color-mix(in srgb, var(--intro-text) 0%, transparent); }
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
 }
 
-@media (hover: none) {
-  .invitation-intro__hint { display: none; }
+.invitation-intro__caption {
+  position: absolute;
+  left: 50%;
+  bottom: max(16svh, 6rem);
+  margin: 0;
+  transform: translate(-50%, 0.5rem);
+  font-size: clamp(1rem, 3vw, 1.35rem);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.9s ease, transform 0.9s ease;
 }
+
+.invitation-intro__caption[data-placement='top'] {
+  top: max(12svh, 4.5rem);
+  bottom: auto;
+}
+
+.invitation-intro__caption[data-visible='true'] {
+  opacity: 0.92;
+  transform: translate(-50%, 0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .invitation-intro__open { animation: none; }
+}
+
+

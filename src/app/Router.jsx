@@ -8,6 +8,7 @@ import { WeddingCardProvider } from '../api/WeddingCardContext.jsx'
 const AdminPage = lazy(() => import('../admin/AdminPage.jsx'))
 const WeddingCardManagerPage = lazy(() => import('../admin/WeddingCardManagerPage.jsx'))
 const AuthPage = lazy(() => import('../account/AuthPage.jsx'))
+const DesignPage = lazy(() => import('../landing/DesignPage.jsx'))
 
 const AUTH_PATHS = ['/login', '/register', '/confirm-email', '/resend-confirmation', '/forgot-password', '/reset-password', '/account']
 
@@ -68,6 +69,7 @@ function TemplateShell({ template }) {
 }
 
 function appPage(pathname) {
+  if (pathname.startsWith('/tasarim/')) return 'design'
   if (pathname === '/admin') return 'admin'
   if (pathname === '/manage') return 'manage'
   if (AUTH_PATHS.includes(pathname)) return 'auth'
@@ -92,6 +94,7 @@ export default function Router() {
           {app === 'admin' && <AdminPage />}
           {app === 'manage' && <WeddingCardManagerPage />}
           {app === 'auth' && <AuthPage />}
+          {app === 'design' && <DesignPage slug={decodeURIComponent(pathname.split('/')[2] ?? '')} />}
         </Suspense>
       </ErrorBoundary>
     )

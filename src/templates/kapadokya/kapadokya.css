@@ -1,0 +1,117 @@
+.theme-kapadokya {
+  --inv-bg: #fbf3ea;
+  --inv-surface: #fffaf3;
+  --inv-alt: #f5e6d6;
+  --inv-ink: #3a2e2a;
+  --inv-muted: #74625a;
+  --inv-accent: #b8573c;
+  --inv-accent-ink: #fffaf3;
+  --inv-display: 'Cormorant Garamond', Georgia, serif;
+  --inv-script: 'Great Vibes', cursive;
+  --inv-body: 'Jost', system-ui, sans-serif;
+}
+
+.kap-hero {
+  --px: 0;
+  --py: 0;
+  position: relative;
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  min-height: 100svh;
+  padding: clamp(4.5rem, 12svh, 8rem) 1.25rem 0;
+  overflow: hidden;
+  background: linear-gradient(180deg, #474a6e 0%, #8e6e8c 24%, #df9c86 46%, #f6c9a6 58%, #f8dcc0 100%);
+  color: #fffaf3;
+  text-align: center;
+}
+
+.kap-sun {
+  position: absolute;
+  left: 28%;
+  top: 42%;
+  width: min(60vw, 560px);
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff7e2 0%, #ffe2b0 14%, rgb(255 205 150 / 0.45) 34%, transparent 68%);
+}
+
+.kap-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.kap-layer--back {
+  transform: translate(calc(var(--px) * -6px), calc(var(--py) * -3px)) scale(1.02);
+}
+
+.kap-layer--balloons {
+  transform: translate(calc(var(--px) * -10px), calc(var(--py) * -5px));
+}
+
+.kap-layer--front {
+  transform: translate(calc(var(--px) * -16px), calc(var(--py) * -6px)) scale(1.03);
+}
+
+.kap-hero-copy {
+  position: relative;
+  z-index: 3;
+  display: grid;
+  justify-items: center;
+  gap: 0.4rem;
+  text-shadow: 0 2px 24px rgb(61 64 91 / 0.45), 0 1px 3px rgb(61 64 91 / 0.35);
+}
+
+.kap-eyebrow {
+  margin: 0 0 0.5rem;
+  font-size: 0.85rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+}
+
+.kap-names {
+  display: grid;
+  margin: 0;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-weight: 400;
+  font-size: clamp(3.6rem, 15vw, 8.5rem);
+  line-height: 0.92;
+}
+
+.kap-amp {
+  font-family: 'Great Vibes', cursive;
+  font-size: 0.6em;
+  line-height: 1.2;
+  color: #ffe2b8;
+}
+
+.kap-date {
+  margin: 1.4rem 0 0;
+  font-size: 1rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.kap-place {
+  margin: 0;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-style: italic;
+  font-size: 1.3rem;
+}
+
+.theme-kapadokya .inv-section:nth-of-type(even) {
+  background:
+    radial-gradient(120% 80% at 50% 0%, rgb(244 201 168 / 0.35), transparent 60%),
+    var(--inv-alt);
+}
+
+.theme-kapadokya .inv-countdown-cell {
+  border-color: rgb(184 87 60 / 0.25);
+  border-radius: 999px 999px 18px 18px;
+}
+
+
