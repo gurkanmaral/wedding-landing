@@ -1,13 +1,49 @@
-export const TEMPLATE_OPTIONS = [
-  { value: 'artdeco', label: 'Art Deco', path: '/artdeco' },
-  { value: 'celestial', label: 'Celestial', path: '/celestial' },
-  { value: 'gilded-rome', label: 'Sunny Storybook', path: '/gilded-rome' },
-  { value: 'sakura', label: 'Sakura', path: '/sakura' },
-  { value: 'autumn', label: 'Autumn Falls', path: '/autumn' },
-  { value: 'aegean', label: 'Ege Zeytin', path: '/aegean' },
-  { value: 'spark', label: 'Sole & Mare', path: '/spark' },
-  { value: 'royal', label: 'Royal Garden', path: '/royal' },
-]
+import { templates as registryTemplates } from '../templates/registry.js'
+
+// Card details store the template under the `template` key. The first eight
+// templates were saved with their own historical values, so they keep them;
+// every other template uses its registry slug.
+const LEGACY_VALUES = {
+  'art-deco': 'artdeco',
+  storybook: 'gilded-rome',
+  'sole-mare': 'spark',
+}
+
+export const TEMPLATE_OPTIONS = registryTemplates.map((template) => ({
+  value: LEGACY_VALUES[template.slug] || template.slug,
+  slug: template.slug,
+  label: template.name,
+  path: template.path,
+  mood: template.mood,
+  lang: template.lang,
+  swatch: template.intro?.bg || template.intro?.paper || '#d9b67c',
+}))
+
+const DEFAULT_TEMPLATE = TEMPLATE_OPTIONS.find((option) => option.value === 'artdeco') || TEMPLATE_OPTIONS[0]
+
+// Accepts a card's `template` detail, a registry slug (as sent by the landing
+// contact form) or a path, and returns the matching template option.
+export function findTemplateOption(value) {
+  if (!value) return null
+  const key = String(value).trim().toLowerCase().replace(/^\/+/, '')
+  return TEMPLATE_OPTIONS.find((option) => (
+    option.value === key || option.slug === key || option.path === `/${key}`
+  )) || null
+}
+
+export function templateLabel(value) {
+  return findTemplateOption(value)?.label || value || 'Şablon seçilmedi'
+}
+
+// Path of the live invitation page for a card's template detail.
+export function templatePathFor(value) {
+  return (findTemplateOption(value) || DEFAULT_TEMPLATE)?.path || '/artdeco'
+}
+
+export function invitationHref(details) {
+  const path = templatePathFor(details?.template)
+  return details?.slug ? `${path}/${encodeURIComponent(details.slug)}` : null
+}
 
 export const DETAIL_LABELS = {
   partner1: 'Jane',
@@ -134,18 +170,58 @@ const TEMPLATE_SCHEMAS = {
   },
 }
 
+const formatRegistryDate = (isoDate, lang, offsetDays = 0) => {
+  const date = new Date(`${isoDate}T12:00:00`)
+  if (!Number.isFinite(date.getTime())) return ''
+  date.setDate(date.getDate() + offsetDays)
+  return new Intl.DateTimeFormat(lang === 'tr' ? 'tr-TR' : 'en-GB', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  }).format(date)
+}
+
+// Templates without a hand-written schema get the core and place fields,
+// pre-filled from their registry entry.
+function registrySchema(slug) {
+  const entry = registryTemplates.find((template) => template.slug === slug)
+  if (!entry) return null
+  const [partner1 = 'Jane', partner2 = 'Joe'] = entry.couple || []
+  const places = (entry.place || '').split(',').map((part) => part.trim()).filter(Boolean)
+  return {
+    fields: [...CORE_FIELDS, ...PLACE_FIELDS],
+    defaults: {
+      partner1,
+      partner2,
+      eventDate: entry.date ? `${entry.date}T17:00:00+03:00` : '',
+      dateLabel: entry.date ? formatRegistryDate(entry.date, entry.lang) : '',
+      venue: places[0] || '',
+      city: places.slice(1).join(', ') || places[0] || '',
+      address: entry.place || '',
+      rsvpDeadline: entry.date ? formatRegistryDate(entry.date, entry.lang, -42) : '',
+    },
+  }
+}
+
+const schemaCache = new Map()
+
 export function getTemplateSchema(template) {
-  return TEMPLATE_SCHEMAS[template] || TEMPLATE_SCHEMAS.artdeco
+  const option = findTemplateOption(template) || DEFAULT_TEMPLATE
+  const value = option?.value || 'artdeco'
+  if (TEMPLATE_SCHEMAS[value]) return TEMPLATE_SCHEMAS[value]
+  if (!schemaCache.has(value)) schemaCache.set(value, registrySchema(option.slug) || TEMPLATE_SCHEMAS.artdeco)
+  return schemaCache.get(value)
 }
 
 export function createTemplateDetails(template = 'artdeco') {
   const schema = getTemplateSchema(template)
-  return { template, ...schema.defaults }
+  const value = findTemplateOption(template)?.value || template
+  return { template: value, ...schema.defaults }
 }
 
 export function changeDetailsTemplate(details, template) {
   const defaults = createTemplateDetails(template)
-  const next = { ...details, template }
+  const next = { ...details, template: defaults.template }
   getTemplateSchema(template).fields.forEach((key) => {
     if (!Object.hasOwn(next, key)) next[key] = defaults[key] || ''
   })

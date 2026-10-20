@@ -4,6 +4,7 @@ import {
   changeDetailsTemplate,
   createTemplateDetails,
   DETAIL_LABELS,
+  findTemplateOption,
   getTemplateSchema,
   storedDetails,
   TEMPLATE_OPTIONS,
@@ -45,7 +46,7 @@ export default function WeddingCardManagerPage() {
 
   const previewHref = useMemo(() => {
     if (!card) return null
-    const template = TEMPLATE_OPTIONS.find((item) => item.value === details.template) || TEMPLATE_OPTIONS[0]
+    const template = findTemplateOption(details.template) || TEMPLATE_OPTIONS.find((item) => item.value === 'artdeco')
     return `${template.path}?cardId=${encodeURIComponent(card.id)}`
   }, [card, details.template])
 

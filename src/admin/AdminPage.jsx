@@ -1,302 +1,402 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { adminWeddingCardApi, ApiError, authApi } from '../api/weddingCardApi'
-import { uniqueWeddingSlug } from '../api/weddingCardSlug'
-import InvitationRequestInbox from './InvitationRequestInbox'
+import { useCallback, useEffect, useId, useRef, useState } from 'react'
+import { adminInvitationRequestApi, adminStatsApi, adminWeddingCardApi, authApi } from '../api/weddingCardApi'
+import { Icon, Spinner, Toasts } from './adminUi'
 import {
-  changeDetailsTemplate,
-  createTemplateDetails,
-  DETAIL_LABELS,
-  getTemplateSchema,
-  storedDetails,
-  TEMPLATE_OPTIONS,
-} from './templateDetails'
+  ADMIN_TABS,
+  adminErrorText,
+  hashForTab,
+  isForbidden,
+  isUnauthorized,
+  loginErrorText,
+  requiresTwoFactor,
+  tabFromHash,
+} from './adminUtils'
+import CardEditorDrawer from './CardEditorDrawer'
+import CardsView from './CardsView'
+import InvitationRequestInbox from './InvitationRequestInbox'
+import OverviewView from './OverviewView'
+import RsvpView from './RsvpView'
+import './admin.css'
 
-const ADMIN_DETAIL_KEYS = new Set(['template', 'slug', 'published'])
+const FONT_HREF = 'https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;0,6..96,600;1,6..96,400&family=Manrope:wght@400;500;600;700&display=swap'
 
-function createAdminDetails(template = 'artdeco') {
-  return { slug: '', published: 'false', ...createTemplateDetails(template) }
+const idle = (value) => ({ data: value, loading: true, error: null })
+
+function Fonts() {
+  return (
+    <>
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+      <link rel="stylesheet" href={FONT_HREF} />
+    </>
+  )
 }
 
-const LABELS = {
-  template: 'Template',
-  slug: 'Share link',
-  published: 'Published',
-  ...DETAIL_LABELS,
+function Brand({ compact = false }) {
+  return (
+    <a className={`wf-brand ${compact ? 'wf-brand--compact' : ''}`} href="/" aria-label="Wedfolio ana sayfası">
+      <span className="wf-brand__mark" aria-hidden="true">W</span>
+      <span className="wf-brand__text">
+        <strong>Wedfolio</strong>
+        <small>Yönetim paneli</small>
+      </span>
+    </a>
+  )
 }
 
-const errorText = (error) => error instanceof ApiError ? error.message : error?.message || 'Something went wrong.'
+function SignInScreen({ onSignedIn }) {
+  const emailId = useId()
+  const passwordId = useId()
+  const codeId = useId()
+  const errorId = useId()
+  const [form, setForm] = useState({ email: '', password: '', code: '' })
+  const [showCode, setShowCode] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
 
-const adminErrorText = (error) => {
-  if (error instanceof ApiError && error.status === 405) {
-    return 'The live API does not expose GET /api/admin/wedding-cards yet. Deploy the updated backend to enable the invitation list.'
-  }
-  if (error instanceof ApiError && error.status === 403) {
-    return 'This account does not have the Admin role.'
-  }
-  return errorText(error)
-}
+  const update = (key) => (event) => setForm((current) => ({ ...current, [key]: event.target.value }))
 
-export default function AdminPage() {
-  const [adminView, setAdminView] = useState('invitations')
-  const [cards, setCards] = useState([])
-  const [selected, setSelected] = useState(null)
-  const [name, setName] = useState('')
-  const [userId, setUserId] = useState('')
-  const [details, setDetails] = useState(() => createAdminDetails())
-  const [newDetail, setNewDetail] = useState({ key: '', value: '' })
-  const [busy, setBusy] = useState(true)
-  const [notice, setNotice] = useState(null)
-  const initialLoadStarted = useRef(false)
-
-  const isAuthenticated = authApi.isAuthenticated()
-  const previewHref = useMemo(() => {
-    if (!selected) return null
-    const template = TEMPLATE_OPTIONS.find((item) => item.value === details.template) || TEMPLATE_OPTIONS[0]
-    return details.slug
-      ? `${template.path}/${encodeURIComponent(details.slug)}`
-      : `${template.path}?cardId=${encodeURIComponent(selected.id)}`
-  }, [details.slug, details.template, selected])
-
-  const generateSlug = () => {
-    const slug = uniqueWeddingSlug(details.partner1, details.partner2, cards, selected?.id)
-    setDetails((current) => ({ ...current, slug }))
-  }
-
-  const selectCard = useCallback((card) => {
-    setSelected(card)
-    setName(card.name || '')
-    setUserId(card.userId || '')
-    setDetails({ slug: '', published: 'false', ...storedDetails(card.details) })
-    setNotice(null)
-  }, [])
-
-  const loadCard = async (id) => {
-    setBusy(true)
-    setNotice(null)
-    try {
-      const response = await adminWeddingCardApi.get(id)
-      selectCard(response)
-    } catch (error) {
-      setNotice({ type: 'error', text: adminErrorText(error) })
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  const loadCards = useCallback(async (preferredId) => {
-    setBusy(true)
-    try {
-      const response = await adminWeddingCardApi.list()
-      setCards(response)
-      if (preferredId) {
-        const next = response.find((item) => item.id === preferredId)
-        if (next) selectCard(next)
-      }
-      setNotice(null)
-    } catch (error) {
-      setNotice({ type: 'error', text: adminErrorText(error) })
-    } finally {
-      setBusy(false)
-    }
-  }, [selectCard])
-
-  useEffect(() => {
-    if (!isAuthenticated || initialLoadStarted.current) return
-    initialLoadStarted.current = true
-    void Promise.resolve().then(() => loadCards())
-  }, [isAuthenticated, loadCards])
-
-  const newDraft = () => {
-    setSelected(null)
-    setName('New wedding invitation')
-    setUserId('')
-    setDetails(createAdminDetails())
-    setNewDetail({ key: '', value: '' })
-    setNotice(null)
-  }
-
-  const addDetail = () => {
-    const key = newDetail.key.trim()
-    if (!key || Object.hasOwn(details, key)) return
-    setDetails((current) => ({ ...current, [key]: newDetail.value }))
-    setNewDetail({ key: '', value: '' })
-  }
-
-  const removeDetail = async (key) => {
-    if (selected && Object.hasOwn(selected.details || {}, key)) {
-      setBusy(true)
-      setNotice(null)
-      try {
-        await adminWeddingCardApi.removeDetail(selected.id, key)
-      } catch (error) {
-        setNotice({ type: 'error', text: adminErrorText(error) })
-        setBusy(false)
-        return
-      }
-      setBusy(false)
-    }
-
-    setDetails((current) => {
-      const next = { ...current }
-      delete next[key]
-      return next
-    })
-    setSelected((current) => {
-      if (!current) return current
-      const nextDetails = { ...(current.details || {}) }
-      delete nextDetails[key]
-      return { ...current, details: nextDetails }
-    })
-    setNotice({ type: 'success', text: `Removed “${key}”.` })
-  }
-
-  const save = async (event) => {
+  const submit = async (event) => {
     event.preventDefault()
     setBusy(true)
-    setNotice(null)
+    setError('')
     try {
-      const nextDetails = {
-        ...details,
-        slug: details.slug.trim() || uniqueWeddingSlug(details.partner1, details.partner2, cards, selected?.id),
-      }
-      setDetails(nextDetails)
-      if (!selected) {
-        const created = await adminWeddingCardApi.create({ name, userId: userId || null, details: nextDetails })
-        await loadCards(created.id)
-        setNotice({ type: 'success', text: 'Invitation created.' })
-      } else {
-        await adminWeddingCardApi.update(selected.id, { name, userId: userId || null })
-        await Promise.all(Object.entries(nextDetails).map(([key, value]) => adminWeddingCardApi.upsertDetail(selected.id, key, String(value))))
-        await loadCards(selected.id)
-        setNotice({ type: 'success', text: 'Invitation updated.' })
-      }
-    } catch (error) {
-      setNotice({ type: 'error', text: errorText(error) })
+      const code = form.code.trim()
+      const isRecovery = code.length > 8
+      await authApi.login(form.email.trim(), form.password, isRecovery ? '' : code, isRecovery ? code : '')
+      onSignedIn()
+    } catch (loginError) {
+      if (requiresTwoFactor(loginError)) setShowCode(true)
+      setError(loginErrorText(loginError))
       setBusy(false)
     }
-  }
-
-  const remove = async () => {
-    if (!selected || !window.confirm(`Delete “${selected.name}”? This cannot be undone.`)) return
-    setBusy(true)
-    try {
-      await adminWeddingCardApi.remove(selected.id)
-      setSelected(null)
-      setName('')
-      setDetails(createAdminDetails())
-      await loadCards()
-      setNotice({ type: 'success', text: 'Invitation deleted.' })
-    } catch (error) {
-      setNotice({ type: 'error', text: errorText(error) })
-      setBusy(false)
-    }
-  }
-
-  const copyClientLink = async () => {
-    if (!previewHref) return
-    try {
-      await navigator.clipboard.writeText(`${window.location.origin}${previewHref}`)
-      setNotice({ type: 'success', text: 'Client link copied.' })
-    } catch {
-      setNotice({ type: 'error', text: 'The client link could not be copied.' })
-    }
-  }
-
-  const supportedKeys = getTemplateSchema(details.template).fields
-  const visibleKeys = new Set([...ADMIN_DETAIL_KEYS, ...supportedKeys])
-  const detailFields = [
-    ...['template', 'slug', 'published'].map((key) => ({ key, value: details[key] || '', removable: false })),
-    ...supportedKeys.map((key) => ({ key, value: details[key] || '', removable: false })),
-    ...Object.entries(details)
-      .filter(([key]) => !visibleKeys.has(key))
-      .map(([key, value]) => ({ key, value, removable: true })),
-  ]
-
-  if (!isAuthenticated) {
-    return (
-      <div className="manager-page min-h-screen">
-        <header className="manager-header"><a href="/" className="manager-brand">Wedding Invitations</a></header>
-        <main className="admin-gate"><p className="manager-kicker">Administration</p><h1>Admin access required.</h1><p>Sign in with an administrator account to manage published invitations.</p><a className="manager-primary" href="/login?returnTo=/admin">Admin sign in</a></main>
-      </div>
-    )
   }
 
   return (
-    <div className="admin-page min-h-screen">
-      <header className="manager-header">
-        <a href="/" className="manager-brand">Wedding Invitations <small>Admin</small></a>
-        <nav className="admin-nav flex items-center gap-2">
-          <button className="manager-link" aria-pressed={adminView === 'invitations'} onClick={() => setAdminView('invitations')}>Invitations</button>
-          <button className="manager-link" aria-pressed={adminView === 'requests'} onClick={() => setAdminView('requests')}>Requests</button>
-          <a className="manager-link" href="/">Public site</a>
-          <a className="manager-link" href="/account">Security</a>
-          <button className="manager-link" onClick={() => { authApi.logout(); window.location.href = '/login?returnTo=/admin' }}>Sign out</button>
-        </nav>
-      </header>
-      {adminView === 'requests' ? <InvitationRequestInbox /> : <main className="admin-layout">
-        <aside className="admin-list-panel">
-          <div className="admin-list-head"><div><p className="manager-kicker">Content</p><h1>Invitations</h1></div><button type="button" onClick={newDraft} title="Create invitation">+</button></div>
-          <div className="admin-list-meta"><span>{cards.length} records</span><button type="button" onClick={() => loadCards()} disabled={busy}>Refresh</button></div>
-          <div className="admin-card-list">
-            {cards.map((card) => (
-            <button key={card.id} type="button" aria-pressed={selected?.id === card.id} onClick={() => loadCard(card.id)}>
-                <span className={`admin-publish-dot ${card.details?.published === 'true' ? 'on' : ''}`} />
-                <span><strong>{card.name}</strong><small>{card.details?.template || 'No template'} · {card.details?.dateLabel || 'No date'}</small></span>
-                <span>→</span>
-              </button>
-            ))}
-            {!busy && cards.length === 0 && <p className="admin-empty-list">No invitations yet.</p>}
+    <div className="wf-admin wf-gate">
+      <Fonts />
+      <div className="wf-gate__panel">
+        <Brand />
+        <div className="wf-gate__intro">
+          <p className="wf-eyebrow">Yönetici girişi</p>
+          <h1>Tekrar hoş geldiniz.</h1>
+          <p>Davetiyeleri, gelen talepleri ve konuk yanıtlarını yönetmek için yönetici hesabınızla giriş yapın.</p>
+        </div>
+        <form className="wf-form" onSubmit={submit} noValidate={false} aria-describedby={error ? errorId : undefined}>
+          {error && <div id={errorId} className="wf-alert wf-alert--error" role="alert">{error}</div>}
+          <div className="wf-field">
+            <label htmlFor={emailId}>E-posta adresi</label>
+            <input id={emailId} type="email" autoComplete="username" required value={form.email} onChange={update('email')} placeholder="ornek@wedfolio.com" />
           </div>
-        </aside>
-
-        <section className="admin-editor-panel">
-          {notice && <div className={`manager-notice ${notice.type === 'error' ? 'manager-notice-error' : ''}`}>{notice.text}</div>}
-          {!selected && !name ? (
-            <div className="manager-empty"><span>ADMIN</span><h2>Select an invitation or create a new one.</h2></div>
+          <div className="wf-field">
+            <label htmlFor={passwordId}>Şifre</label>
+            <input id={passwordId} type="password" autoComplete="current-password" required value={form.password} onChange={update('password')} />
+          </div>
+          {showCode ? (
+            <div className="wf-field">
+              <label htmlFor={codeId}>Doğrulama kodu</label>
+              <input id={codeId} inputMode="text" autoComplete="one-time-code" value={form.code} onChange={update('code')} placeholder="6 haneli kod ya da kurtarma kodu" />
+              <p className="wf-hint">Doğrulama uygulamanızdaki 6 haneli kodu ya da kurtarma kodlarınızdan birini girin.</p>
+            </div>
           ) : (
-            <form onSubmit={save}>
-              <div className="admin-editor-head">
-                <div><p>{selected ? 'Editing invitation' : 'New invitation'}</p><h2>{name || 'Untitled'}</h2>{selected && <code>{selected.id}</code>}</div>
-                <div>
-                  {selected && <button className="manager-danger" type="button" onClick={remove}>Delete</button>}
-                  {previewHref && <button className="manager-secondary" type="button" onClick={copyClientLink}>Copy client link</button>}
-                  {previewHref && <a className="manager-secondary" href={previewHref} target="_blank" rel="noreferrer">Open ↗</a>}
-                </div>
-              </div>
-              <div className="manager-field-grid">
-                <label className="manager-field-wide">Record name<input required maxLength={200} value={name} onChange={(event) => setName(event.target.value)} /></label>
-                <label className="manager-field-wide">Owner account ID <span className="admin-label-note">Use an existing registered user ID, or leave empty for an admin-owned card</span><input value={userId} onChange={(event) => setUserId(event.target.value)} placeholder="Optional Identity user ID" /></label>
-                {detailFields.map(({ key, value, removable }) => (
-                  <label key={key} className={key === 'description' ? 'manager-field-wide' : ''}>
-                    <span>{LABELS[key] || key}</span>
-                    {key === 'template' ? (
-                      <select value={value} onChange={(event) => setDetails((current) => changeDetailsTemplate(current, event.target.value))}>{TEMPLATE_OPTIONS.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select>
-                    ) : key === 'published' ? (
-                      <select value={value} onChange={(event) => setDetails((current) => ({ ...current, published: event.target.value }))}><option value="false">Draft</option><option value="true">Published</option></select>
-                    ) : key === 'slug' ? (
-                      <div className="admin-slug-field">
-                        <input value={value} onChange={(event) => setDetails((current) => ({ ...current, slug: event.target.value }))} placeholder="elena-marcus" />
-                        <button type="button" onClick={generateSlug}>Generate</button>
-                      </div>
-                    ) : (
-                      <div className="admin-detail-field">
-                        <input value={value} onChange={(event) => setDetails((current) => ({ ...current, [key]: event.target.value }))} />
-                        {removable && <button type="button" title={`Remove ${key}`} onClick={() => removeDetail(key)}>×</button>}
-                      </div>
-                    )}
-                  </label>
-                ))}
-              </div>
-              <div className="manager-add-detail">
-                <input aria-label="New detail key" placeholder="New detail key" value={newDetail.key} onChange={(event) => setNewDetail((current) => ({ ...current, key: event.target.value }))} />
-                <input aria-label="New detail value" placeholder="Value" value={newDetail.value} onChange={(event) => setNewDetail((current) => ({ ...current, value: event.target.value }))} />
-                <button type="button" onClick={addDetail}>Add field</button>
-              </div>
-              <div className="manager-savebar"><span>{details.published === 'true' ? 'Visible on homepage' : 'Draft only'}</span><button className="manager-primary" disabled={busy}>{busy ? 'Saving…' : selected ? 'Save changes' : 'Create invitation'}</button></div>
-            </form>
+            <button type="button" className="wf-link-btn" onClick={() => setShowCode(true)}>İki adımlı doğrulama kodum var</button>
           )}
-        </section>
-      </main>}
+          <button type="submit" className="wf-btn wf-btn--primary wf-btn--block" disabled={busy}>
+            {busy ? <><Spinner label="Giriş yapılıyor" /> Giriş yapılıyor…</> : 'Giriş yap'}
+          </button>
+          <p className="wf-gate__foot"><a href="/forgot-password">Şifremi unuttum</a><span aria-hidden="true">·</span><a href="/">Siteye dön</a></p>
+        </form>
+      </div>
+    </div>
+  )
+}
+
+function ForbiddenScreen({ email, onSignOut }) {
+  return (
+    <div className="wf-admin wf-gate">
+      <Fonts />
+      <div className="wf-gate__panel">
+        <Brand />
+        <div className="wf-gate__intro">
+          <span className="wf-gate__icon"><Icon name="shield" size={24} /></span>
+          <p className="wf-eyebrow">Erişim yok</p>
+          <h1>Bu hesabın yönetici yetkisi yok.</h1>
+          <p>
+            {email ? <><strong>{email}</strong> hesabıyla giriş yaptınız, </> : 'Giriş yaptığınız hesap '}
+            ancak yönetim paneli yalnızca <em>Admin</em> rolüne sahip hesaplara açıktır. Yönetici hesabıyla giriş yapmak için önce çıkış yapın.
+          </p>
+        </div>
+        <div className="wf-gate__actions">
+          <button type="button" className="wf-btn wf-btn--primary wf-btn--block" onClick={onSignOut}><Icon name="logout" size={16} /> Çıkış yap</button>
+          <a className="wf-btn wf-btn--ghost wf-btn--block" href="/manage">Kendi davetiyelerime git</a>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function CheckingScreen() {
+  return (
+    <div className="wf-admin wf-gate">
+      <Fonts />
+      <div className="wf-gate__loading" role="status">
+        <Spinner label="Yönetim paneli hazırlanıyor" />
+        <p>Yönetim paneli hazırlanıyor…</p>
+      </div>
+    </div>
+  )
+}
+
+export default function AdminPage() {
+  const [auth, setAuth] = useState(() => (authApi.isAuthenticated() ? 'checking' : 'signedOut'))
+  const [email, setEmail] = useState('')
+  const [tab, setTab] = useState(() => tabFromHash(window.location.hash))
+  const [stats, setStats] = useState(() => idle(null))
+  const [cards, setCards] = useState(() => idle([]))
+  const [requests, setRequests] = useState(() => idle([]))
+  const [toasts, setToasts] = useState([])
+  const [editor, setEditor] = useState({ open: false, card: null, prefill: null, requestId: null })
+  const [selectedRequestId, setSelectedRequestId] = useState(null)
+  const [rsvpCardId, setRsvpCardId] = useState('')
+  const toastId = useRef(0)
+
+  useEffect(() => {
+    document.title = 'Wedfolio · Yönetim paneli'
+    document.documentElement.lang = 'tr'
+  }, [])
+
+  const dismissToast = useCallback((id) => setToasts((current) => current.filter((toast) => toast.id !== id)), [])
+
+  const notify = useCallback((type, text) => {
+    toastId.current += 1
+    const id = toastId.current
+    setToasts((current) => [...current.slice(-3), { id, type, text }])
+    window.setTimeout(() => dismissToast(id), type === 'error' ? 7000 : 4000)
+  }, [dismissToast])
+
+  const signOut = useCallback(() => {
+    authApi.logout()
+    setEmail('')
+    setAuth('signedOut')
+  }, [])
+
+  // Any admin call that comes back 401/403 sends the user to the right gate.
+  const handleAuthError = useCallback((error) => {
+    if (isUnauthorized(error)) {
+      authApi.logout()
+      setAuth('signedOut')
+      return true
+    }
+    if (isForbidden(error)) {
+      setAuth('forbidden')
+      return true
+    }
+    return false
+  }, [])
+
+  const loadAll = useCallback(async () => {
+    authApi.getInfo().then((info) => setEmail(info?.email || '')).catch(() => {})
+    const [statsResult, cardsResult, requestsResult] = await Promise.allSettled([
+      adminStatsApi.get(),
+      adminWeddingCardApi.list(),
+      adminInvitationRequestApi.list(),
+    ])
+    const failures = [statsResult, cardsResult, requestsResult].filter((result) => result.status === 'rejected').map((result) => result.reason)
+    if (failures.some(isUnauthorized)) {
+      authApi.logout()
+      setAuth('signedOut')
+      return
+    }
+    if (failures.some(isForbidden)) {
+      setAuth('forbidden')
+      return
+    }
+    const settle = (result, fallback, message) => (
+      result.status === 'fulfilled'
+        ? { data: result.value ?? fallback, loading: false, error: null }
+        : { data: fallback, loading: false, error: adminErrorText(result.reason, message) }
+    )
+    setStats(settle(statsResult, null, 'Özet bilgiler yüklenemedi.'))
+    setCards(settle(cardsResult, [], 'Davetiyeler yüklenemedi.'))
+    setRequests(settle(requestsResult, [], 'Talepler yüklenemedi.'))
+    setAuth('ready')
+  }, [])
+
+  useEffect(() => {
+    if (auth !== 'checking') return
+    void Promise.resolve().then(loadAll)
+  }, [auth, loadAll])
+
+  const makeLoader = useCallback((setter, request, message, fallback) => async () => {
+    setter((current) => ({ ...current, loading: true, error: null }))
+    try {
+      const data = await request()
+      setter({ data: data ?? fallback, loading: false, error: null })
+    } catch (error) {
+      if (handleAuthError(error)) return
+      setter((current) => ({ ...current, loading: false, error: adminErrorText(error, message) }))
+    }
+  }, [handleAuthError])
+
+  const refreshStats = useCallback(() => makeLoader(setStats, adminStatsApi.get, 'Özet bilgiler yüklenemedi.', null)(), [makeLoader])
+  const refreshCards = useCallback(() => makeLoader(setCards, adminWeddingCardApi.list, 'Davetiyeler yüklenemedi.', [])(), [makeLoader])
+  const refreshRequests = useCallback(() => makeLoader(setRequests, () => adminInvitationRequestApi.list(), 'Talepler yüklenemedi.', [])(), [makeLoader])
+  const refreshEverything = useCallback(() => Promise.all([refreshStats(), refreshCards(), refreshRequests()]), [refreshCards, refreshRequests, refreshStats])
+
+  useEffect(() => {
+    const onHash = () => setTab(tabFromHash(window.location.hash))
+    window.addEventListener('hashchange', onHash)
+    return () => window.removeEventListener('hashchange', onHash)
+  }, [])
+
+  const goTo = useCallback((id) => {
+    setTab(id)
+    window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}#${hashForTab(id)}`)
+    window.scrollTo({ top: 0 })
+  }, [])
+
+  const openRequest = useCallback((id) => {
+    setSelectedRequestId(id)
+    goTo('requests')
+  }, [goTo])
+
+  const openRsvp = useCallback((cardId) => {
+    setRsvpCardId(cardId)
+    goTo('rsvp')
+  }, [goTo])
+
+  const openCreate = useCallback((prefill = null, requestId = null) => setEditor({ open: true, card: null, prefill, requestId }), [])
+  const openEdit = useCallback((card) => setEditor({ open: true, card, prefill: null, requestId: null }), [])
+  const closeEditor = useCallback(() => setEditor((current) => ({ ...current, open: false })), [])
+
+  const onCardSaved = useCallback(async (saved, created) => {
+    setEditor((current) => ({ ...current, open: false }))
+    notify('success', created ? 'Davetiye oluşturuldu.' : 'Değişiklikler kaydedildi.')
+    if (created && saved?.id && tab !== 'cards') goTo('cards')
+    await Promise.all([refreshCards(), refreshStats()])
+  }, [goTo, notify, refreshCards, refreshStats, tab])
+
+  const onCardDeleted = useCallback(async (id) => {
+    setCards((current) => ({ ...current, data: current.data.filter((card) => card.id !== id) }))
+    setEditor((current) => (current.card?.id === id ? { ...current, open: false } : current))
+    if (rsvpCardId === id) setRsvpCardId('')
+    await refreshStats()
+  }, [refreshStats, rsvpCardId])
+
+  const onRequestChanged = useCallback((updated) => {
+    setRequests((current) => ({ ...current, data: current.data.map((item) => (item.id === updated.id ? { ...item, ...updated } : item)) }))
+    void refreshStats()
+  }, [refreshStats])
+
+  const onRequestRemoved = useCallback((id) => {
+    setRequests((current) => ({ ...current, data: current.data.filter((item) => item.id !== id) }))
+    setSelectedRequestId(null)
+    void refreshStats()
+  }, [refreshStats])
+
+  if (auth === 'signedOut') return <SignInScreen onSignedIn={() => setAuth('checking')} />
+  if (auth === 'forbidden') return <ForbiddenScreen email={email} onSignOut={signOut} />
+  if (auth === 'checking') return <CheckingScreen />
+
+  const newRequests = requests.data.filter((item) => item.status === 'new').length
+  const counts = { cards: cards.data.length, requests: newRequests }
+
+  return (
+    <div className="wf-admin wf-shell">
+      <Fonts />
+      <a className="wf-skip" href="#wf-main">İçeriğe geç</a>
+      <aside className="wf-sidebar">
+        <div className="wf-sidebar__top">
+          <Brand />
+          <button type="button" className="wf-icon-btn wf-sidebar__mobile-out" onClick={signOut} aria-label="Çıkış yap"><Icon name="logout" /></button>
+        </div>
+        <nav className="wf-nav" aria-label="Yönetim bölümleri">
+          {ADMIN_TABS.map((item) => (
+            <a
+              key={item.id}
+              href={`#${item.hash}`}
+              className="wf-nav__item"
+              aria-current={tab === item.id ? 'page' : undefined}
+              onClick={(event) => { event.preventDefault(); goTo(item.id) }}
+            >
+              <Icon name={item.icon} />
+              <span>{item.label}</span>
+              {item.id === 'requests' && counts.requests > 0 && <span className="wf-nav__count" aria-label={`${counts.requests} yeni talep`}>{counts.requests}</span>}
+              {item.id === 'cards' && !cards.loading && <span className="wf-nav__count wf-nav__count--muted" aria-label={`${counts.cards} davetiye`}>{counts.cards}</span>}
+            </a>
+          ))}
+        </nav>
+        <div className="wf-sidebar__foot">
+          {email && <p className="wf-sidebar__user" title={email}><span>Giriş yapan</span>{email}</p>}
+          <a className="wf-sidebar__link" href="/" target="_blank" rel="noopener noreferrer"><Icon name="site" size={16} /> Siteyi aç</a>
+          <a className="wf-sidebar__link" href="/account"><Icon name="shield" size={16} /> Hesap güvenliği</a>
+          <button type="button" className="wf-sidebar__link" onClick={signOut}><Icon name="logout" size={16} /> Çıkış yap</button>
+        </div>
+      </aside>
+
+      <main id="wf-main" className="wf-main" tabIndex={-1}>
+        {tab === 'overview' && (
+          <OverviewView
+            stats={stats}
+            cards={cards}
+            requests={requests}
+            onRetry={refreshEverything}
+            onNavigate={goTo}
+            onOpenRequest={openRequest}
+            onCreate={() => openCreate()}
+          />
+        )}
+        {tab === 'cards' && (
+          <CardsView
+            cards={cards}
+            onRefresh={refreshCards}
+            onCreate={() => openCreate()}
+            onEdit={openEdit}
+            onOpenRsvp={openRsvp}
+            onDeleted={onCardDeleted}
+            onAuthError={handleAuthError}
+            notify={notify}
+          />
+        )}
+        {tab === 'requests' && (
+          <InvitationRequestInbox
+            requests={requests}
+            selectedId={selectedRequestId}
+            onSelect={setSelectedRequestId}
+            onRefresh={refreshRequests}
+            onChanged={onRequestChanged}
+            onRemoved={onRequestRemoved}
+            onCreateCard={(prefill, requestId) => openCreate(prefill, requestId)}
+            onAuthError={handleAuthError}
+            notify={notify}
+          />
+        )}
+        {tab === 'rsvp' && (
+          <RsvpView
+            cards={cards}
+            cardId={rsvpCardId}
+            onSelectCard={setRsvpCardId}
+            onChanged={refreshStats}
+            onAuthError={handleAuthError}
+            notify={notify}
+          />
+        )}
+      </main>
+
+      <CardEditorDrawer
+        key={editor.open ? `${editor.card?.id || 'new'}-${editor.requestId || ''}` : 'closed'}
+        open={editor.open}
+        card={editor.card}
+        prefill={editor.prefill}
+        fromRequest={editor.requestId ? requests.data.find((item) => item.id === editor.requestId) : null}
+        cards={cards.data}
+        onClose={closeEditor}
+        onSaved={onCardSaved}
+        onDeleted={onCardDeleted}
+        onAuthError={handleAuthError}
+        notify={notify}
+      />
+      <Toasts toasts={toasts} onDismiss={dismissToast} />
     </div>
   )
 }
