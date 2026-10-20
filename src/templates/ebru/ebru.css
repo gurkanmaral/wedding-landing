@@ -1,0 +1,326 @@
+.theme-ebru {
+  --inv-bg: #f1faee;
+  --inv-surface: #fbfdf8;
+  --inv-alt: #e6efea;
+  --inv-ink: #1d3557;
+  --inv-muted: #4b6175;
+  --inv-accent: #e63946;
+  --inv-accent-ink: #fbfdf8;
+  --inv-line: rgb(29 53 87 / 0.16);
+  --inv-display: 'Cormorant', Georgia, serif;
+  --inv-script: 'Cormorant', Georgia, serif;
+  --inv-body: 'Mulish', system-ui, sans-serif;
+  --inv-radius: 4px;
+  /* stand-in for the guest's sheet until the hero has printed it */
+  --eb-marble-fallback:
+    repeating-linear-gradient(104deg, rgb(69 123 157 / 0.55) 0 7px, rgb(241 250 238 / 0.5) 7px 10px, rgb(230 57 70 / 0.45) 10px 14px, rgb(29 53 87 / 0.6) 14px 22px, rgb(241 196 83 / 0.4) 22px 25px),
+    linear-gradient(160deg, #457b9d, #1d3557);
+  --eb-paper:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .3 0 0 0 0 .22 0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  --eb-wave: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 30' preserveAspectRatio='none'%3E%3Cpath d='M0 0H1200V20C1125 30 1050 10 975 20S825 30 750 20 600 10 525 20 375 30 300 20 150 10 75 20 0 22 0 22Z'/%3E%3C/svg%3E");
+
+  background-image: var(--eb-paper);
+}
+
+/* hero */
+.eb-hero {
+  position: relative;
+  height: 100svh;
+  min-height: 34rem;
+  overflow: hidden;
+  background: var(--eb-marble-fallback);
+}
+
+.eb-hero-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.eb-hero-gl {
+  position: absolute;
+  inset: 0;
+}
+
+.eb-hero--flat .eb-hero-gl {
+  display: none;
+}
+
+/* no WebGL2: the still of the guest's printed sheet, or a quiet marbled stand-in */
+.eb-hero--flat {
+  background: var(--eb-still, none) center / cover, var(--eb-marble-fallback);
+}
+
+.eb-names {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  font: inherit;
+}
+
+.eb-line {
+  position: absolute;
+  left: 50%;
+  margin: 0;
+  transform: translate(-50%, -50%);
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.eb-name {
+  color: #1d3557;
+  font: italic 500 var(--eb-name) / 1 'Cormorant', Georgia, serif;
+}
+
+.eb-amp {
+  color: #e63946;
+  font: italic 500 calc(var(--eb-name) * 0.62) / 1 'Cormorant', Georgia, serif;
+}
+
+.eb-tagline {
+  width: min(78vw, calc(var(--eb-name) * 5));
+  color: #457b9d;
+  font: italic 500 calc(var(--eb-meta) * 1.2) / 1.2 'Cormorant', Georgia, serif;
+  white-space: normal;
+  text-wrap: balance;
+}
+
+.eb-date {
+  color: #1d3557;
+  font: 600 var(--eb-meta) / 1 'Mulish', system-ui, sans-serif;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.eb-place {
+  color: #457b9d;
+  font: italic 500 calc(var(--eb-meta) * 1.35) / 1 'Cormorant', Georgia, serif;
+}
+
+/* marbled dividers: a torn strip of the guest's sheet atop each section */
+.theme-ebru .inv-section {
+  padding-top: clamp(5.5rem, 13vw, 8.5rem);
+}
+
+.theme-ebru .inv-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: clamp(22px, 3.4vw, 32px);
+  background: var(--ebru-paper, var(--eb-marble-fallback));
+  background-size: cover;
+  background-position: 50% 20%;
+  -webkit-mask: var(--eb-wave) 0 0 / 100% 100% no-repeat;
+  mask: var(--eb-wave) 0 0 / 100% 100% no-repeat;
+}
+
+.theme-ebru .inv-section:nth-of-type(3n + 1)::before { background-position: 10% 70%; }
+.theme-ebru .inv-section:nth-of-type(3n + 2)::before { background-position: 80% 40%; }
+
+.theme-ebru .inv-section:nth-of-type(even) {
+  background-color: var(--inv-alt);
+  background-image: var(--eb-paper);
+}
+
+.theme-ebru .inv-kicker {
+  font-size: 0.74rem;
+  letter-spacing: 0.26em;
+}
+
+.theme-ebru .inv-title {
+  font-style: italic;
+  font-weight: 500;
+  font-size: clamp(2.5rem, 8vw, 4.4rem);
+}
+
+.theme-ebru .inv-lead {
+  font-size: clamp(1.4rem, 4.4vw, 2rem);
+}
+
+.theme-ebru .inv-button {
+  border-radius: 999px;
+  font-weight: 600;
+  box-shadow: 0 8px 20px -12px rgb(230 57 70 / 0.7);
+}
+
+/* a dropped colour with its rings: countdown, schedule times, story dots */
+.theme-ebru {
+  --eb-drop:
+    radial-gradient(circle, #fbfdf8 0 54%, #457b9d 55% 57.5%, #fbfdf8 58.5% 62%, #e63946 63% 65.5%, #fbfdf8 66.5% 70%, #1d3557 71% 74%, transparent 75%);
+}
+
+.theme-ebru .inv-countdown-cell {
+  aspect-ratio: 1;
+  align-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--eb-drop);
+}
+
+.theme-ebru .inv-countdown-value {
+  font-size: clamp(1.6rem, 6vw, 2.8rem);
+  font-weight: 500;
+}
+
+.theme-ebru .inv-countdown-label {
+  font-size: 0.6rem;
+}
+
+.theme-ebru .inv-timeline li {
+  position: relative;
+  padding-left: 2.1rem;
+  border-left: 2px solid rgb(69 123 157 / 0.4);
+}
+
+.theme-ebru .inv-timeline li::before {
+  content: '';
+  position: absolute;
+  left: -13px;
+  top: 0;
+  width: 24px;
+  height: 24px;
+  background: var(--eb-drop);
+}
+
+.theme-ebru .inv-timeline h3,
+.theme-ebru .inv-schedule-list h3 {
+  font-style: italic;
+  font-size: 1.7rem;
+}
+
+.theme-ebru .inv-schedule-list li {
+  position: relative;
+  grid-template-columns: 5.4rem minmax(0, 1fr);
+  align-items: center;
+  border-bottom: 0;
+}
+
+.theme-ebru .inv-schedule-list li::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--ebru-paper, var(--eb-marble-fallback)) center / cover;
+  opacity: 0.75;
+}
+
+.theme-ebru .inv-schedule-time {
+  display: grid;
+  place-items: center;
+  width: 5rem;
+  aspect-ratio: 1;
+  padding: 0;
+  background: var(--eb-drop);
+  color: var(--inv-ink);
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+/* venue */
+.theme-ebru .inv-map {
+  border: 10px solid #457b9d;
+  border-image: var(--ebru-paper) 70 stretch;
+  border-radius: 0;
+}
+
+.theme-ebru .inv-swatches li {
+  box-shadow: 0 0 0 4px var(--inv-surface), 0 0 0 5px rgb(29 53 87 / 0.25);
+}
+
+/* gifts: a card with a marbled head */
+.theme-ebru .inv-gifts .inv-narrow {
+  position: relative;
+  overflow: hidden;
+  padding: clamp(3.4rem, 9vw, 4rem) clamp(1.2rem, 5vw, 2.4rem) clamp(1.8rem, 5vw, 2.4rem);
+  border-radius: 6px;
+  background: var(--inv-surface);
+  box-shadow: 0 22px 50px -30px rgb(29 53 87 / 0.55);
+}
+
+.theme-ebru .inv-gifts .inv-narrow::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1.5rem;
+  background: var(--ebru-paper, var(--eb-marble-fallback)) 30% 60% / cover;
+  -webkit-mask: var(--eb-wave) 0 0 / 100% 100% no-repeat;
+  mask: var(--eb-wave) 0 0 / 100% 100% no-repeat;
+}
+
+/* RSVP: the form sits on a card cut from the guest's marbled sheet */
+.theme-ebru .inv-rsvp-section .inv-narrow {
+  padding: clamp(14px, 4vw, 24px);
+  border-radius: 8px;
+  background: var(--ebru-paper, var(--eb-marble-fallback)) center / cover;
+  box-shadow: 0 26px 60px -30px rgb(29 53 87 / 0.7);
+}
+
+.theme-ebru .inv-rsvp,
+.theme-ebru .inv-rsvp-thanks {
+  padding: clamp(1.4rem, 5vw, 2.2rem);
+  border-radius: 4px;
+  background: var(--eb-paper), #fbfdf8;
+  box-shadow: 0 0 0 1px rgb(29 53 87 / 0.25), inset 0 0 30px rgb(29 53 87 / 0.06);
+}
+
+.theme-ebru .inv-field input,
+.theme-ebru .inv-field select,
+.theme-ebru .inv-field textarea {
+  border-color: rgb(29 53 87 / 0.25);
+  border-radius: 4px;
+}
+
+/* footer */
+.theme-ebru .inv-footer {
+  padding-top: 6rem;
+  background: #1d3557;
+}
+
+.theme-ebru .inv-footer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 34px;
+  background: var(--ebru-paper, var(--eb-marble-fallback)) 50% 80% / cover;
+  -webkit-mask: var(--eb-wave) 0 0 / 100% 100% no-repeat;
+  mask: var(--eb-wave) 0 0 / 100% 100% no-repeat;
+}
+
+.theme-ebru .inv-footer p {
+  color: rgb(241 250 238 / 0.8);
+}
+
+.theme-ebru .inv-footer-names {
+  color: #f1faee !important;
+  font-family: 'Cormorant', Georgia, serif;
+  font-style: italic;
+  font-weight: 500;
+}
+
+.theme-ebru .inv-footer-names span {
+  color: #f1c453;
+}
+
+@media (max-width: 760px) {
+  .theme-ebru .inv-schedule-list li {
+    grid-template-columns: 4.6rem minmax(0, 1fr);
+  }
+
+  .theme-ebru .inv-schedule-time {
+    width: 4.3rem;
+    font-size: 1rem;
+  }
+}
