@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
-import { adminInvitationRequestApi, adminStatsApi, adminWeddingCardApi, authApi } from '../api/weddingCardApi'
+import { adminInvitationRequestApi, adminStatsApi, adminWeddingCardApi, authApi, meApi } from '../api/weddingCardApi'
 import { Icon, Spinner, Toasts } from './adminUi'
 import {
   ADMIN_TABS,
@@ -195,10 +195,25 @@ export default function AdminPage() {
   }, [])
 
   const loadAll = useCallback(async () => {
-    authApi.getInfo().then((info) => setEmail(info?.email || '')).catch(() => {})
+    // Ask the API who is signed in first; the 403 handling below stays as a fallback.
+    try {
+      const me = await meApi.get()
+      setEmail(me?.email || '')
+      if (me && me.isAdmin === false) {
+        setAuth('forbidden')
+        return
+      }
+    } catch (error) {
+      if (isUnauthorized(error)) {
+        authApi.logout()
+        setAuth('signedOut')
+        return
+      }
+      authApi.getInfo().then((info) => setEmail(info?.email || '')).catch(() => {})
+    }
     const [statsResult, cardsResult, requestsResult] = await Promise.allSettled([
       adminStatsApi.get(),
-      adminWeddingCardApi.list(),
+      adminWeddingCardApi.list('newest'),
       adminInvitationRequestApi.list(),
     ])
     const failures = [statsResult, cardsResult, requestsResult].filter((result) => result.status === 'rejected').map((result) => result.reason)
@@ -239,7 +254,7 @@ export default function AdminPage() {
   }, [handleAuthError])
 
   const refreshStats = useCallback(() => makeLoader(setStats, adminStatsApi.get, 'Özet bilgiler yüklenemedi.', null)(), [makeLoader])
-  const refreshCards = useCallback(() => makeLoader(setCards, adminWeddingCardApi.list, 'Davetiyeler yüklenemedi.', [])(), [makeLoader])
+  const refreshCards = useCallback(() => makeLoader(setCards, () => adminWeddingCardApi.list('newest'), 'Davetiyeler yüklenemedi.', [])(), [makeLoader])
   const refreshRequests = useCallback(() => makeLoader(setRequests, () => adminInvitationRequestApi.list(), 'Talepler yüklenemedi.', [])(), [makeLoader])
   const refreshEverything = useCallback(() => Promise.all([refreshStats(), refreshCards(), refreshRequests()]), [refreshCards, refreshRequests, refreshStats])
 
@@ -270,11 +285,26 @@ export default function AdminPage() {
   const closeEditor = useCallback(() => setEditor((current) => ({ ...current, open: false })), [])
 
   const onCardSaved = useCallback(async (saved, created) => {
+    const requestId = editor.requestId
     setEditor((current) => ({ ...current, open: false }))
-    notify('success', created ? 'Davetiye oluşturuldu.' : 'Değişiklikler kaydedildi.')
-    if (created && saved?.id && tab !== 'cards') goTo('cards')
+    if (created && requestId && saved?.id) {
+      try {
+        await adminInvitationRequestApi.linkCard(requestId, saved.id)
+        setRequests((current) => ({
+          ...current,
+          data: current.data.map((item) => (item.id === requestId ? { ...item, weddingCardId: saved.id } : item)),
+        }))
+        notify('success', 'Davetiye oluşturuldu ve talebe bağlandı.')
+      } catch (error) {
+        if (handleAuthError(error)) return
+        notify('error', `Davetiye oluşturuldu ancak talebe bağlanamadı. ${adminErrorText(error)}`)
+      }
+    } else {
+      notify('success', created ? 'Davetiye oluşturuldu.' : 'Değişiklikler kaydedildi.')
+    }
+    if (created && saved?.id && !requestId && tab !== 'cards') goTo('cards')
     await Promise.all([refreshCards(), refreshStats()])
-  }, [goTo, notify, refreshCards, refreshStats, tab])
+  }, [editor.requestId, goTo, handleAuthError, notify, refreshCards, refreshStats, tab])
 
   const onCardDeleted = useCallback(async (id) => {
     setCards((current) => ({ ...current, data: current.data.filter((card) => card.id !== id) }))
@@ -361,6 +391,8 @@ export default function AdminPage() {
         {tab === 'requests' && (
           <InvitationRequestInbox
             requests={requests}
+            cards={cards.data}
+            onEditCard={openEdit}
             selectedId={selectedRequestId}
             onSelect={setSelectedRequestId}
             onRefresh={refreshRequests}

@@ -670,8 +670,6 @@
 .wf-chip[aria-pressed='true'] { background: var(--wf-ink); border-color: var(--wf-ink); color: #fff; }
 .wf-chip[aria-pressed='true'] span { background: var(--wf-gold); color: var(--wf-ink); }
 
-.wf-sort-mobile { display: none; align-items: center; gap: 8px; }
-.wf-sort-mobile label { font-size: 0.84rem; font-weight: 600; }
 .wf-result-count { margin-bottom: -12px; font-size: 0.84rem; color: var(--wf-muted); }
 
 /* ---------- tables ---------- */
@@ -1182,8 +1180,6 @@
 
   .wf-table-wrap { display: none; }
   .wf-card-list { display: grid; }
-  .wf-sort-mobile { display: flex; flex: 1 1 100%; }
-  .wf-sort-mobile select { flex: 1; }
 
   .wf-picker { grid-template-columns: minmax(0, 1fr); }
   .wf-request { padding: 18px; }
@@ -1214,4 +1210,54 @@
   .wf-request__actions .wf-btn { flex: 1; }
   .wf-contact .wf-btn { flex: 1; }
   .wf-gate__panel { padding: 28px 20px 20px; }
+}
+
+/* ---------- card list additions: sort, LCV column, created date ---------- */
+
+.wf-sort { display: flex; align-items: center; gap: 8px; }
+.wf-sort label { font-size: 0.84rem; font-weight: 600; white-space: nowrap; }
+.wf-admin .wf-sort select { width: auto; min-width: 190px; border-radius: 999px; background: var(--wf-surface); }
+
+.wf-created { display: block; margin-top: 3px; font-size: 0.78rem; color: var(--wf-muted); }
+
+.wf-rsvp-link {
+  display: inline-grid;
+  justify-items: start;
+  min-height: 44px;
+  padding: 4px 10px;
+  margin: -4px -10px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  font: inherit;
+  font-size: 0.86rem;
+  color: var(--wf-text);
+  text-align: left;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.wf-rsvp-link strong { font-weight: 700; }
+.wf-rsvp-link small { font-size: 0.78rem; color: var(--wf-muted); }
+.wf-rsvp-link:hover { background: var(--wf-gold-soft); }
+
+.wf-card-item__meta { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.wf-card-item__meta .wf-rsvp-link { margin: 0; }
+
+.wf-linked-card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  padding: 14px 16px;
+  border: 1px solid #cfe0d5;
+  border-radius: var(--wf-radius-sm);
+  background: var(--wf-green-soft);
+}
+.wf-linked-card__text { flex: 1 1 220px; min-width: 0; font-size: 0.92rem; }
+.wf-linked-card__text strong { font-weight: 700; }
+.wf-linked-card--missing { border-color: #ebc5be; background: var(--wf-red-soft); }
+
+@media (max-width: 960px) {
+  .wf-sort { flex: 1 1 100%; }
+  .wf-admin .wf-sort select { flex: 1; }
 }

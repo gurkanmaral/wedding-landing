@@ -222,6 +222,10 @@ export const adminInvitationRequestApi = {
     method: 'PUT',
     body: JSON.stringify({ status }),
   }),
+  linkCard: (id, weddingCardId) => authorizedRequest(`/api/admin/invitation-requests/${encode(id)}/card`, {
+    method: 'PUT',
+    body: JSON.stringify({ weddingCardId }),
+  }),
   updateNote: (id, adminNote) => authorizedRequest(`/api/admin/invitation-requests/${encode(id)}/note`, {
     method: 'PUT',
     body: JSON.stringify({ adminNote }),
@@ -232,7 +236,8 @@ export const adminInvitationRequestApi = {
 }
 
 export const adminWeddingCardApi = {
-  list: () => authorizedRequest('/api/admin/wedding-cards'),
+  // sort: 'newest' (default) | 'oldest' | 'name'; items include rsvpCount and attendingGuests
+  list: (sort = 'newest') => authorizedRequest(`/api/admin/wedding-cards?sort=${encode(sort)}`),
   get: (id) => authorizedRequest(`/api/admin/wedding-cards/${encode(id)}`),
   create: (payload) => authorizedRequest('/api/admin/wedding-cards', {
     method: 'POST',
@@ -295,6 +300,11 @@ export const adminRsvpApi = {
     method: 'DELETE',
   }),
   downloadCsv: (cardId, fileName = 'lcv.csv') => authorizedDownload(`/api/admin/wedding-cards/${encode(cardId)}/rsvps.csv`, fileName),
+}
+
+// The signed-in user with roles from the token: { id, email, roles, isAdmin }.
+export const meApi = {
+  get: () => authorizedRequest('/api/me'),
 }
 
 export const adminStatsApi = {

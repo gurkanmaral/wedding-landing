@@ -3,6 +3,7 @@ import { adminInvitationRequestApi } from '../api/weddingCardApi'
 import { ConfirmDialog, EmptyState, ErrorState, Icon, PageHeader, Skeleton, Spinner, StatusBadge, TemplateBadge } from './adminUi'
 import {
   adminErrorText,
+  coupleName,
   formatDateTime,
   normalizeSearch,
   parseRequestForCard,
@@ -11,7 +12,7 @@ import {
   telHref,
   whatsappHref,
 } from './adminUtils'
-import { findTemplateOption } from './templateDetails'
+import { findTemplateOption, invitationHref } from './templateDetails'
 
 const NOTE_LIMIT = 2000
 
@@ -62,7 +63,47 @@ function NoteEditor({ request, onSaved, onAuthError, notify }) {
   )
 }
 
-function RequestDetail({ request, onBack, onChanged, onDelete, onCreateCard, onAuthError, notify }) {
+function LinkedCard({ request, cards, onEditCard, onChanged, onAuthError, notify }) {
+  const [busy, setBusy] = useState(false)
+  const card = cards.find((item) => item.id === request.weddingCardId) || null
+  const href = card ? invitationHref(card.details) : null
+
+  const unlink = async () => {
+    setBusy(true)
+    try {
+      await adminInvitationRequestApi.linkCard(request.id, null)
+      onChanged({ ...request, weddingCardId: null, updatedAtUtc: new Date().toISOString() })
+      notify('success', 'Talep ile davetiye arasındaki bağlantı kaldırıldı.')
+    } catch (error) {
+      if (!onAuthError(error)) notify('error', adminErrorText(error, 'Bağlantı kaldırılamadı.'))
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div className={`wf-linked-card ${card ? '' : 'wf-linked-card--missing'}`}>
+      <Icon name="cards" size={18} />
+      <p className="wf-linked-card__text">
+        {card
+          ? <>Davetiye: <strong>{coupleName(card)}</strong></>
+          : 'Bağlı davetiye bulunamadı; silinmiş olabilir.'}
+      </p>
+      {card && href && (
+        <a className="wf-btn wf-btn--ghost wf-btn--sm" href={href} target="_blank" rel="noopener noreferrer" aria-label={`${coupleName(card)} davetiyesini yeni sekmede aç`}>
+          <Icon name="external" size={15} /> Aç
+        </a>
+      )}
+      {card && (
+        <button type="button" className="wf-btn wf-btn--ghost wf-btn--sm" onClick={() => onEditCard(card)}><Icon name="edit" size={15} /> Düzenle</button>
+      )}
+      <button type="button" className="wf-link-btn" onClick={unlink} disabled={busy}>
+        {busy ? 'Kaldırılıyor…' : 'Bağlantıyı kaldır'}
+      </button>
+    </div>
+  )
+}
+
+function RequestDetail({ request, cards, onEditCard, onBack, onChanged, onDelete, onCreateCard, onAuthError, notify }) {
   const [statusBusy, setStatusBusy] = useState('')
   const template = findTemplateOption(request.template)
   const wa = whatsappHref(request.phone)
@@ -117,6 +158,10 @@ function RequestDetail({ request, onBack, onChanged, onDelete, onCreateCard, onA
         </div>
       </dl>
 
+      {request.weddingCardId && (
+        <LinkedCard request={request} cards={cards} onEditCard={onEditCard} onChanged={onChanged} onAuthError={onAuthError} notify={notify} />
+      )}
+
       <section className="wf-pipeline" aria-labelledby="wf-pipeline-title">
         <h3 id="wf-pipeline-title">Talep durumu</h3>
         <ol>
@@ -134,8 +179,8 @@ function RequestDetail({ request, onBack, onChanged, onDelete, onCreateCard, onA
       <NoteEditor key={request.id} request={request} onSaved={onChanged} onAuthError={onAuthError} notify={notify} />
 
       <footer className="wf-request__actions">
-        <button type="button" className="wf-btn wf-btn--primary" onClick={() => onCreateCard(parseRequestForCard(request), request.id)}>
-          <Icon name="plus" size={16} /> Bu talepten davetiye oluştur
+        <button type="button" className={`wf-btn ${request.weddingCardId ? 'wf-btn--ghost' : 'wf-btn--primary'}`} onClick={() => onCreateCard(parseRequestForCard(request), request.id)}>
+          <Icon name="plus" size={16} /> {request.weddingCardId ? 'Bu talepten yeni davetiye oluştur' : 'Bu talepten davetiye oluştur'}
         </button>
         <button type="button" className="wf-btn wf-btn--danger-ghost" onClick={onDelete}><Icon name="trash" size={16} /> Talebi sil</button>
       </footer>
@@ -143,7 +188,7 @@ function RequestDetail({ request, onBack, onChanged, onDelete, onCreateCard, onA
   )
 }
 
-export default function InvitationRequestInbox({ requests, selectedId, onSelect, onRefresh, onChanged, onRemoved, onCreateCard, onAuthError, notify }) {
+export default function InvitationRequestInbox({ requests, cards = [], onEditCard, selectedId, onSelect, onRefresh, onChanged, onRemoved, onCreateCard, onAuthError, notify }) {
   const searchId = useId()
   const [filter, setFilter] = useState('all')
   const [query, setQuery] = useState('')
@@ -251,6 +296,8 @@ export default function InvitationRequestInbox({ requests, selectedId, onSelect,
             <RequestDetail
               key={selected.id}
               request={selected}
+              cards={cards}
+              onEditCard={onEditCard}
               onBack={() => onSelect(null)}
               onChanged={onChanged}
               onDelete={() => setPendingDelete(selected)}

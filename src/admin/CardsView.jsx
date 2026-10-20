@@ -8,18 +8,49 @@ import {
   compareText,
   copyText,
   coupleName,
+  formatDate,
+  formatNumber,
   isPublished,
   normalizeSearch,
 } from './adminUtils'
 import { invitationHref, templateLabel } from './templateDetails'
 
+const createdTime = (card) => {
+  const time = new Date(card.createdAtUtc || 0).getTime()
+  return Number.isFinite(time) ? time : 0
+}
+
 const SORTS = {
+  created: { label: 'Eklenme tarihi', compare: (a, b) => createdTime(a) - createdTime(b) },
   name: { label: 'Çift adı', compare: (a, b) => compareText(coupleName(a), coupleName(b)) },
   date: {
     label: 'Tören tarihi',
     compare: (a, b) => (cardEventTime(a) ?? Infinity) - (cardEventTime(b) ?? Infinity),
   },
   template: { label: 'Şablon', compare: (a, b) => compareText(templateLabel(a.details?.template), templateLabel(b.details?.template)) },
+  rsvp: { label: 'LCV', compare: (a, b) => (a.rsvpCount || 0) - (b.rsvpCount || 0) },
+}
+
+const SORT_PRESETS = [
+  { value: 'created:desc', label: 'En yeni' },
+  { value: 'created:asc', label: 'En eski' },
+  { value: 'name:asc', label: 'İsim (A–Z)' },
+  { value: 'name:desc', label: 'İsim (Z–A)' },
+  { value: 'date:asc', label: 'Tören tarihi (yakın)' },
+  { value: 'date:desc', label: 'Tören tarihi (uzak)' },
+  { value: 'template:asc', label: 'Şablon' },
+  { value: 'rsvp:desc', label: 'En çok LCV' },
+]
+
+function RsvpCell({ card, onOpenRsvp }) {
+  const count = card.rsvpCount || 0
+  const guests = card.attendingGuests || 0
+  return (
+    <button type="button" className="wf-rsvp-link" onClick={() => onOpenRsvp(card.id)} aria-label={`${coupleName(card)}: ${count} yanıt, ${guests} kişi katılıyor. LCV yanıtlarını aç`}>
+      <strong>{formatNumber(count)}</strong> yanıt
+      <small>{formatNumber(guests)} kişi</small>
+    </button>
+  )
 }
 
 const FILTERS = [
@@ -74,7 +105,7 @@ export default function CardsView({ cards, onRefresh, onCreate, onEdit, onOpenRs
   const sortId = useId()
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState('all')
-  const [sort, setSort] = useState({ key: 'date', dir: 'asc' })
+  const [sort, setSort] = useState({ key: 'created', dir: 'desc' })
   const [pendingDelete, setPendingDelete] = useState(null)
   const [deleting, setDeleting] = useState(false)
 
@@ -156,13 +187,13 @@ export default function CardsView({ cards, onRefresh, onCreate, onEdit, onOpenRs
             </button>
           ))}
         </div>
-        <div className="wf-sort-mobile">
+        <div className="wf-sort">
           <label htmlFor={sortId}>Sırala</label>
           <select id={sortId} value={`${sort.key}:${sort.dir}`} onChange={(event) => { const [key, dir] = event.target.value.split(':'); setSort({ key, dir }) }}>
-            {Object.entries(SORTS).flatMap(([key, item]) => [
-              <option key={`${key}:asc`} value={`${key}:asc`}>{item.label} (artan)</option>,
-              <option key={`${key}:desc`} value={`${key}:desc`}>{item.label} (azalan)</option>,
-            ])}
+            {!SORT_PRESETS.some((item) => item.value === `${sort.key}:${sort.dir}`) && (
+              <option value={`${sort.key}:${sort.dir}`}>{SORTS[sort.key].label} ({sort.dir === 'asc' ? 'artan' : 'azalan'})</option>
+            )}
+            {SORT_PRESETS.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
           </select>
         </div>
       </div>
@@ -198,6 +229,7 @@ export default function CardsView({ cards, onRefresh, onCreate, onEdit, onOpenRs
                   <SortHeader id="name" label="Çift" sort={sort} onSort={toggleSort} />
                   <SortHeader id="template" label="Şablon" sort={sort} onSort={toggleSort} />
                   <SortHeader id="date" label="Tarih" sort={sort} onSort={toggleSort} />
+                  <SortHeader id="rsvp" label="LCV" sort={sort} onSort={toggleSort} />
                   <th scope="col">Bağlantı</th>
                   <th scope="col"><span className="wf-sr-only">İşlemler</span></th>
                 </tr>
@@ -213,7 +245,11 @@ export default function CardsView({ cards, onRefresh, onCreate, onEdit, onOpenRs
                       {(card.details?.venue || card.details?.city) && <small className="wf-muted">{[card.details?.venue, card.details?.city].filter(Boolean).join(' · ')}</small>}
                     </td>
                     <td><TemplateBadge template={card.details?.template} /></td>
-                    <td className="wf-nowrap">{cardDateText(card) || <span className="wf-muted">Tarih yok</span>}</td>
+                    <td className="wf-nowrap">
+                      {cardDateText(card) || <span className="wf-muted">Tarih yok</span>}
+                      {card.createdAtUtc && <small className="wf-created">Eklendi: {formatDate(card.createdAtUtc)}</small>}
+                    </td>
+                    <td><RsvpCell card={card} onOpenRsvp={onOpenRsvp} /></td>
                     <td><LinkCell card={card} onCopy={copy} /></td>
                     <td><RowActions card={card} onEdit={onEdit} onOpenRsvp={onOpenRsvp} onDelete={setPendingDelete} /></td>
                   </tr>
@@ -232,7 +268,11 @@ export default function CardsView({ cards, onRefresh, onCreate, onEdit, onOpenRs
                   </div>
                   <span className={`wf-pill ${isPublished(card) ? 'wf-pill--live' : ''}`}>{isPublished(card) ? 'Yayında' : 'Taslak'}</span>
                 </div>
-                <TemplateBadge template={card.details?.template} />
+                <div className="wf-card-item__meta">
+                  <TemplateBadge template={card.details?.template} />
+                  <RsvpCell card={card} onOpenRsvp={onOpenRsvp} />
+                </div>
+                {card.createdAtUtc && <small className="wf-created">Eklendi: {formatDate(card.createdAtUtc)}</small>}
                 <LinkCell card={card} onCopy={copy} />
                 <RowActions card={card} onEdit={onEdit} onOpenRsvp={onOpenRsvp} onDelete={setPendingDelete} />
               </li>
