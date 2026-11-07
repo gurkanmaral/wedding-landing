@@ -1,10 +1,11 @@
 // Shared plumbing for every intro scene: renderer, camera, render loop,
 // resize handling and disposal. A scene module only builds its own objects.
 import * as THREE from 'three'
+import { animationPixelRatio } from '../animationQuality.js'
 
 export function createStage(host, { fov = 35, cameraZ = 10, antialias = true, toneMapping = false } = {}) {
   const renderer = new THREE.WebGLRenderer({ antialias, alpha: true, powerPreference: 'high-performance' })
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2))
+  renderer.setPixelRatio(animationPixelRatio(2))
   renderer.setClearColor(0x000000, 0)
   if (toneMapping) {
     renderer.toneMapping = THREE.ACESFilmicToneMapping
@@ -118,7 +119,7 @@ export function makeCanvas(width, height) {
 export function canvasTexture(canvas, renderer, { srgb = true, repeat = false } = {}) {
   const texture = new THREE.CanvasTexture(canvas)
   if (srgb) texture.colorSpace = THREE.SRGBColorSpace
-  texture.anisotropy = renderer.capabilities.getMaxAnisotropy()
+  texture.anisotropy = Math.min(renderer.capabilities.getMaxAnisotropy(), 8)
   if (repeat) {
     texture.wrapS = THREE.RepeatWrapping
     texture.wrapT = THREE.RepeatWrapping

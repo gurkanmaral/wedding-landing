@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { cardDetail, useWeddingCardFields } from '../../api/weddingCardContext'
 import { useRsvp } from '../../api/useRsvp'
+import { animationPixelRatio } from '../../shared/animationQuality.js'
 
 const sakuraTree = '/assets/sakura/sakura-tree.png'
 const couple1 = '/assets/sakura/couple-1.png'
@@ -473,7 +474,7 @@ export default function SakuraWeddingPage() {
     const canvas = canvasRef.current
     const ctx = canvas.getContext('2d')
     const mouse = { x: 0.5, y: 0.5 }
-    let dpr = Math.min(window.devicePixelRatio || 1, 2)
+    let dpr = animationPixelRatio(2)
     let W = 0, H = 0
     const petals = []
 
@@ -515,7 +516,7 @@ export default function SakuraWeddingPage() {
     }
     let lastBuiltW = -1
     function resize() {
-      dpr = Math.min(window.devicePixelRatio || 1, 2)
+      dpr = animationPixelRatio(2)
       W = window.innerWidth; H = window.innerHeight
       canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr)
       canvas.style.width = W + 'px'; canvas.style.height = H + 'px'
@@ -579,7 +580,7 @@ export default function SakuraWeddingPage() {
       } else {
         p.y += p.vy * 60 * dt * p.depth
       }
-      p.rot += p.vr + sway * 0.02
+      p.rot += (p.vr + sway * 0.02) * 60 * dt
       if (p.y > H + 30 || p.x < -40 || p.x > W + 40) {
         Object.assign(p, spawnPetal(false))
         p.x = Math.random() * W

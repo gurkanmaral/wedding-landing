@@ -139,7 +139,8 @@ const css = String.raw`
   .autumn-page em, .autumn-page .it{ font-family:var(--script); font-style:italic; }
 
   /* ====== HERO (asymmetric, left-anchored) ====== */
-  .autumn-page .hero{ position:relative; z-index:2; min-height:100vh; min-height:100svh; display:flex; align-items:center; overflow-x:clip; }
+  /* Keep the ambient falling leaves behind the invitation copy. */
+  .autumn-page .hero{ position:relative; z-index:4; min-height:100vh; min-height:100svh; display:flex; align-items:center; overflow-x:clip; }
   .autumn-page .hero-tree{ position:absolute; top:0; right:-2%; height:100vh; height:100svh; width:auto; max-width:64%;
     object-fit:contain; object-position:top right; z-index:1; pointer-events:none; user-select:none;
     -webkit-user-drag:none; filter:drop-shadow(0 18px 40px oklch(.3 .06 50 / .18)); will-change:transform; }
@@ -156,6 +157,9 @@ const css = String.raw`
   /* phone: tree becomes a soft backdrop, content anchors low */
   @media(max-width:720px){
     .autumn-page .hero{ align-items:flex-end; padding:6rem 0 11.5rem; }
+    /* Preserve the atmosphere without letting large foreground leaves compete
+       with the compact mobile name and date block. */
+    .autumn-page #leaves{ opacity:.55; }
     .autumn-page .leaf-band{ height:120px; }
     .autumn-page .hero-tree{ height:78vh; height:78svh; width:120%; max-width:none; right:-32%; opacity:.4;
       -webkit-mask-image:linear-gradient(205deg,#000 30%,transparent 85%);

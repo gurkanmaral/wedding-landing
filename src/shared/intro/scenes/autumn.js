@@ -758,6 +758,9 @@ export default function create(host, template, { onOpened, setCaption }) {
     new THREE.TubeGeometry(stemCurve, 24, 0.016, 8, false),
     new THREE.MeshStandardMaterial({ color: '#8a3414', roughness: 0.65 }),
   )
+  // Keep the petiole behind the blade while the leaf is face-on. Without the
+  // offset it sits above the name texture and cuts through the lower name.
+  stem.position.z = -0.18
   blade.add(stem)
 
   // ember sparks shed by the sweeping edge

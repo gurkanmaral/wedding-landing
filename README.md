@@ -1,4 +1,4 @@
-# Wedfolio — wedding invitation websites
+# Şimdi Evleniyoruz — dijital düğün davetiyeleri
 
 React 19 + Vite + Tailwind v4 + GSAP + three.js.
 
@@ -7,6 +7,11 @@ npm run dev      # http://localhost:5173
 npm run build
 npm run lint
 ```
+
+For direct WhatsApp pricing requests, copy `.env.example` to `.env` and set
+`VITE_WHATSAPP_NUMBER` in international format without `+` or spaces. The
+project defaults to `905378314730`; the environment variable can override it
+for another deployment.
 
 ## Structure
 
@@ -17,7 +22,7 @@ src/
     Router.jsx             path → template; lazy-loads each page, plays the 3D intro first
     ErrorBoundary.jsx      fallback if a page crashes
     openedFlag.js          skips the intro when the landing page already opened the envelope
-  landing/                 the Wedfolio landing page (hero envelope, collection, how it works)
+  landing/                 the Şimdi Evleniyoruz landing page (hero envelope, collection, how it works)
     previews/<slug>.jpg    hero screenshots used on the collection cards
   shared/intro/            the 3D envelope intro shared by every template
     InvitationIntro.jsx    full-screen overlay + buttons

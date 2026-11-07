@@ -588,6 +588,23 @@
   color: #f0a9a0;
 }
 
+.lp-whatsapp-preview {
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgb(0 0 0 / 0.18);
+}
+
+.lp-whatsapp-preview span {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.lp-whatsapp-preview p {
+  margin: 0.45rem 0 0;
+  line-height: 1.6;
+}
+
 .lp-footer {
   display: flex;
   flex-wrap: wrap;

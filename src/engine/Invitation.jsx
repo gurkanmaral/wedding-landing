@@ -61,9 +61,9 @@ function downloadIcs({ title, start, end, location, fileName }) {
   const body = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//Wedfolio//Invitation//EN',
+    'PRODID:-//Şimdi Evleniyoruz//Invitation//TR',
     'BEGIN:VEVENT',
-    `UID:${start.getTime()}-${fileName}@wedfolio`,
+    `UID:${start.getTime()}-${fileName}@simdievleniyoruz.com`,
     `DTSTAMP:${icsDate(new Date())}`,
     `DTSTART:${icsDate(start)}`,
     `DTEND:${icsDate(end)}`,

@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import { gsap } from 'gsap'
+import { animationPixelRatio, frameBlend } from '../animationQuality.js'
 import {
   cardTexture,
   flapTexture,
@@ -142,7 +143,7 @@ export function createEnvelopeScene(host, template, { onOpened, particleCount, a
     year: 'numeric',
   })
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' })
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2))
+  renderer.setPixelRatio(animationPixelRatio(2))
   renderer.setClearColor(0x000000, 0)
   host.appendChild(renderer.domElement)
   renderer.domElement.setAttribute('aria-hidden', 'true')
@@ -312,12 +313,13 @@ export function createEnvelopeScene(host, template, { onOpened, particleCount, a
     const dt = Math.min(clock.getDelta(), 0.05)
     const t = clock.elapsedTime
     if (!state.opening) {
-      root.rotation.y += (state.pointerX * 0.32 - root.rotation.y) * 0.06
-      root.rotation.x += (-state.pointerY * 0.22 - root.rotation.x) * 0.06
+      const blend = frameBlend(3.7, dt)
+      root.rotation.y += (state.pointerX * 0.32 - root.rotation.y) * blend
+      root.rotation.x += (-state.pointerY * 0.22 - root.rotation.x) * blend
       root.rotation.z = Math.sin(t * 0.6) * 0.015
       root.position.y = view.h * 0.04 + Math.sin(t * 0.9) * 0.05
     }
-    state.burst *= 0.96
+    state.burst *= Math.exp(-2.45 * dt)
     particles.update(dt, t, state.burst)
     renderer.render(scene, camera)
   }

@@ -5,6 +5,7 @@ import * as THREE from 'three'
 import { Body, Equator, GeoMoon, HelioDistance, Horizon, Illumination, KM_PER_AU, MoonPhase, Observer, SearchRiseSet } from 'astronomy-engine'
 import { cardDetail, useWeddingCardFields } from '../../api/weddingCardContext'
 import { useRsvp } from '../../api/useRsvp'
+import { animationPixelRatio, frameBlend } from '../../shared/animationQuality.js'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -1257,7 +1258,7 @@ export default function CelestialWeddingPage() {
       const rect = host.getBoundingClientRect()
       width = Math.max(1, rect.width)
       height = Math.max(1, rect.height)
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, isMobile ? 1.35 : 2))
+      renderer.setPixelRatio(animationPixelRatio(isMobile ? 1.35 : 2))
       renderer.setSize(width, height, false)
       camera.aspect = width / height
       camera.updateProjectionMatrix()
@@ -1299,9 +1300,10 @@ export default function CelestialWeddingPage() {
 
     const animate = () => {
       const now = performance.now()
-      elapsed += Math.min((now - lastTime) / 1000, 0.05)
+      const dt = Math.min((now - lastTime) / 1000, 0.05)
+      elapsed += dt
       lastTime = now
-      pointer.lerp(targetPointer, 0.075)
+      pointer.lerp(targetPointer, frameBlend(4.68, dt))
 
       starField.rotation.y = pointer.x * 0.055
       starField.rotation.x = pointer.y * 0.035
@@ -1311,7 +1313,7 @@ export default function CelestialWeddingPage() {
       moonGroup.rotation.x = pointer.y * 0.07
       moonGroup.position.x = pointer.x * 10
       moonGroup.position.y = moonBaseY + pointer.y * 6 + Math.sin(elapsed * 0.7) * 1.8
-      moon.rotation.y += 0.0018
+      moon.rotation.y += dt * 0.108
       moonGlow.material.opacity = 0.13 + Math.sin(elapsed * 1.2) * 0.025
 
       farStars.position.x = pointer.x * -16

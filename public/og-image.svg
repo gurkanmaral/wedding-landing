@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1200" viewBox="0 0 1200 1200">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="18%" r="90%">
+      <stop offset="0" stop-color="#34463d"/>
+      <stop offset="0.55" stop-color="#17231e"/>
+      <stop offset="1" stop-color="#0b100e"/>
+    </radialGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="20" stdDeviation="20" flood-color="#000" flood-opacity=".35"/>
+    </filter>
+  </defs>
+  <rect width="1200" height="1200" fill="url(#bg)"/>
+  <circle cx="1020" cy="330" r="220" fill="#d8bd7d" opacity=".08"/>
+  <circle cx="165" cy="860" r="260" fill="#d8bd7d" opacity=".06"/>
+  <g transform="translate(600 430)" filter="url(#shadow)">
+    <circle cx="-35" cy="0" r="65" fill="none" stroke="#d8bd7d" stroke-width="16"/>
+    <circle cx="35" cy="0" r="65" fill="none" stroke="#f7efe1" stroke-width="16"/>
+    <path d="M0-96l12 22 22 12-22 12L0-28l-12-22-22-12 22-12L0-96z" fill="#d8bd7d"/>
+  </g>
+  <text x="600" y="600" fill="#f7efe1" font-family="Georgia, serif" font-size="76" text-anchor="middle">Şimdi Evleniyoruz</text>
+  <text x="600" y="665" fill="#d8bd7d" font-family="Arial, sans-serif" font-size="30" letter-spacing="6" text-anchor="middle">DİJİTAL DÜĞÜN DAVETİYESİ</text>
+  <text x="600" y="740" fill="#d9dedb" font-family="Arial, sans-serif" font-size="26" text-anchor="middle">Hikâyenize yakışan, animasyonlu ve size özel.</text>
+</svg>

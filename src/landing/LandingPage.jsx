@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { templates } from '../templates/registry.js'
-import { site, whatsappLink } from '../app/site.js'
+import { priceRequestText, site, whatsappLink } from '../app/site.js'
+import { homeStructuredData, useSeo } from '../app/seo.js'
 import ContactSection from './ContactSection.jsx'
 import PhoneDemo from './PhoneDemo.jsx'
 import TemplatePreview from './TemplatePreview.jsx'
@@ -47,8 +48,16 @@ export default function LandingPage() {
     const group = COLLECTIONS.find((c) => c.id === collection)
     return group?.slugs ? templates.filter((t) => group.slugs.includes(t.slug)) : templates
   }, [collection])
-  const fromPrice = Math.min(...templates.map((t) => t.price))
-
+  const seo = useMemo(
+    () => ({
+      title: site.defaultTitle,
+      description: site.description,
+      path: '/',
+      structuredData: homeStructuredData(FAQ),
+    }),
+    [],
+  )
+  useSeo(seo)
   return (
     <div className="lp">
       <link
@@ -76,7 +85,7 @@ export default function LandingPage() {
         <section className="lp-hero" aria-labelledby="hero-title">
           <div className="lp-hero__copy">
             <h1 id="hero-title" className="lp-h1">
-              Davetiyeniz açıldığı an düğününüz başlasın.
+              Dijital düğün davetiyeniz açıldığı an, düğününüz başlasın.
             </h1>
             <p className="lp-lead">
               Misafirleriniz linke dokunduğunda size özel bir açılış izler; ardından geri sayım, program, konum ve katılım
@@ -86,8 +95,8 @@ export default function LandingPage() {
               <a href="#tasarimlar" className="lp-button">
                 Tasarımları keşfet
               </a>
-              <a href={whatsappLink()} className="lp-button lp-button--ghost" target={site.whatsapp ? '_blank' : undefined} rel="noopener noreferrer">
-                Bize yazın
+              <a href={whatsappLink(priceRequestText(active))} className="lp-button lp-button--ghost" target="_blank" rel="noopener noreferrer">
+                WhatsApp’tan fiyat sor
               </a>
             </div>
             <ul className="lp-hero__facts" aria-label="Öne çıkanlar">
@@ -139,7 +148,7 @@ export default function LandingPage() {
                   <div className="lp-card__body">
                     <h3>{t.name}</h3>
                     <p>{t.mood}</p>
-                    <span className="lp-card__price">${t.price}</span>
+                    <span className="lp-card__price">Fiyat bilgisi alın</span>
                   </div>
                 </a>
               </li>
@@ -189,7 +198,7 @@ export default function LandingPage() {
           <div className="lp-plans__grid">
             <article className="lp-plan">
               <h3>Hazır tasarım</h3>
-              <p className="lp-plan__price">${fromPrice}’dan başlayan</p>
+              <p className="lp-plan__price">Fiyat bilgisi için bize yazın</p>
               <ul>
                 <li>Seçtiğiniz tasarım, sizin bilgilerinizle</li>
                 <li>Açılış animasyonu, geri sayım, konum, LCV</li>
@@ -197,7 +206,7 @@ export default function LandingPage() {
                 <li>Size özel link ve QR kod</li>
               </ul>
               <a className="lp-button lp-button--ghost" href="#iletisim">
-                Başlayalım
+                Fiyat sor
               </a>
             </article>
             <article className="lp-plan lp-plan--featured">
@@ -253,7 +262,7 @@ export default function LandingPage() {
       </footer>
 
       {site.whatsapp ? (
-        <a className="lp-whatsapp" href={whatsappLink()} target="_blank" rel="noopener noreferrer" aria-label="WhatsApp’tan yazın">
+        <a className="lp-whatsapp" href={whatsappLink(priceRequestText(active))} target="_blank" rel="noopener noreferrer" aria-label="WhatsApp’tan fiyat sorun">
           WhatsApp
         </a>
       ) : null}

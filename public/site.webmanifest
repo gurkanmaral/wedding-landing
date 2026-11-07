@@ -1,0 +1,17 @@
+{
+  "name": "Şimdi Evleniyoruz",
+  "short_name": "Evleniyoruz",
+  "description": "Animasyonlu dijital düğün davetiyeleri",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f1512",
+  "theme_color": "#0f1512",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

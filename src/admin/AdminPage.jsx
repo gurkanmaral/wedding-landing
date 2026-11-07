@@ -34,10 +34,10 @@ function Fonts() {
 
 function Brand({ compact = false }) {
   return (
-    <a className={`wf-brand ${compact ? 'wf-brand--compact' : ''}`} href="/" aria-label="Wedfolio ana sayfası">
+    <a className={`wf-brand ${compact ? 'wf-brand--compact' : ''}`} href="/" aria-label="Şimdi Evleniyoruz ana sayfası">
       <span className="wf-brand__mark" aria-hidden="true">W</span>
       <span className="wf-brand__text">
-        <strong>Wedfolio</strong>
+        <strong>Şimdi Evleniyoruz</strong>
         <small>Yönetim paneli</small>
       </span>
     </a>
@@ -86,7 +86,7 @@ function SignInScreen({ onSignedIn }) {
           {error && <div id={errorId} className="wf-alert wf-alert--error" role="alert">{error}</div>}
           <div className="wf-field">
             <label htmlFor={emailId}>E-posta adresi</label>
-            <input id={emailId} type="email" autoComplete="username" required value={form.email} onChange={update('email')} placeholder="ornek@wedfolio.com" />
+            <input id={emailId} type="email" autoComplete="username" required value={form.email} onChange={update('email')} placeholder="ornek@simdievleniyoruz.com" />
           </div>
           <div className="wf-field">
             <label htmlFor={passwordId}>Şifre</label>
@@ -161,7 +161,7 @@ export default function AdminPage() {
   const toastId = useRef(0)
 
   useEffect(() => {
-    document.title = 'Wedfolio · Yönetim paneli'
+    document.title = 'Şimdi Evleniyoruz · Yönetim paneli'
     document.documentElement.lang = 'tr'
   }, [])
 

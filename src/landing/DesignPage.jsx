@@ -1,6 +1,7 @@
-import { useEffect } from 'react'
+import { useMemo } from 'react'
 import { templates } from '../templates/registry.js'
-import { site } from '../app/site.js'
+import { priceRequestText, site, whatsappLink } from '../app/site.js'
+import { designStructuredData, useSeo } from '../app/seo.js'
 import ContactSection from './ContactSection.jsx'
 import PhoneDemo from './PhoneDemo.jsx'
 import TemplatePreview from './TemplatePreview.jsx'
@@ -22,10 +23,24 @@ export default function DesignPage({ slug }) {
   const template = templates.find((t) => t.slug === slug)
   const others = templates.filter((t) => t.slug !== slug).slice(0, 4)
 
-  useEffect(() => {
-    document.title = template ? `${template.name} — ${site.name} dijital davetiye` : site.name
-    document.documentElement.lang = 'tr'
-  }, [template])
+  const seo = useMemo(() => {
+    if (!template) {
+      return {
+        title: `Tasarım Bulunamadı | ${site.name}`,
+        description: 'Aradığınız dijital davetiye tasarımı bulunamadı.',
+        path: `/tasarim/${slug}`,
+        robots: 'noindex, follow',
+      }
+    }
+    return {
+      title: `${template.name} Dijital Düğün Davetiyesi | ${site.name}`,
+      description: `${template.mood}. ${template.blurb} Tasarımı canlı inceleyin ve fiyat bilgisi alın.`,
+      path: `/tasarim/${template.slug}`,
+      imageAlt: `${template.name} dijital düğün davetiyesi önizlemesi`,
+      structuredData: designStructuredData(template),
+    }
+  }, [slug, template])
+  useSeo(seo)
 
   if (!template) {
     return (
@@ -73,16 +88,14 @@ export default function DesignPage({ slug }) {
               ← Tüm tasarımlar
             </a>
             <h1 id="design-title" className="lp-h1">
-              {template.name}
+              {template.name} dijital düğün davetiyesi
             </h1>
             <p className="lp-design__mood">{template.mood}</p>
             <p className="lp-lead">{template.blurb}</p>
-            <p className="lp-design__price">
-              <strong>${template.price}</strong> tek seferlik
-            </p>
+            <p className="lp-design__price">Güncel fiyat ve paket ayrıntıları için WhatsApp’tan yazın.</p>
             <div className="lp-hero__actions">
-              <a className="lp-button" href="#iletisim">
-                Bu tasarımla başla
+              <a className="lp-button" href={whatsappLink(priceRequestText(template))} target="_blank" rel="noopener noreferrer">
+                WhatsApp’tan fiyat sor
               </a>
               <a className="lp-button lp-button--ghost" href={template.path} target="_blank" rel="noopener noreferrer">
                 Tam ekran önizle
@@ -112,7 +125,7 @@ export default function DesignPage({ slug }) {
                   <div className="lp-card__body">
                     <h3>{t.name}</h3>
                     <p>{t.mood}</p>
-                    <span className="lp-card__price">${t.price}</span>
+                    <span className="lp-card__price">Fiyat bilgisi alın</span>
                   </div>
                 </a>
               </li>

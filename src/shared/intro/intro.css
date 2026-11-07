@@ -9,6 +9,7 @@
   transition: opacity 0.85s ease;
   overflow: hidden;
   touch-action: none;
+  isolation: isolate;
 }
 
 .invitation-intro[data-stage='leaving'] {
@@ -19,6 +20,7 @@
 .invitation-intro__stage {
   position: absolute;
   inset: 0;
+  z-index: 0;
   cursor: pointer;
   opacity: 0;
   transition: opacity 0.9s ease;
@@ -34,6 +36,7 @@
 
 .invitation-intro__actions {
   position: absolute;
+  z-index: 2;
   left: 50%;
   bottom: max(7svh, 2.5rem);
   transform: translateX(-50%);
@@ -57,13 +60,17 @@
   min-height: 48px;
   padding: 0.75rem 1.4rem;
   border: 0;
-  background: transparent;
+  background: color-mix(in srgb, var(--intro-hover-text) 72%, transparent);
   color: inherit;
   font: inherit;
   font-size: clamp(0.95rem, 2.6vw, 1.1rem);
   letter-spacing: 0.08em;
   cursor: pointer;
   text-shadow: 0 1px 12px rgb(0 0 0 / 0.25);
+  border-radius: 999px;
+  box-shadow: 0 8px 28px rgb(0 0 0 / 0.12);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   animation: invitation-intro-breathe 2.8s ease-in-out infinite;
 }
 
@@ -81,6 +88,7 @@
 
 .invitation-intro__skip {
   position: absolute;
+  z-index: 2;
   top: max(1rem, env(safe-area-inset-top));
   right: 1rem;
   min-height: 44px;
@@ -112,6 +120,7 @@
 
 .invitation-intro__caption {
   position: absolute;
+  z-index: 2;
   left: 50%;
   bottom: max(16svh, 6rem);
   margin: 0;

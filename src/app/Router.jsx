@@ -4,6 +4,9 @@ import ErrorBoundary from './ErrorBoundary.jsx'
 import { consumeOpened } from './openedFlag.js'
 import { findTemplate, templates } from '../templates/registry.js'
 import { WeddingCardProvider } from '../api/WeddingCardContext.jsx'
+import TemplatePriceContact from '../shared/TemplatePriceContact.jsx'
+import { applySeo } from './seo.js'
+import { site } from './site.js'
 
 const AdminPage = lazy(() => import('../admin/AdminPage.jsx'))
 const WeddingCardManagerPage = lazy(() => import('../admin/WeddingCardManagerPage.jsx'))
@@ -56,8 +59,12 @@ function TemplateShell({ template }) {
   const pageReady = useMemo(() => template.load(), [template])
 
   useEffect(() => {
-    document.title = template.title
-    document.documentElement.lang = template.lang
+    applySeo({
+      title: `${template.name} Davetiye Önizlemesi | ${site.name}`,
+      description: `${template.name} dijital düğün davetiyesinin canlı önizlemesi.`,
+      path: `/tasarim/${template.slug}`,
+      robots: 'noindex, follow',
+    })
   }, [template])
 
   useEffect(() => {
@@ -80,6 +87,7 @@ function TemplateShell({ template }) {
         <ErrorBoundary>
           <Suspense fallback={pageFallback}>
             <Page />
+            <TemplatePriceContact template={template} />
             <Painted onPainted={() => setPainted(true)} />
           </Suspense>
         </ErrorBoundary>
@@ -113,10 +121,14 @@ export default function Router() {
   const template = app ? null : findTemplate(pathname)
 
   useEffect(() => {
-    if (template || app) return
-    document.title = 'Wedfolio — Online düğün davetiyeleri'
-    document.documentElement.lang = 'tr'
-  }, [template, app])
+    if (!app || app === 'design') return
+    applySeo({
+      title: `${site.name} | Hesap`,
+      description: `${site.name} hesap ve yönetim alanı.`,
+      path: pathname,
+      robots: 'noindex, nofollow',
+    })
+  }, [app, pathname])
 
   if (app) {
     return (

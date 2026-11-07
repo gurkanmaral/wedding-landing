@@ -1,0 +1,80 @@
+.template-price-contact,
+.template-price-contact * {
+  box-sizing: border-box;
+}
+
+.template-price-contact {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  margin: 0;
+  padding: clamp(4rem, 9vw, 7rem) 1.25rem;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 0%, rgb(207 171 104 / 0.18), transparent 45%),
+    #0d120f;
+  color: #f5efe3;
+  font-family: Manrope, Arial, sans-serif;
+  text-align: center;
+}
+
+.template-price-contact__inner {
+  width: min(100%, 42rem);
+  margin: 0 auto;
+}
+
+.template-price-contact__eyebrow {
+  margin: 0 0 1rem;
+  color: #d8bb83;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  line-height: 1.5;
+  text-transform: uppercase;
+}
+
+.template-price-contact h2 {
+  margin: 0;
+  color: #f5efe3;
+  font: 400 clamp(2rem, 6vw, 3.75rem) / 1.08 "Bodoni Moda", Georgia, serif;
+  letter-spacing: -0.025em;
+}
+
+.template-price-contact__copy {
+  max-width: 34rem;
+  margin: 1.25rem auto 0;
+  color: #bbb8b0;
+  font-size: clamp(0.95rem, 2vw, 1.08rem);
+  line-height: 1.7;
+}
+
+.template-price-contact a {
+  display: inline-flex;
+  min-height: 50px;
+  margin-top: 2rem;
+  padding: 0.8rem 1.5rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #dfc28a;
+  border-radius: 999px;
+  background: #dfc28a;
+  color: #16130e;
+  font: 600 0.92rem/1.2 Manrope, Arial, sans-serif;
+  text-decoration: none;
+  transition: transform 180ms ease, background-color 180ms ease, box-shadow 180ms ease;
+}
+
+.template-price-contact a:hover {
+  transform: translateY(-2px);
+  background: #ebd39f;
+  box-shadow: 0 12px 30px rgb(0 0 0 / 0.24);
+}
+
+.template-price-contact a:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .template-price-contact a { transition: none; }
+}

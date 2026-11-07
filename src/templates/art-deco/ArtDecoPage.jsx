@@ -10,6 +10,7 @@ import decoCouple from './assets/deco-couple.jpg'
 import decoFrame from './assets/deco-frame.jpg'
 import { useWeddingCardFields } from '../../api/weddingCardContext'
 import { useRsvp } from '../../api/useRsvp'
+import { animationPixelRatio, frameBlend } from '../../shared/animationQuality.js'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -389,7 +390,7 @@ export default function MedDreamSparkArtDecoTemplatePage() {
       canvas.remove()
       return undefined
     }
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2))
+    renderer.setPixelRatio(animationPixelRatio(2))
     renderer.outputColorSpace = THREE.SRGBColorSpace
     renderer.toneMapping = THREE.ACESFilmicToneMapping
     renderer.toneMappingExposure = 1.18
@@ -666,9 +667,10 @@ export default function MedDreamSparkArtDecoTemplatePage() {
     window.addEventListener('pointermove', onPointerMove, { passive: true })
 
     let elapsed = 0
-    const draw = () => {
-      group.rotation.y += ((pointer.x * 0.18) - group.rotation.y) * 0.035
-      group.rotation.x += ((pointer.y * 0.09) - group.rotation.x) * 0.035
+    const draw = (dt = 0) => {
+      const blend = frameBlend(2.15, dt)
+      group.rotation.y += ((pointer.x * 0.18) - group.rotation.y) * blend
+      group.rotation.x += ((pointer.y * 0.09) - group.rotation.x) * blend
       portal.position.y = Math.sin(elapsed * 0.65) * 0.055
       crystal.rotation.y = Math.sin(elapsed * 0.38) * 0.42
       crystal.rotation.x = Math.sin(elapsed * 0.24) * 0.035
@@ -689,9 +691,10 @@ export default function MedDreamSparkArtDecoTemplatePage() {
     let onScreen = true
     let last = 0
     const tick = (now) => {
-      elapsed += Math.min(0.1, (now - last) / 1000)
+      const dt = Math.min(0.05, (now - last) / 1000)
+      elapsed += dt
       last = now
-      draw()
+      draw(dt)
       frameId = window.requestAnimationFrame(tick)
     }
     const updateLoop = () => {
@@ -709,7 +712,7 @@ export default function MedDreamSparkArtDecoTemplatePage() {
     const resize = () => {
       const width = Math.max(1, host.clientWidth)
       const height = Math.max(1, host.clientHeight)
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2))
+      renderer.setPixelRatio(animationPixelRatio(2))
       renderer.setSize(width, height, false)
       camera.aspect = width / height
       camera.updateProjectionMatrix()
