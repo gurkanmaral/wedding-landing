@@ -19,12 +19,10 @@ const COLLECTIONS = [
 const FEATURED = ['kapadokya', 'bogaz', 'iznik', 'kina', 'cinema', 'celestial', 'orangerie', 'art-deco']
 
 const FEATURES = [
-  { title: 'Dokunarak açılan giriş', text: 'Her tasarımın kendine özgü bir açılışı var: kayan yıldız, yükselen balon, açan gül, aralanan paravan.' },
-  { title: 'Katılım bildirimi (LCV)', text: 'Misafirleriniz kişi sayısı ve notuyla birlikte tek dokunuşla yanıt verir. Yanıtlar size ulaşır.' },
-  { title: 'Geri sayım ve takvim', text: 'Büyük güne kalan süre canlı akar. Misafirler tarihi tek tuşla takvimlerine ekler.' },
-  { title: 'Konum ve yol tarifi', text: 'Mekânın haritası sayfada açılır; yol tarifi doğrudan Google Haritalar’a gider.' },
-  { title: 'Türkçe ve İngilizce', text: 'Yabancı misafirleriniz için davetiye tek dokunuşla İngilizceye geçer.' },
-  { title: 'Hediye ve IBAN', text: 'Hediye notunuz ve IBAN bilginiz kopyalanabilir şekilde, zarif bir bölümde yer alır.' },
+  { mark: '01', title: 'Tek link, eksiksiz davet', text: 'Program, konum, geri sayım, hikâyeniz ve tüm önemli bilgiler bir arada.' },
+  { mark: '02', title: 'Kolay katılım bildirimi', text: 'Misafirleriniz kişi sayısı ve notuyla saniyeler içinde LCV yanıtı bırakır.' },
+  { mark: '03', title: 'Her zaman güncel', text: 'Saat veya mekân değiştiğinde link aynı kalır; misafirleriniz güncel bilgiyi görür.' },
+  { mark: '04', title: 'Tamamen size ait', text: 'İsimleriniz, fotoğraflarınız, müziğiniz ve hikâyeniz tasarıma zarifçe işlenir.' },
 ]
 
 const STEPS = [
@@ -68,7 +66,8 @@ export default function LandingPage() {
 
       <header className="lp-header">
         <a href="/" className="lp-logo">
-          {site.name}
+          <span className="lp-logo__mark" aria-hidden="true"><i /><i /></span>
+          <span>{site.name}</span>
         </a>
         <nav aria-label="Ana menü" className="lp-nav">
           <a href="#tasarimlar">Tasarımlar</a>
@@ -77,43 +76,40 @@ export default function LandingPage() {
           <a href="#sss">SSS</a>
         </nav>
         <a href="#iletisim" className="lp-button lp-button--small">
-          Davetiyeni oluştur
+          Fiyat bilgisi al
         </a>
       </header>
 
       <main>
         <section className="lp-hero" aria-labelledby="hero-title">
           <div className="lp-hero__copy">
+            <p className="lp-eyebrow">Size özel · Animasyonlu · Tek link</p>
             <h1 id="hero-title" className="lp-h1">
-              Dijital düğün davetiyeniz açıldığı an, düğününüz başlasın.
+              Hikâyenize yakışan dijital düğün davetiyesi.
             </h1>
             <p className="lp-lead">
-              Misafirleriniz linke dokunduğunda size özel bir açılış izler; ardından geri sayım, program, konum ve katılım
-              formu tek sayfada karşılar. {templates.length} tasarım, Türkçe ve İngilizce.
+              Misafirleriniz linke dokunduğu anda düğününüzün dünyasına girsin. Sinematik bir açılış, program, konum,
+              geri sayım ve katılım formu tek bir zarif sayfada.
             </p>
             <div className="lp-hero__actions">
               <a href="#tasarimlar" className="lp-button">
                 Tasarımları keşfet
               </a>
               <a href={whatsappLink(priceRequestText(active))} className="lp-button lp-button--ghost" target="_blank" rel="noopener noreferrer">
-                WhatsApp’tan fiyat sor
+                WhatsApp’tan konuşalım
               </a>
             </div>
-            <ul className="lp-hero__facts" aria-label="Öne çıkanlar">
-              <li>
-                <strong>{templates.length}</strong> tasarım
-              </li>
-              <li>
-                <strong>TR / EN</strong> dil seçeneği
-              </li>
-              <li>
-                <strong>Sınırsız</strong> misafir
-              </li>
-            </ul>
+            <p className="lp-hero__note">Uygulama gerekmez · WhatsApp’tan kolayca paylaşılır</p>
           </div>
 
           <div className="lp-hero__demo">
-            <PhoneDemo template={active} autoLoad />
+            <div className="lp-showcase">
+              <div className="lp-showcase__label">
+                <span>Canlı davetiye</span>
+                <strong>{active.name}</strong>
+              </div>
+              <PhoneDemo template={active} autoLoad />
+            </div>
             <div className="lp-switch" role="radiogroup" aria-label="Önizlenecek tasarım">
               {FEATURED.map((slug) => templates.find((t) => t.slug === slug))
                 .filter(Boolean)
@@ -126,12 +122,20 @@ export default function LandingPage() {
           </div>
         </section>
 
+        <ul className="lp-trust" aria-label="Hizmet özellikleri">
+          <li><strong>{templates.length}</strong><span>özgün tasarım</span></li>
+          <li><strong>Sınırsız</strong><span>misafir ve LCV</span></li>
+          <li><strong>TR / EN</strong><span>dil seçeneği</span></li>
+          <li><strong>Tek link</strong><span>kolay paylaşım</span></li>
+        </ul>
+
         <section id="tasarimlar" className="lp-section" aria-labelledby="designs-title">
           <div className="lp-section__head">
+            <p className="lp-eyebrow">Koleksiyon</p>
             <h2 id="designs-title" className="lp-h2">
-              Her biri ayrı bir dünya
+              Her aşkın başka bir havası var.
             </h2>
-            <p className="lp-lead">Bir tasarıma dokunun; misafirlerinizin göreceği gibi telefonda açın.</p>
+            <p className="lp-lead">Sizinkini bulun. Bir tasarıma dokunun ve misafirlerinizin göreceği gibi canlı deneyin.</p>
           </div>
           <div className="lp-filters" role="tablist" aria-label="Koleksiyonlar">
             {COLLECTIONS.map((c) => (
@@ -156,15 +160,25 @@ export default function LandingPage() {
           </ul>
         </section>
 
+        <section className="lp-story" aria-label="Dijital davetiye deneyimi">
+          <p className="lp-story__kicker">Bir davetiyeden daha fazlası</p>
+          <blockquote>
+            “Düğününüzün hissi, misafirleriniz mekâna gelmeden çok önce başlar.”
+          </blockquote>
+          <p>İlk dokunuştan son katılım yanıtına kadar, her ayrıntıyı sizin hikâyeniz etrafında tasarlıyoruz.</p>
+        </section>
+
         <section className="lp-section lp-features" aria-labelledby="features-title">
           <div className="lp-section__head">
+            <p className="lp-eyebrow">Deneyim</p>
             <h2 id="features-title" className="lp-h2">
-              Bir davetiyeden fazlası
+              Güzel görünür. İşinizi de kolaylaştırır.
             </h2>
           </div>
           <ul className="lp-features__list">
             {FEATURES.map((f) => (
               <li key={f.title}>
+                <span className="lp-feature__mark" aria-hidden="true">{f.mark}</span>
                 <h3>{f.title}</h3>
                 <p>{f.text}</p>
               </li>
@@ -174,8 +188,9 @@ export default function LandingPage() {
 
         <section id="nasil" className="lp-section lp-steps" aria-labelledby="steps-title">
           <div className="lp-section__head">
+            <p className="lp-eyebrow">Nasıl çalışır?</p>
             <h2 id="steps-title" className="lp-h2">
-              Üç adımda hazır
+              Üç adımda davetiniz hazır.
             </h2>
           </div>
           <ol className="lp-steps__list">
@@ -190,8 +205,9 @@ export default function LandingPage() {
 
         <section id="paketler" className="lp-section lp-plans" aria-labelledby="plans-title">
           <div className="lp-section__head">
+            <p className="lp-eyebrow">Size uygun seçenekler</p>
             <h2 id="plans-title" className="lp-h2">
-              Paketler
+              Ne kadar özel, siz karar verin.
             </h2>
             <p className="lp-lead">Tek seferlik ödeme. Abonelik yok, misafir sınırı yok.</p>
           </div>
@@ -239,6 +255,7 @@ export default function LandingPage() {
 
         <section id="sss" className="lp-section lp-faq" aria-labelledby="faq-title">
           <div className="lp-section__head">
+            <p className="lp-eyebrow">Merak ettikleriniz</p>
             <h2 id="faq-title" className="lp-h2">
               Sık sorulanlar
             </h2>
@@ -257,8 +274,15 @@ export default function LandingPage() {
       </main>
 
       <footer className="lp-footer">
-        <span className="lp-logo">{site.name}</span>
-        <p>Açıldığı an başlayan dijital düğün davetiyeleri.</p>
+        <div>
+          <span className="lp-logo">{site.name}</span>
+          <p>Hikâyenize yakışan dijital düğün davetiyeleri.</p>
+        </div>
+        <nav aria-label="Alt menü">
+          <a href="#tasarimlar">Tasarımlar</a>
+          <a href="#nasil">Nasıl çalışır?</a>
+          <a href="#iletisim">İletişim</a>
+        </nav>
       </footer>
 
       {site.whatsapp ? (
