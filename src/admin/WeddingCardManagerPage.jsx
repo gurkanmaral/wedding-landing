@@ -201,7 +201,7 @@ export default function WeddingCardManagerPage() {
   return (
     <div className="manager-page min-h-screen">
       <header className="manager-header">
-        <a href="/" className="manager-brand">Wedding Invitations</a>
+        <a href="/" className="manager-brand">e-invitation</a>
         <div className="flex items-center gap-3">
           <a href="/" className="manager-link">Templates</a>
           {authenticated && <button type="button" className="manager-link" onClick={logout}>Sign out</button>}

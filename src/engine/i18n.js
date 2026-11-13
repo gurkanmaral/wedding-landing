@@ -2,7 +2,7 @@
 export const strings = {
   tr: {
     together: 'Aileleriyle birlikte',
-    invite: 'sizi düğünlerine davet ediyor',
+    invite: 'sizi kutlamalarına davet ediyor',
     countdown: 'Büyük güne kalan',
     days: 'Gün',
     hours: 'Saat',
@@ -37,7 +37,7 @@ export const strings = {
   },
   en: {
     together: 'Together with their families',
-    invite: 'invite you to celebrate their wedding',
+    invite: 'invite you to celebrate with them',
     countdown: 'Counting down to the day',
     days: 'Days',
     hours: 'Hours',

@@ -9,8 +9,11 @@ const previews = Object.fromEntries(
 export default function TemplatePreview({ template }) {
   const src = previews[template.slug]
   return (
-    <div className="lp-card__media" style={{ background: template.intro.bg }}>
-      {src ? <img src={src} alt="" loading="lazy" /> : <span className="lp-card__fallback">{template.name}</span>}
+    <div className="lp-card__phone" aria-hidden="true">
+      <span className="lp-card__notch" />
+      <div className="lp-card__media" style={{ background: template.intro.bg }}>
+        {src ? <img src={src} alt="" loading="lazy" /> : <span className="lp-card__fallback">{template.name}</span>}
+      </div>
     </div>
   )
 }

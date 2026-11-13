@@ -4,7 +4,7 @@ const SCREEN_W = 390
 const SCREEN_H = 844
 
 // A phone with the real invitation running inside it (an iframe of the template route).
-export default function PhoneDemo({ template, autoLoad = false, label }) {
+export default function PhoneDemo({ template, autoLoad = false, label, replayLabel = 'Replay', fullscreenLabel = 'Open full screen' }) {
   const frameRef = useRef(null)
   const [scale, setScale] = useState(0.7)
   const [visible, setVisible] = useState(autoLoad)
@@ -32,7 +32,7 @@ export default function PhoneDemo({ template, autoLoad = false, label }) {
           {visible ? (
             <iframe
               key={`${template.slug}-${run}`}
-              title={label ?? `${template.name} davetiye önizlemesi`}
+              title={label ?? `${template.name} invitation preview`}
               src={template.path}
               width={SCREEN_W}
               height={SCREEN_H}
@@ -44,10 +44,10 @@ export default function PhoneDemo({ template, autoLoad = false, label }) {
       </div>
       <figcaption className="lp-phone__caption">
         <button type="button" className="lp-link" onClick={() => setRun((n) => n + 1)}>
-          Baştan oynat
+          {replayLabel}
         </button>
         <a className="lp-link" href={template.path} target="_blank" rel="noopener noreferrer">
-          Tam ekran aç
+          {fullscreenLabel}
         </a>
       </figcaption>
     </figure>

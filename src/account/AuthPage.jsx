@@ -198,7 +198,7 @@ function AuthShell({ children }) {
   return (
     <div className="manager-page min-h-screen">
       <header className="manager-header">
-        <a href="/" className="manager-brand">Wedding Invitations</a>
+        <a href="/" className="manager-brand">e-invitation</a>
         <nav className="flex items-center gap-2"><a className="manager-link" href="/manage">My cards</a><a className="manager-link" href="/admin">Admin</a></nav>
       </header>
       {children}

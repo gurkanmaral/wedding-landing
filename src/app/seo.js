@@ -42,15 +42,16 @@ export function applySeo({
   type = 'website',
   robots = 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
   structuredData,
+  locale = 'en',
 }) {
   const canonical = new URL(path, site.url).href
   const imageUrl = new URL(image, site.url).href
 
   document.title = title
-  document.documentElement.lang = 'tr'
+  document.documentElement.lang = locale
   upsertMeta('meta[name="description"]', { name: 'description', content: description })
   upsertMeta('meta[name="robots"]', { name: 'robots', content: robots })
-  upsertMeta('meta[property="og:locale"]', { property: 'og:locale', content: 'tr_TR' })
+  upsertMeta('meta[property="og:locale"]', { property: 'og:locale', content: locale === 'tr' ? 'tr_TR' : 'en_US' })
   upsertMeta('meta[property="og:type"]', { property: 'og:type', content: type })
   upsertMeta('meta[property="og:site_name"]', { property: 'og:site_name', content: site.name })
   upsertMeta('meta[property="og:title"]', { property: 'og:title', content: title })
@@ -77,7 +78,7 @@ export function useSeo(options) {
   }, [options])
 }
 
-export function homeStructuredData(faq) {
+export function homeStructuredData(faq, locale = 'en') {
   return {
     '@context': 'https://schema.org',
     '@graph': [
@@ -86,8 +87,8 @@ export function homeStructuredData(faq) {
         '@id': `${site.url}/#website`,
         url: `${site.url}/`,
         name: site.name,
-        alternateName: 'Şimdi Evleniyoruz Dijital Davetiye',
-        inLanguage: 'tr-TR',
+        alternateName: 'e-invitation digital invitations',
+        inLanguage: locale === 'tr' ? 'tr-TR' : 'en',
       },
       {
         '@type': 'Organization',
@@ -99,7 +100,7 @@ export function homeStructuredData(faq) {
           '@type': 'ContactPoint',
           telephone: `+${site.whatsapp}`,
           contactType: 'sales',
-          availableLanguage: ['Turkish', 'English'],
+          availableLanguage: ['English', 'Turkish'],
         },
       },
       {
@@ -123,12 +124,12 @@ export function designStructuredData(template) {
       {
         '@type': 'Service',
         '@id': `${url}#service`,
-        name: `${template.name} dijital düğün davetiyesi`,
+        name: `${template.name} digital invitation`,
         description: template.blurb,
         url,
         provider: { '@id': `${site.url}/#organization` },
         areaServed: { '@type': 'Country', name: 'Türkiye' },
-        serviceType: 'Dijital düğün davetiyesi tasarımı',
+        serviceType: 'Digital invitation design',
       },
       {
         '@type': 'BreadcrumbList',

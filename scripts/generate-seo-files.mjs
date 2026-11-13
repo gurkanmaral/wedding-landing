@@ -4,8 +4,8 @@ import { fileURLToPath } from 'node:url'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const dist = resolve(root, 'dist')
-const siteUrl = 'https://simdievleniyoruz.com'
-const siteName = 'Şimdi Evleniyoruz'
+const siteUrl = process.env.VITE_SITE_URL || 'https://e-invitation.com'
+const siteName = 'e-invitation'
 const registry = await readFile(resolve(root, 'src/templates/registry.js'), 'utf8')
 const baseHtml = await readFile(resolve(dist, 'index.html'), 'utf8')
 
@@ -34,12 +34,12 @@ function designHtml(template) {
       {
         '@type': 'Service',
         '@id': `${canonical}#service`,
-        name: `${template.name} dijital düğün davetiyesi`,
+        name: `${template.name} digital invitation`,
         description: template.blurb,
         url: canonical,
         provider: { '@id': `${siteUrl}/#organization` },
         areaServed: { '@type': 'Country', name: 'Türkiye' },
-        serviceType: 'Dijital düğün davetiyesi tasarımı',
+        serviceType: 'Digital invitation design',
       },
       {
         '@type': 'BreadcrumbList',
@@ -59,7 +59,7 @@ function designHtml(template) {
   html = replaceMeta(html, 'property', 'og:title', title)
   html = replaceMeta(html, 'property', 'og:description', description)
   html = replaceMeta(html, 'property', 'og:url', canonical)
-  html = replaceMeta(html, 'property', 'og:image:alt', `${template.name} dijital düğün davetiyesi`)
+  html = replaceMeta(html, 'property', 'og:image:alt', `${template.name} digital invitation`)
   html = replaceMeta(html, 'name', 'twitter:title', title)
   html = replaceMeta(html, 'name', 'twitter:description', description)
   html = html.replace(

@@ -61,7 +61,7 @@ function TemplateShell({ template }) {
   useEffect(() => {
     applySeo({
       title: `${template.name} Davetiye Önizlemesi | ${site.name}`,
-      description: `${template.name} dijital düğün davetiyesinin canlı önizlemesi.`,
+      description: `${template.name} digital invitation live preview.`,
       path: `/tasarim/${template.slug}`,
       robots: 'noindex, follow',
     })
